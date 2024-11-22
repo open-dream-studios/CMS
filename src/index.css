@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,4 +14,52 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Sephir */
+@font-face {
+  font-family: 'Sephir';
+  src: url('/public/fonts/sephir/Sephir-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.sephir {
+  font-family: 'Sephir', sans-serif;
+}
+
+/* Glyce */
+@font-face {
+  font-family: 'Glyce';
+  src: url('/public/fonts/glyce/Glyce-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.glyce {
+  font-family: 'Glyce', sans-serif;
+}
+
+/* Caster */
+@font-face {
+  font-family: 'Caster';
+  src: url('/public/fonts/caster-demo/Caster.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.caster {
+  font-family: 'Caster', sans-serif;
+}
+
+/* Abygaer */
+@font-face {
+  font-family: 'Abygaer';
+  src: url('/public/fonts/abygaer/Abygaer.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.abygaer {
+  font-family: 'Abygaer', sans-serif;
 }

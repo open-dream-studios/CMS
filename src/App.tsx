@@ -1,23 +1,30 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import Home from "./Pages/Home/Home"
-import About from "./Pages/About/About"
+import Home from "./Pages/Home/Home";
+import About from "./Pages/About/About";
+import Projects from "./Pages/Projects/Projects";
+import Navbar from "./Components/Navbar/Navbar";
+import Archives from "./Pages/Archives/Archives";
+import "./App.css"
 
-interface SlideUpPageProps {
-  children: React.ReactNode; 
-  isVisible: boolean;  
-}     
+export interface SlideUpPageProps {
+  children: React.ReactNode;
+  isVisible: boolean;
+}
 
-type Page = "home" | "about";
-type IncomingPage = "home" | "about" | null;
+export type Page = "home" | "about" | "projects" | "archives";
+export type IncomingPage = "home" | "about" | "projects" | "archives" | null;
+export interface PageProps {
+  navigate: (page: Page) => void;
+}
 
 const SlideUpPage: React.FC<SlideUpPageProps> = ({ children, isVisible }) => (
   <motion.div
     initial={{ y: "100%" }}
     animate={isVisible ? { y: "0%" } : {}}
     exit={{}}
-    transition={{ duration: 1, ease: "easeInOut" }}
+    transition={{ duration: 1, ease: [0.95, 0, 0.4, 1] }}
     style={{
       position: "absolute",
       top: 0,
@@ -37,6 +44,7 @@ const App = () => {
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
 
   const navigate = (page: Page) => {
+    if (page === currentPage) return
     setIncomingPage(page); // Set the incoming page to trigger animation
     setTimeout(() => {
       setCurrentPage(page); // Once animation is done, switch to the new page
@@ -45,29 +53,46 @@ const App = () => {
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
-      {currentPage === "home" && <Home navigateToAbout={() => navigate("about")} />}
-      {currentPage === "about" && <About navigateToHome={() => navigate("home")} />}
+    <>
+      <Navbar navigate={navigate} />
+      <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+        {currentPage === "home" && <Home navigate={navigate} />}
+        {currentPage === "about" && <About navigate={navigate} />}
+        {currentPage === "projects" && <Projects navigate={navigate} />}
+        {currentPage === "archives" && <Archives navigate={navigate} />}
 
-      {/* Animate the incoming page */}
-      {incomingPage === "about" && (
-        <SlideUpPage isVisible>
-          <About navigateToHome={() => navigate("home")} />
-        </SlideUpPage>
-      )}
-      {incomingPage === "home" && (
-        <SlideUpPage isVisible>
-          <Home navigateToAbout={() => navigate("about")} />
-        </SlideUpPage>
-      )}
-    </div>
+        {/* Animate the incoming page */}
+        {incomingPage === "home" && (
+          <SlideUpPage isVisible>
+            <Home navigate={navigate} />
+          </SlideUpPage>
+        )}
+        {incomingPage === "about" && (
+          <SlideUpPage isVisible>
+            <About navigate={navigate} />
+          </SlideUpPage>
+        )}
+        {incomingPage === "projects" && (
+          <SlideUpPage isVisible>
+            <Projects navigate={navigate} />
+          </SlideUpPage>
+        )}
+        {incomingPage === "archives" && (
+          <SlideUpPage isVisible>
+            <Archives navigate={navigate} />
+          </SlideUpPage>
+        )}
+      </div>
+    </>
   );
 };
 
 const Root = () => (
-  <Router>
-    <App />
-  </Router>
+  <>
+    <Router>
+      <App />
+    </Router>
+  </>
 );
 
 export default Root;

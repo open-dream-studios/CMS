@@ -1,0 +1,50 @@
+{
+  "baseURL": "/assets/",
+  "S3_base_URL": "https://aws1-bucket1-jg.s3.amazonaws.com/jess-shulman-portfolio/",
+  "S3_URL": "https://aws1-bucket1-jg.s3.amazonaws.com/JS-2/",
+  "colors": {
+    "black_1": "#000000",
+    "soft_black_1": "#191917",
+    "soft_black_2": "#666",
+    "page_backgrounds": "#FFFFFF",
+    "page_backgrounds1": "#FEFCFC",
+    "page_backgrounds2": "#F2F2F2"
+  },
+  "pages": {
+    "projects": [
+      {
+        "title": "Dreamlike flowers"
+      },
+      {
+        "title": "La Croisette"
+      },
+      {
+        "title": "Provence"
+      },
+      {
+        "title": "Dolce Tara"
+      },
+      {
+        "title": "Cavalcade"
+      },
+      {
+        "title": "Winter fantasy"
+      },
+      {
+        "title": "Twisted classics"
+      },
+      {
+        "title": "Mix it up"
+      },
+      {
+        "title": "Cyanotype"
+      },
+      {
+        "title": "Summer breeze"
+      },
+      {
+        "title": "Prairie & Co"
+      }
+    ]
+  }
+}

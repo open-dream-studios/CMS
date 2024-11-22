@@ -1,24 +1,18 @@
 import React from 'react'
+import { PageProps } from '../../App';
 
-interface PageProps {
-  navigateToHome: () => void;
-}
-
-const About: React.FC<PageProps> = ({ navigateToHome }) => (
+const About: React.FC<PageProps> = ({ navigate }) => (
   <div
     style={{
       width: "100%",
       height: "100%",
-      backgroundColor: "lightcoral",
+      backgroundColor: "lightgreen",
       display: "flex",
-      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
     }}
   >
     <h1>About Page</h1>
-    <p>This is the about page!</p>
-    <button onClick={navigateToHome}>Go to Home</button>
   </div>
 );
 
