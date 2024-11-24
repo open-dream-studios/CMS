@@ -16,6 +16,20 @@ code {
     monospace;
 }
 
+.white-dim {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.white-dim:hover {
+  opacity: 0.5;
+}
+
+
+
+
+
+
+
 /* Sephir */
 @font-face {
   font-family: 'Sephir';

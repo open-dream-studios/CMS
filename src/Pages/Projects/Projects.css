@@ -1,0 +1,8 @@
+.container-query {
+  container-type: size;
+}
+
+.container-item {
+  font-size: clamp(10px, 2vw, 14px);
+  line-height: clamp(12px, 2.5vw, 18px);
+}

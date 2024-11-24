@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavigate, useLocation } from "react-router-dom";
 import Home from "./Pages/Home/Home";
 import About from "./Pages/About/About";
 import Projects from "./Pages/Projects/Projects";
@@ -42,13 +43,23 @@ const SlideUpPage: React.FC<SlideUpPageProps> = ({ children, isVisible }) => (
 const App = () => {
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
+  const navigateTo = useNavigate();
+    const location = useLocation();
 
+  useEffect(() => {
+    const path = location.pathname.replace("/", "") || "home";
+    if (["home", "about", "projects", "archives"].includes(path)) {
+      setCurrentPage(path as Page);
+    }
+  }, [location]);
+  
   const navigate = (page: Page) => {
     if (page === currentPage) return
     setIncomingPage(page); // Set the incoming page to trigger animation
     setTimeout(() => {
       setCurrentPage(page); // Once animation is done, switch to the new page
       setIncomingPage(null); // Reset incoming page
+      navigateTo(`/${page}`);
     }, 1000); // Match this timeout to the animation duration
   };
 
