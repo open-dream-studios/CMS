@@ -14,6 +14,8 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const navOverlayBG = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
+  const [canSelectPage, setCanSelectPage] = useState(true);
+
   const [isVisible, setIsVisible] = useState(false);
   const [isRevealing1, setIsRevealing1] = useState(true);
   const [isRevealing2, setIsRevealing2] = useState(true);
@@ -54,7 +56,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       setDropdown1Display(false);
       setDropdown2Display(false);
       setDropdown3Display(false);
-    }, 900); 
+    }, 900);
   }
 
   useEffect(() => {
@@ -63,7 +65,8 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         isOpenRef.current = false;
         setNavOpen(false);
         setNavOnScreen(false);
-        hideText()
+        hideText();
+        document.body.style.overflow = "";
       }
     };
 
@@ -80,6 +83,13 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       setNavOnScreen(false);
       document.body.style.overflow = "";
     }
+  }
+
+  function selectedPage() {
+    setCanSelectPage(false) 
+    setTimeout(()=>{
+      setCanSelectPage(true)
+    },700)
   }
 
   function clickedDropdownPage(newPage: string) {
@@ -150,8 +160,13 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         <div
           className="cursor-pointer mt-[20px] md:mt-[28px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
           onClick={() => {
-            if (navOpen) {clickedDropdownPage("home");}
-            navigate("home")
+            if (canSelectPage) {
+              if (navOpen) {
+                clickedDropdownPage("home");
+              } 
+              selectedPage()
+              navigate("home");
+            }
           }}
         >
           JESSICA SHULMAN
@@ -172,7 +187,10 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           <div
             className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
             onClick={() => {
-              navigate("projects");
+              if (canSelectPage) {
+                selectedPage()
+                navigate("projects");
+              }
             }}
           >
             INDEX
@@ -180,7 +198,10 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           <div
             className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
             onClick={() => {
-              navigate("about");
+              if (canSelectPage) {
+                selectedPage()
+                navigate("about");
+              }
             }}
           >
             INFOS
@@ -188,7 +209,10 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           <div
             className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
             onClick={() => {
-              navigate("archives");
+              if (canSelectPage) {
+                selectedPage()
+                navigate("archives");
+              }
             }}
           >
             ARCHIVES
@@ -231,7 +255,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
 
       <div
         ref={navOverlayBG}
-        className={`fixed z-[1] min-h-[500px] top-0 left-0 md:hidden flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
+        className={`fixed z-[102] min-h-[500px] top-0 left-0 md:hidden flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
         style={{
           backgroundColor: "white",
           transition: "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
@@ -240,7 +264,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       ></div>
 
       <div
-        className={`fixed z-[1] min-h-[500px] top-0 left-0 md:hidden 
+        className={`fixed z-[102] min-h-[500px] top-0 left-0 md:hidden 
           ${navOnScreen ? "flex" : "hidden"}
           w-[100vw] h-[calc(100vh-20px)] mt-[20px] items-center justify-center pl-[20px]`}
         style={{ backgroundColor: "transparent" }}
