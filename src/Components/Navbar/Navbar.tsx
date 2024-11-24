@@ -12,10 +12,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const [navOnScreen, setNavOnScreen] = useState<boolean>(false);
   const isOpenRef = useRef<boolean>(false);
   const navOverlayBG = useRef<HTMLDivElement>(null);
-  const navOverlayText = useRef<HTMLDivElement>(null);
-  const dropdown1 = useRef<HTMLDivElement>(null);
-  const dropdown2 = useRef<HTMLDivElement>(null);
-  const dropdown3 = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
   const [isVisible, setIsVisible] = useState(false);
@@ -54,11 +50,11 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     }, 300);
 
     setTimeout(() => {
-      setIsVisible(false); 
-      setDropdown1Display(false)
-      setDropdown2Display(false)
-      setDropdown3Display(false)
-    }, 900); // Match duration of `slideDown`
+      setIsVisible(false);
+      setDropdown1Display(false);
+      setDropdown2Display(false);
+      setDropdown3Display(false);
+    }, 900); 
   }
 
   useEffect(() => {
@@ -67,6 +63,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         isOpenRef.current = false;
         setNavOpen(false);
         setNavOnScreen(false);
+        hideText()
       }
     };
 
@@ -81,6 +78,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       isOpenRef.current = false;
       setNavOpen(false);
       setNavOnScreen(false);
+      document.body.style.overflow = "";
     }
   }
 
@@ -94,7 +92,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       return;
     }
 
-    hideText()
+    hideText();
 
     if (navOverlayBG && navOverlayBG.current !== null) {
       navOverlayBG.current.style.transition = "none";
@@ -112,62 +110,13 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     }, 1200);
   }
 
-  // function showDropdownText() {
-  //   if (
-  //     dropdown1 &&
-  //     dropdown1.current !== null &&
-  //     dropdown2 &&
-  //     dropdown2.current !== null &&
-  //     dropdown3 &&
-  //     dropdown3.current !== null
-  //   ) {
-  //     setTimeout(() => {
-  //       if (dropdown1 && dropdown1.current !== null) {
-  //         dropdown1.current.style.display = "flex";
-  //       }
-  //     }, 250);
-  //     setTimeout(() => {
-  //       if (dropdown2 && dropdown2.current !== null) {
-  //         dropdown2.current.style.display = "flex";
-  //       }
-  //     }, 400);
-  //     setTimeout(() => {
-  //       if (dropdown3 && dropdown3.current !== null) {
-  //         dropdown3.current.style.display = "flex";
-  //       }
-  //     }, 550);
-  //   }
-  // }
-
-  // function hideDropdownText() {
-  //   if (
-  //     dropdown1 &&
-  //     dropdown1.current !== null &&
-  //     dropdown2 &&
-  //     dropdown2.current !== null &&
-  //     dropdown3 &&
-  //     dropdown3.current !== null
-  //   ) {
-  //     dropdown3.current.style.display = "none";
-  //     setTimeout(() => {
-  //       if (dropdown2 && dropdown2.current !== null) {
-  //         dropdown2.current.style.display = "none";
-  //       }
-  //     }, 150);
-  //     setTimeout(() => {
-  //       if (dropdown1 && dropdown1.current !== null) {
-  //         dropdown1.current.style.display = "none";
-  //       }
-  //     }, 300);
-  //   }
-  // }
-
   const [isAnimatingNav, setIsAnimatingNav] = useState<boolean>(false);
   function toggleNav() {
     if (isOpenRef) {
       const newVal = !isOpenRef.current;
       if (isOpenRef.current) {
         // Close Nav
+        document.body.style.overflow = "";
         hideText();
         setIsAnimatingNav(true);
         setTimeout(() => {
@@ -179,6 +128,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         }, 700);
       } else {
         // Open Nav
+        document.body.style.overflow = "hidden";
         setNavOpen(newVal);
         showText();
         setNavOnScreen(true);
@@ -200,7 +150,8 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         <div
           className="cursor-pointer mt-[20px] md:mt-[28px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
           onClick={() => {
-            navigate("home");
+            if (navOpen) {clickedDropdownPage("home");}
+            navigate("home")
           }}
         >
           JESSICA SHULMAN
@@ -280,7 +231,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
 
       <div
         ref={navOverlayBG}
-        className={`absolute z-[1] min-h-[500px] top-0 left-0 md:hidden flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
+        className={`fixed z-[1] min-h-[500px] top-0 left-0 md:hidden flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
         style={{
           backgroundColor: "white",
           transition: "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
@@ -299,7 +250,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           style={{ backgroundColor: "transparent" }}
         >
           <div
-            ref={dropdown1}
             className={`text-reveal-wrapper 
             ${dropdown1Display ? "flex" : "hidden"}
             ${isVisible ? "visible" : ""}`}
@@ -318,7 +268,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             </div>
           </div>
           <div
-            ref={dropdown2}
             className={`text-reveal-wrapper
             ${dropdown2Display ? "flex" : "hidden"}
              ${isVisible ? "visible" : ""}`}
@@ -337,7 +286,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             </div>
           </div>
           <div
-            ref={dropdown3}
             className={`text-reveal-wrapper
             ${dropdown3Display ? "flex" : "hidden"}
              ${isVisible ? "visible" : ""}`}

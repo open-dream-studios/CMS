@@ -5,7 +5,7 @@ const Archives: React.FC<PageProps> = ({ navigate }) => (
   <div
     style={{
       width: "100%",
-      height: "100%",
+      height: "2000px",
       backgroundColor: "pink",
       display: "flex",
       justifyContent: "center",
