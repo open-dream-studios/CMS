@@ -24,11 +24,19 @@ code {
   opacity: 0.5;
 }
 
+.hover-dim5 {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.hover-dim5:hover {
+  opacity: 0.5
+}
 
 
 
 
 
+/* Project Title Fonts */
 
 /* Sephir */
 @font-face {
@@ -77,3 +85,44 @@ code {
 .abygaer {
   font-family: 'Abygaer', sans-serif;
 }
+
+
+
+
+/* Nav Bar Serif Fonts */
+/* Klivora */
+@font-face {
+  font-family: 'Klivora';
+  src: url('/public/fonts/klivora/Klivora.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.klivora {
+  font-family: 'Klivora', sans-serif;
+}
+
+/* Sandemore */
+@font-face {
+  font-family: 'Sandemore';
+  src: url('/public/fonts/sandemore/SandeMore-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.sandemore {
+  font-family: 'Sandemore', sans-serif;
+}
+
+/* Medio */
+@font-face {
+  font-family: 'Medio';
+  src: url('/public/fonts/medio/Medio.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.medio {
+  font-family: 'Medio', sans-serif;
+}
+

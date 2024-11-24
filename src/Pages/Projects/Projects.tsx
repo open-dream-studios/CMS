@@ -36,7 +36,7 @@ const Projects: React.FC<PageProps> = ({ navigate }) => {
   ];
 
   return (
-    <div className="absolute min-h-[100vh] w-[100vw] flex flex-row">
+    <div className="min-h-[100vh] w-[100vw] flex flex-row">
       <div
         className="mt-[75px] h-[calc(100vh-75px)] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]"
         style={{
@@ -44,19 +44,23 @@ const Projects: React.FC<PageProps> = ({ navigate }) => {
         }}
       >
         <div
-          className="sm:w-[350px] md:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)]"
+          className="w-[300px] sm:w-[350px] md:w-[400px] container-query min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
           style={{
-            width: selectedProject === null ? "400px" : "300px",
             backgroundColor: "red",
-            transition: "width 2s ease-in-out"
           }}
         >
-          <div className="caster container-query cursor-pointer h-[100%] flex flex-col justify-center">
+          <div
+            style={{
+              transform: selectedProject === null ? "none" : "scale(0.5)",
+              transition: "transform 1s cubic-bezier(0.6, 0.05, 0.3, 1",
+              transformOrigin: "left",
+            }}
+            className="caster cursor-pointer"
+          >
             {projects.map((item, index) => {
               return (
                 <div
                   className="white-dim text-[11cqw] leading-[14cqw]"
-                  // style={{fontSize: selectedProject === null ? "50px" : "30px", lineHeight: selectedProject === null ? "58px" : "35px", transition: "font-size 2s ease-in-out, line-height 2s ease-in-out"}}
                   key={index}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}

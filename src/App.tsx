@@ -33,7 +33,7 @@ const SlideUpPage: React.FC<SlideUpPageProps> = ({ children, isVisible }) => (
       width: "100%",
       height: "100%",
       background: "white",
-      zIndex: isVisible ? 1 : 0, // Ensure the incoming page overlays the current one
+      zIndex: isVisible ? 101 : 0, // Ensure the incoming page overlays the current one
     }}
   >
     {children}
@@ -52,7 +52,7 @@ const App = () => {
       setCurrentPage(path as Page);
     }
   }, [location]);
-  
+
   const navigate = (page: Page) => {
     if (page === currentPage) return
     setIncomingPage(page); // Set the incoming page to trigger animation

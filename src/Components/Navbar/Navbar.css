@@ -1,3 +1,4 @@
+/* Underline Effect */
 .nav-item {
   display: inline-block;
   position: relative;
@@ -20,3 +21,123 @@
   transform: scaleX(1); 
   transform-origin: left;
 }
+
+
+
+/* Nav Overlay */
+.nav-transition {
+  transition: 
+    transform 0.6s cubic-bezier(0.15, 0.95, 0.2, 1),
+    margin-top 0.6s cubic-bezier(0.15, 0.95, 0.2, 1);
+}
+
+.nav-hamburger-bar {
+  width: 35px;
+  height: 1px;
+}
+
+.dimmer {
+  opacity: 0.88;
+}
+
+
+
+/* LEXEND - FOR NAV OVERLAY*/
+/* @import url('https://fonts.googleapis.com/css2?family=Lexend+Tera:wght@100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+.lexend-tera {
+  font-family: "Lexend Tera", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
+  letter-spacing: -1.4px;
+} */
+
+/* NAV BAR */
+/* .nav-link {
+  height: calc(21px + 0.2vw);
+  transition: 0.2s ease-in-out;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.nav-link-text {
+    font-size: calc(13px + 0.2vw);
+    letter-spacing: calc(0.6px + 0.05vw);
+    -webkit-transform: scale(1.06, 1);
+    -moz-transform: scale(1.06, 1);
+    -ms-transform: scale(1.06, 1);
+    -o-transform: scale(1.06, 1);
+    transform: scale(1.06, 1);
+    font-weight: 200;
+}
+
+.nav-link:hover {
+  border-bottom: 1.4px solid black;
+  opacity: 0.5;
+} */
+
+
+/* NAV BUTTONS */
+/* #nav-hamburger:hover {
+  gap: 5.5px;
+} */
+
+/* OVERLAY */
+/* .nav-overlay-leaf {
+  position: absolute;
+  margin-top: 4;
+}
+
+.nav-overlay-text {
+  color: #888; 
+  margin-left: 41px;
+  font-size: 22px; 
+  transition: 0.3s ease-in-out;
+  opacity: 1;
+}
+
+.nav-overlay-text:hover {
+  color: black; 
+}
+
+.nav-overlay-text.active-route {
+  color: black;
+} */
+
+/* OVERLAY TEXT ANIMATION */
+/* .slide-bottom-up-text { 
+    animation: slide-up-text 0.3s cubic-bezier(0.42, 0, 0.58, 1) forwards;
+    animation: slide-up-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    opacity: 0;
+}
+
+@keyframes slide-up-text {
+  from {
+    opacity: 0;
+    transform: translateY(60%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} */
+
+/* FADE OUT OVERLAY TEXT */
+/* .fading-out {
+  transition: 0.6s ease;
+  opacity: 0; 
+} */
+
+
+/* .image-transition {
+  transition: opacity 1s ease-in-out; 
+  opacity: 0;
+}
+
+.image-visible {
+  opacity: 1;
+} */
+
+
+
+
