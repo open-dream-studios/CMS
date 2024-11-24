@@ -13,7 +13,53 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const isOpenRef = useRef<boolean>(false);
   const navOverlayBG = useRef<HTMLDivElement>(null);
   const navOverlayText = useRef<HTMLDivElement>(null);
-  const location = useLocation(); 
+  const dropdown1 = useRef<HTMLDivElement>(null);
+  const dropdown2 = useRef<HTMLDivElement>(null);
+  const dropdown3 = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+
+  const [isVisible, setIsVisible] = useState(false);
+  const [isRevealing1, setIsRevealing1] = useState(true);
+  const [isRevealing2, setIsRevealing2] = useState(true);
+  const [isRevealing3, setIsRevealing3] = useState(true);
+  const [dropdown1Display, setDropdown1Display] = useState(false);
+  const [dropdown2Display, setDropdown2Display] = useState(false);
+  const [dropdown3Display, setDropdown3Display] = useState(false);
+
+  function showText() {
+    setTimeout(() => {
+      setIsRevealing1(true);
+      setIsRevealing2(true);
+      setIsRevealing3(true);
+      setIsVisible(true);
+      setDropdown1Display(true);
+    }, 200);
+
+    setTimeout(() => {
+      setDropdown2Display(true);
+    }, 350);
+
+    setTimeout(() => {
+      setDropdown3Display(true);
+    }, 500);
+  }
+
+  function hideText() {
+    setIsRevealing3(false);
+    setTimeout(() => {
+      setIsRevealing2(false);
+    }, 150);
+    setTimeout(() => {
+      setIsRevealing1(false);
+    }, 300);
+
+    setTimeout(() => {
+      setIsVisible(false); 
+      setDropdown1Display(false)
+      setDropdown2Display(false)
+      setDropdown3Display(false)
+    }, 900); // Match duration of `slideDown`
+  }
 
   useEffect(() => {
     const handleNavResize = () => {
@@ -40,42 +86,106 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
 
   function clickedDropdownPage(newPage: string) {
     const currentPage = location.pathname.replace("/", "") || "home";
-    if (["home", "about", "projects", "archives"].includes(currentPage) && newPage === currentPage) {
-      toggleNav()
-      return
-    } 
+    if (
+      ["home", "about", "projects", "archives"].includes(currentPage) &&
+      newPage === currentPage
+    ) {
+      toggleNav();
+      return;
+    }
 
-    // start close text
+    hideText()
 
     if (navOverlayBG && navOverlayBG.current !== null) {
-      navOverlayBG.current.style.transition = "none"
+      navOverlayBG.current.style.transition = "none";
     }
 
     setTimeout(() => {
       closeNavQuick();
     }, 990);
 
-    setTimeout(()=>{
+    setTimeout(() => {
       if (navOverlayBG && navOverlayBG.current !== null) {
         navOverlayBG.current.style.transition =
           "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)";
       }
-    },1200)
+    }, 1200);
   }
 
-  // const isClosingNav = useRef<boolean>(false);
+  // function showDropdownText() {
+  //   if (
+  //     dropdown1 &&
+  //     dropdown1.current !== null &&
+  //     dropdown2 &&
+  //     dropdown2.current !== null &&
+  //     dropdown3 &&
+  //     dropdown3.current !== null
+  //   ) {
+  //     setTimeout(() => {
+  //       if (dropdown1 && dropdown1.current !== null) {
+  //         dropdown1.current.style.display = "flex";
+  //       }
+  //     }, 250);
+  //     setTimeout(() => {
+  //       if (dropdown2 && dropdown2.current !== null) {
+  //         dropdown2.current.style.display = "flex";
+  //       }
+  //     }, 400);
+  //     setTimeout(() => {
+  //       if (dropdown3 && dropdown3.current !== null) {
+  //         dropdown3.current.style.display = "flex";
+  //       }
+  //     }, 550);
+  //   }
+  // }
+
+  // function hideDropdownText() {
+  //   if (
+  //     dropdown1 &&
+  //     dropdown1.current !== null &&
+  //     dropdown2 &&
+  //     dropdown2.current !== null &&
+  //     dropdown3 &&
+  //     dropdown3.current !== null
+  //   ) {
+  //     dropdown3.current.style.display = "none";
+  //     setTimeout(() => {
+  //       if (dropdown2 && dropdown2.current !== null) {
+  //         dropdown2.current.style.display = "none";
+  //       }
+  //     }, 150);
+  //     setTimeout(() => {
+  //       if (dropdown1 && dropdown1.current !== null) {
+  //         dropdown1.current.style.display = "none";
+  //       }
+  //     }, 300);
+  //   }
+  // }
+
+  const [isAnimatingNav, setIsAnimatingNav] = useState<boolean>(false);
   function toggleNav() {
     if (isOpenRef) {
-      // if (isClosingNav) {isClosingNav.current = true}
       const newVal = !isOpenRef.current;
-      setNavOpen(newVal);
       if (isOpenRef.current) {
+        // Close Nav
+        hideText();
+        setIsAnimatingNav(true);
         setTimeout(() => {
-          setNavOnScreen(false);
-          // if (isClosingNav) {isClosingNav.current = false}
+          setNavOpen(newVal);
+          setTimeout(() => {
+            setNavOnScreen(false);
+            setIsAnimatingNav(false);
+          }, 700);
         }, 700);
       } else {
+        // Open Nav
+        setNavOpen(newVal);
+        showText();
         setNavOnScreen(true);
+        setIsAnimatingNav(true);
+        setTimeout(() => {
+          setIsAnimatingNav(false);
+        }, 700);
       }
       isOpenRef.current = newVal;
     }
@@ -135,11 +245,11 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         </div>
 
         <div
-          className="relative mt-[11px] h-[34px] w-[35px] md:hidden flex cursor-pointer"
+          className="relative mt-[12px] h-[34px] w-[35px] md:hidden flex cursor-pointer"
           onClick={() => {
-            // if (isClosingNav && !isClosingNav.current) {
-            toggleNav();
-            // }
+            if (!isAnimatingNav) {
+              toggleNav();
+            }
           }}
         >
           <div
@@ -179,37 +289,72 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       ></div>
 
       <div
-        ref={navOverlayText}
-        className={`fixed z-[1] min-h-[500px] top-0 left-0 md:hidden ${
-          navOnScreen ? "flex" : "hidden"
-        } w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
+        className={`fixed z-[1] min-h-[500px] top-0 left-0 md:hidden 
+          ${navOnScreen ? "flex" : "hidden"}
+          w-[100vw] h-[calc(100vh-20px)] mt-[20px] items-center justify-center pl-[20px]`}
+        style={{ backgroundColor: "transparent" }}
       >
         <div
-          onClick={() => {
-            clickedDropdownPage("projects");
-            navigate("projects");
-          }}
-          className="klivora hover-dim5 text-[45px] tracking-[1px] dimmer cursor-pointer"
+          className="h-[160px] w-[100%] flex flex-col gap-[26px]"
+          style={{ backgroundColor: "transparent" }}
         >
-          INDEX
-        </div>
-        <div
-          onClick={() => {
-            clickedDropdownPage("about");
-            navigate("about");
-          }}
-          className="klivora hover-dim5 text-[45px] tracking-[1px] dimmer cursor-pointer"
-        >
-          INFOS
-        </div>
-        <div
-          onClick={() => {
-            clickedDropdownPage("archives");
-            navigate("archives");
-          }}
-          className="klivora hover-dim5 text-[45px] tracking-[1px] dimmer cursor-pointer"
-        >
-          ARCHIVES
+          <div
+            ref={dropdown1}
+            className={`text-reveal-wrapper 
+            ${dropdown1Display ? "flex" : "hidden"}
+            ${isVisible ? "visible" : ""}`}
+          >
+            <div
+              onClick={() => {
+                clickedDropdownPage("projects");
+                navigate("projects");
+              }}
+              className={`klivora ${
+                isRevealing1 ? "text-reveal" : "text-conceal"
+              } 
+      hover-dim5 text-[42px] tracking-[1px] leading-[29px] dimmer cursor-pointer`}
+            >
+              INDEX
+            </div>
+          </div>
+          <div
+            ref={dropdown2}
+            className={`text-reveal-wrapper
+            ${dropdown2Display ? "flex" : "hidden"}
+             ${isVisible ? "visible" : ""}`}
+          >
+            <div
+              onClick={() => {
+                clickedDropdownPage("about");
+                navigate("about");
+              }}
+              className={`klivora ${
+                isRevealing2 ? "text-reveal" : "text-conceal"
+              } 
+      hover-dim5 text-[42px] tracking-[1px] leading-[29px] dimmer cursor-pointer`}
+            >
+              INFOS
+            </div>
+          </div>
+          <div
+            ref={dropdown3}
+            className={`text-reveal-wrapper
+            ${dropdown3Display ? "flex" : "hidden"}
+             ${isVisible ? "visible" : ""}`}
+          >
+            <div
+              onClick={() => {
+                clickedDropdownPage("archives");
+                navigate("archives");
+              }}
+              className={`klivora ${
+                isRevealing3 ? "text-reveal" : "text-conceal"
+              } 
+      hover-dim5 text-[42px] tracking-[1px] leading-[29px] dimmer cursor-pointer`}
+            >
+              ARCHIVES
+            </div>
+          </div>
         </div>
       </div>
     </>
