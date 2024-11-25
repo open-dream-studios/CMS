@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import appData from "../../app-details.json";
 import "./Home.css";
 import { Page } from "../../App";
@@ -69,21 +69,86 @@ const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
 
   const [exitingCover, setExitingCover] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
 
-  const handleNextCover = (event: any) => {
-    event.stopPropagation();
+
+
+  const handleNextCover = ( direction: number) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-
+    console.log("transitioning", direction)
     setExitingCover(currentCover);
-
     setTimeout(() => {
-      setCurrentCover((prev) => prev + 1);
+      setCurrentCover((prev) => direction === -1? prev + 1 % covers.length : prev === 0? covers.length : prev - 1);
       setExitingCover(null);
     }, 500);
 
     setTimeout(() => setIsTransitioning(false), 500);
   };
+
+  //   useEffect(() => {
+  //   const handleScroll = () => {
+  //     if (window.scrollY > 200) {
+  //       handleNextCover(1)
+  //       console.log("Scrolled up more than 200px");
+  //     } else if (window.scrollY < 200) {
+  //       console.log("Scrolled down more than 200px");
+  //       handleNextCover(-1)
+  //     }
+  //   };
+
+  //   window.addEventListener("scroll", handleScroll);
+
+  //   return () => {
+  //     window.removeEventListener("scroll", handleScroll);
+  //   };
+  // }, []);
+
+
+  // const handleNextCover = (direction: number) => {
+  //   if (isTransitioning) return;
+  //   setIsTransitioning(true);
+  //   console.log("transitioning", direction);
+
+  //   setTimeout(() => setIsTransitioning(false), 500);
+  //   setCurrentCover((prev) =>
+  //     direction === -1
+  //       ? (prev + 1) % covers.length
+  //       : prev === 0
+  //       ? covers.length - 1
+  //       : prev - 1
+  //   );
+  // };
+
+  // useEffect(() => {
+  //   let timeout: ReturnType<typeof setTimeout>;
+
+  //   const handleScroll = () => {
+  //     clearTimeout(timeout); // Clear previous timeout
+  //     timeout = setTimeout(() => {
+  //       if (window.scrollY > 200) {
+  //         handleNextCover(1);
+  //         console.log("Scrolled up more than 200px");
+  //       } else if (window.scrollY < 200) {
+  //         handleNextCover(-1);
+  //         console.log("Scrolled down more than 200px");
+  //       }
+  //     }, 100); // Debounce delay (100ms)
+  //   };
+
+  //   window.addEventListener("scroll", handleScroll);
+
+  //   return () => {
+  //     clearTimeout(timeout);
+  //     window.removeEventListener("scroll", handleScroll);
+  //   };
+  // }, []);
 
   return (
     <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
@@ -92,11 +157,11 @@ const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
         style={{
           backgroundColor: "white",
         }}
-        onClick={handleNextCover}
+        onClick={()=>{navigate("projects")}}
       >
         {currentLayout.map((item, index) => {
           return (
-            <>
+            <div key={index}>
               <AnimatePresence>
                 {exitingCover !== null && (
                   <motion.div
@@ -146,7 +211,7 @@ const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </>
+            </div>
           );
         })}
 
