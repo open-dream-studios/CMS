@@ -1,47 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import appData from "../../app-details.json";
 import "./Home.css";
 import { Page } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 
 export interface HomePageProps {
   navigate: (page: Page) => void;
   layoutOrder: number[];
+  slideUpComponent: boolean;
 }
 
-const HomeImage = ({
-  item,
-  index,
-  covers,
-  currentCover,
-}: {
-  item: any;
-  index: number;
-  covers: any;
-  currentCover: number;
+const Home: React.FC<HomePageProps> = ({
+  navigate,
+  layoutOrder,
+  slideUpComponent,
 }) => {
-  return (
-    <div
-      className="image absolute"
-      style={{
-        aspectRatio: `1/${item.h}`,
-        width: `${item.w}vw`,
-        left: `${item.x}vw`,
-        top: item.top ? `${item.y}vh` : "none",
-        bottom: item.top ? "none" : `${item.y}vh`,
-      }}
-    >
-      <img
-        alt=""
-        className="image"
-        src={`/assets/${covers[currentCover].images[index]}`}
-        style={{ position: "absolute" }}
-      />
-    </div>
-  );
-};
-
-const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
   const covers = appData.pages.home.covers;
   const coverLayouts = [
     [
@@ -69,7 +43,22 @@ const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
 
   const [exitingCover, setExitingCover] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+
+  const handleNextCover = (event: any) => {
+    event.stopPropagation();
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+
+    setExitingCover(currentCover);
+
+    setTimeout(() => {
+      setCurrentCover((prev) => prev + 1);
+      setExitingCover(null);
+    }, 800);
+
+    setTimeout(() => setIsTransitioning(false), 800);
+  };
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -77,78 +66,78 @@ const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
     };
   }, []);
 
-
-
-  const handleNextCover = ( direction: number) => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    console.log("transitioning", direction)
-    setExitingCover(currentCover);
+  const disableTransitionRef = useRef(true);
+  const disableTransition = () => {
+    disableTransitionRef.current = true;
     setTimeout(() => {
-      setCurrentCover((prev) => direction === -1? prev + 1 % covers.length : prev === 0? covers.length : prev - 1);
-      setExitingCover(null);
-    }, 500);
-
-    setTimeout(() => setIsTransitioning(false), 500);
+      disableTransitionRef.current = false;
+    }, 0);
   };
 
-  //   useEffect(() => {
-  //   const handleScroll = () => {
-  //     if (window.scrollY > 200) {
-  //       handleNextCover(1)
-  //       console.log("Scrolled up more than 200px");
-  //     } else if (window.scrollY < 200) {
-  //       console.log("Scrolled down more than 200px");
-  //       handleNextCover(-1)
-  //     }
-  //   };
+  const location = useLocation();
+  const previousRoute = useRef<string | null>(null);
 
-  //   window.addEventListener("scroll", handleScroll);
+  useEffect(() => {
+    if (
+      previousRoute.current &&
+      previousRoute.current.startsWith(window.location.origin)
+    ) {
+      disableTransition();
+    }
+    previousRoute.current = `${window.location.origin}${location.pathname}`;
+  }, [location]);
 
-  //   return () => {
-  //     window.removeEventListener("scroll", handleScroll);
-  //   };
-  // }, []);
+  const generateRandomDelay = () => Math.random() * 0.4;
+  const [firstPageLoad, setFirstPageLoad] = useState(false);
 
+  const preloadImages = (urls: string[]) => {
+    return Promise.all(
+      urls.map((url) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.src = "/assets/" + url;
+          img.onload = () => resolve({ url, success: true });
+          img.onerror = () => resolve({ url, success: false });
+        });
+      })
+    );
+  };
 
-  // const handleNextCover = (direction: number) => {
-  //   if (isTransitioning) return;
-  //   setIsTransitioning(true);
-  //   console.log("transitioning", direction);
+  useEffect(() => {
+    const pageLoadTime = performance.now();
 
-  //   setTimeout(() => setIsTransitioning(false), 500);
-  //   setCurrentCover((prev) =>
-  //     direction === -1
-  //       ? (prev + 1) % covers.length
-  //       : prev === 0
-  //       ? covers.length - 1
-  //       : prev - 1
-  //   );
-  // };
+    preloadImages(covers[0].images).then((results) => {
+      const successful = results
+        .filter((result: any) => result.success)
+        .map((res: any) => res.url);
+      const failed = results
+        .filter((result: any) => !result.success)
+        .map((res: any) => res.url);
 
-  // useEffect(() => {
-  //   let timeout: ReturnType<typeof setTimeout>;
+      const logResults = () => {
+        console.log("has been 300ms");
+        if (failed.length === 0) {
+          console.log("All images preloaded successfully:", successful);
+        } else {
+          console.warn("Some images failed to preload:", failed);
+          console.log("Successfully preloaded images:", successful);
+        }
+        setFirstPageLoad(true);
 
-  //   const handleScroll = () => {
-  //     clearTimeout(timeout); // Clear previous timeout
-  //     timeout = setTimeout(() => {
-  //       if (window.scrollY > 200) {
-  //         handleNextCover(1);
-  //         console.log("Scrolled up more than 200px");
-  //       } else if (window.scrollY < 200) {
-  //         handleNextCover(-1);
-  //         console.log("Scrolled down more than 200px");
-  //       }
-  //     }, 100); // Debounce delay (100ms)
-  //   };
+        for (let i = 1; i < covers.length; i++) {
+          preloadImages(covers[i].images);
+        }
+      };
 
-  //   window.addEventListener("scroll", handleScroll);
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //     window.removeEventListener("scroll", handleScroll);
-  //   };
-  // }, []);
+      const elapsedTime = performance.now() - pageLoadTime;
+      if (elapsedTime >= 300) {
+        logResults();
+      } else {
+        const delay = 300 - elapsedTime;
+        setTimeout(logResults, delay);
+      }
+    });
+  }, []);
 
   return (
     <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
@@ -157,11 +146,11 @@ const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
         style={{
           backgroundColor: "white",
         }}
-        onClick={()=>{navigate("projects")}}
+        onClick={handleNextCover}
       >
         {currentLayout.map((item, index) => {
           return (
-            <div key={index}>
+            <React.Fragment key={`layout-${index}`}>
               <AnimatePresence>
                 {exitingCover !== null && (
                   <motion.div
@@ -172,46 +161,91 @@ const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
                     transition={{
                       duration: 0.5,
                       ease: "easeInOut",
+                      delay: generateRandomDelay(),
                     }}
                     style={{
                       zIndex: item.z,
                     }}
                   >
-                    <HomeImage
-                      item={item}
-                      index={index}
-                      covers={covers}
-                      currentCover={exitingCover}
-                    />
+                    <div
+                      className="image absolute"
+                      style={{
+                        aspectRatio: `1/${item.h}`,
+                        width: `${item.w}vw`,
+                        left: `${item.x}vw`,
+                        top: item.top ? `${item.y}vh` : "none",
+                        bottom: item.top ? "none" : `${item.y}vh`,
+                      }}
+                    >
+                      <img
+                        alt=""
+                        className="image"
+                        src={`/assets/${covers[currentCover].images[index]}`}
+                        style={{
+                          position: "absolute",
+                        }}
+                        // onLoad={handleImageLoad}
+                      />
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              <AnimatePresence>
-                {exitingCover === null && (
-                  <motion.div
-                    key={`current-${currentCover}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      duration: 0.5,
-                      ease: "easeInOut",
-                    }}
-                    style={{
-                      zIndex: item.z,
-                    }}
-                  >
-                    <HomeImage
-                      item={item}
-                      index={index}
-                      covers={covers}
-                      currentCover={currentCover}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+              {firstPageLoad && (
+                <AnimatePresence>
+                  {exitingCover === null && (
+                    <motion.div
+                      key={`current-${currentCover}`}
+                      initial={
+                        disableTransitionRef.current
+                          ? { opacity: 1 }
+                          : { opacity: 0 }
+                      }
+                      animate={
+                        disableTransitionRef.current
+                          ? { opacity: 1 }
+                          : { opacity: 1 }
+                      }
+                      exit={
+                        disableTransitionRef.current
+                          ? { opacity: 1 }
+                          : { opacity: 0 }
+                      }
+                      transition={
+                        disableTransitionRef.current
+                          ? { duration: 0 }
+                          : {
+                              duration: 0.5,
+                              ease: "easeInOut",
+                              delay: generateRandomDelay(),
+                            }
+                      }
+                      style={{
+                        zIndex: item.z,
+                      }}
+                    >
+                      <div
+                        className="image absolute"
+                        style={{
+                          aspectRatio: `1/${item.h}`,
+                          width: `${item.w}vw`,
+                          left: `${item.x}vw`,
+                          top: item.top ? `${item.y}vh` : "none",
+                          bottom: item.top ? "none" : `${item.y}vh`,
+                        }}
+                      >
+                        <img
+                          alt=""
+                          className="image"
+                          src={`/assets/${covers[currentCover].images[index]}`}
+                          style={{ position: "absolute" }}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
+            </React.Fragment>
           );
         })}
 

@@ -97,7 +97,7 @@ const App = () => {
           }}
         >
           {currentPage === "home" && (
-            <Home layoutOrder={layoutOrder} navigate={navigate} />
+            <Home layoutOrder={layoutOrder} navigate={navigate} slideUpComponent={false}/>
           )}
           {currentPage === "projects" && <Projects navigate={navigate} />}
           {currentPage === "about" && <About navigate={navigate} />}
@@ -107,7 +107,7 @@ const App = () => {
         {/* Animate the incoming page */}
         {incomingPage === "home" && (
           <SlideUpPage isVisible>
-            <Home layoutOrder={layoutOrder} navigate={navigate} />
+            <Home layoutOrder={layoutOrder} navigate={navigate} slideUpComponent={true}/>
           </SlideUpPage>
         )}
         {incomingPage === "projects" && (
