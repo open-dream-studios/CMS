@@ -53,7 +53,7 @@ const App = () => {
     }
   }, [location]);
 
-const [disableTransition, setDisableTransition] = useState(false);
+  const [disableTransition, setDisableTransition] = useState(false);
   const navigate = (page: Page) => {
     if (page === currentPage) return;
     setIncomingPage(page); // Set the incoming page to trigger animation
@@ -61,27 +61,31 @@ const [disableTransition, setDisableTransition] = useState(false);
       setCurrentPage(page); // Once animation is done, switch to the new page
       setIncomingPage(null); // Reset incoming page
       navigateTo(`/${page}`);
-      window.scrollTo(0, 0); 
+      window.scrollTo(0, 0);
       setDisableTransition(true);
       setTimeout(() => {
-      setDisableTransition(false);
-    }, 10);
-
+        setDisableTransition(false);
+      }, 10);
     }, 1000); // Match this timeout to the animation duration
   };
+
+  // COVER LAYOUT ORDER (5 projects, 2 layouts available so far)
+  const [layoutOrder, setLayoutOrder] = useState(
+    Array.from({ length: 5 }, () => Math.floor(Math.random() * 2))
+  );
 
   return (
     <>
       <div style={{ position: "relative", width: "100%", height: "100vh" }}>
-      <Navbar navigate={navigate} />
+        <Navbar navigate={navigate} />
         <motion.div
           initial={{ y: 0 }}
           animate={incomingPage ? { y: "-15%" } : { y: 0 }}
-                 transition={
-          disableTransition
-            ? { duration: 0 } // Disable transition
-            : { duration: 1, ease: [0.95, 0, 0.4, 1] } // Enable animation
-        }
+          transition={
+            disableTransition
+              ? { duration: 0 } // Disable transition
+              : { duration: 1, ease: [0.95, 0, 0.4, 1] } // Enable animation
+          }
           // transition={{ duration: 1, ease: [0.95, 0, 0.4, 1] }}
           style={{
             position: "absolute",
@@ -92,26 +96,28 @@ const [disableTransition, setDisableTransition] = useState(false);
             zIndex: 101,
           }}
         >
-          {currentPage === "home" && <Home navigate={navigate} />}
-          {currentPage === "about" && <About navigate={navigate} />}
+          {currentPage === "home" && (
+            <Home layoutOrder={layoutOrder} navigate={navigate} />
+          )}
           {currentPage === "projects" && <Projects navigate={navigate} />}
+          {currentPage === "about" && <About navigate={navigate} />}
           {currentPage === "archives" && <Archives navigate={navigate} />}
         </motion.div>
 
         {/* Animate the incoming page */}
         {incomingPage === "home" && (
           <SlideUpPage isVisible>
-            <Home navigate={navigate} />
-          </SlideUpPage>
-        )}
-        {incomingPage === "about" && (
-          <SlideUpPage isVisible>
-            <About navigate={navigate} />
+            <Home layoutOrder={layoutOrder} navigate={navigate} />
           </SlideUpPage>
         )}
         {incomingPage === "projects" && (
           <SlideUpPage isVisible>
             <Projects navigate={navigate} />
+          </SlideUpPage>
+        )}
+        {incomingPage === "about" && (
+          <SlideUpPage isVisible>
+            <About navigate={navigate} />
           </SlideUpPage>
         )}
         {incomingPage === "archives" && (

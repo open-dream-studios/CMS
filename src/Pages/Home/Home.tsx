@@ -1,12 +1,48 @@
 import React, { useState } from "react";
-import { PageProps } from "../../App";
 import appData from "../../app-details.json";
 import "./Home.css";
+import { Page } from "../../App";
+import { AnimatePresence, motion } from "framer-motion";
 
-const Home: React.FC<PageProps> = ({ navigate }) => {
+export interface HomePageProps {
+  navigate: (page: Page) => void;
+  layoutOrder: number[];
+}
+
+const HomeImage = ({
+  item,
+  index,
+  covers,
+  currentCover,
+}: {
+  item: any;
+  index: number;
+  covers: any;
+  currentCover: number;
+}) => {
+  return (
+    <div
+      className="image absolute"
+      style={{
+        aspectRatio: `1/${item.h}`,
+        width: `${item.w}vw`,
+        left: `${item.x}vw`,
+        top: item.top ? `${item.y}vh` : "none",
+        bottom: item.top ? "none" : `${item.y}vh`,
+      }}
+    >
+      <img
+        alt=""
+        className="image"
+        src={`/assets/${covers[currentCover].images[index]}`}
+        style={{ position: "absolute" }}
+      />
+    </div>
+  );
+};
+
+const Home: React.FC<HomePageProps> = ({ navigate, layoutOrder }) => {
   const covers = appData.pages.home.covers;
-  const [currentCover, setCurrentCover] = useState(0);
-
   const coverLayouts = [
     [
       { x: 0, y: 9, w: 16, h: 1.4, z: 104, top: true },
@@ -25,37 +61,92 @@ const Home: React.FC<PageProps> = ({ navigate }) => {
       { x: 73, y: 6, w: 18, h: 1.2, z: 104, top: false },
     ],
   ];
-  const currentLayout = coverLayouts[Math.floor(Math.random() * coverLayouts.length)];
+
+  const [currentCover, setCurrentCover] = useState(0);
+  const [currentLayout, setCurrentLayout] = useState(
+    coverLayouts[layoutOrder[0]]
+  );
+
+  const [exitingCover, setExitingCover] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const handleNextCover = (event: any) => {
+    event.stopPropagation();
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+
+    setExitingCover(currentCover);
+
+    setTimeout(() => {
+      setCurrentCover((prev) => prev + 1);
+      setExitingCover(null);
+    }, 500);
+
+    setTimeout(() => setIsTransitioning(false), 500);
+  };
 
   return (
     <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
       <div
-        className="relative w-[100vw] h-[100%] flex items-center justify-center"
+        className="cursor-pointer relative w-[100vw] h-[100%] flex items-center justify-center"
         style={{
-          backgroundColor: "pink",
+          backgroundColor: "white",
         }}
-        onClick={()=>{navigate("projects")}}
+        onClick={handleNextCover}
       >
         {currentLayout.map((item, index) => {
           return (
-            <div
-              className="image absolute"
-              style={{
-                aspectRatio: `1/${item.h}`,
-                width: `${item.w}vw`,
-                left: `${item.x}vw`,
-                top: item.top? `${item.y}vh` : "none",
-                bottom: item.top? "none" : `${item.y}vh`,
-                zIndex: item.z,
-              }}
-            >
-              <img
-                alt=""
-                className="image"
-                src={`/assets/${covers[currentCover].images[index]}`}
-                style={{ position: "absolute" }}
-              />
-            </div>
+            <>
+              <AnimatePresence>
+                {exitingCover !== null && (
+                  <motion.div
+                    key={`exiting-${exitingCover}`}
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      duration: 0.5,
+                      ease: "easeInOut",
+                    }}
+                    style={{
+                      zIndex: item.z,
+                    }}
+                  >
+                    <HomeImage
+                      item={item}
+                      index={index}
+                      covers={covers}
+                      currentCover={exitingCover}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {exitingCover === null && (
+                  <motion.div
+                    key={`current-${currentCover}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      duration: 0.5,
+                      ease: "easeInOut",
+                    }}
+                    style={{
+                      zIndex: item.z,
+                    }}
+                  >
+                    <HomeImage
+                      item={item}
+                      index={index}
+                      covers={covers}
+                      currentCover={currentCover}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
           );
         })}
 
