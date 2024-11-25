@@ -9,6 +9,7 @@ interface PageProps {
 
 const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const [navOpen, setNavOpen] = useState<boolean>(false);
+  const [navOpenSpin, setNavOpenSpin] = useState<boolean>(false);
   const [navOnScreen, setNavOnScreen] = useState<boolean>(false);
   const isOpenRef = useRef<boolean>(false);
   const navOverlayBG = useRef<HTMLDivElement>(null);
@@ -64,6 +65,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       if (window.innerWidth >= 768 && isOpenRef && isOpenRef.current) {
         isOpenRef.current = false;
         setNavOpen(false);
+        setNavOpenSpin(false)
         setNavOnScreen(false);
         hideText();
         document.body.style.overflow = "";
@@ -80,6 +82,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     if (isOpenRef && isOpenRef.current) {
       isOpenRef.current = false;
       setNavOpen(false);
+      setNavOpenSpin(false)
       setNavOnScreen(false);
       document.body.style.overflow = "";
     }
@@ -102,6 +105,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       return;
     }
 
+    setNavOpenSpin(false)
     hideText();
 
     if (navOverlayBG && navOverlayBG.current !== null) {
@@ -129,6 +133,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         document.body.style.overflow = "";
         hideText();
         setIsAnimatingNav(true);
+        setNavOpenSpin(newVal)
         setTimeout(() => {
           setNavOpen(newVal);
           setTimeout(() => {
@@ -140,6 +145,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         // Open Nav
         document.body.style.overflow = "hidden";
         setNavOpen(newVal);
+        setNavOpenSpin(newVal)
         showText();
         setNavOnScreen(true);
         setIsAnimatingNav(true);
@@ -158,7 +164,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         style={{ backgroundColor: "transparent" }}
       >
         <div
-          className="cursor-pointer mt-[20px] md:mt-[28px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
+          className="cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
           onClick={() => {
             if (canSelectPage) {
               if (navOpen) {
@@ -171,7 +177,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         >
           JESSICA SHULMAN
         </div>
-        <div className="mt-[28px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]">
+        <div className="mt-[32px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]">
           <div className="text-[14px]">PHOTOGRAPHER & DESIGNER</div>
           <div className="flex flex-row gap-[6px] text-[14px] h-[15px]">
             <a className="nav-item cursor-pointer" href="/">
@@ -183,7 +189,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             </a>
           </div>
         </div>
-        <div className="mt-[28px] hidden md:flex flex-row h-[15px] text-[14px] leading-[14px]">
+        <div className="mt-[32px] hidden md:flex flex-row h-[15px] text-[14px] leading-[14px]">
           <div
             className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
             onClick={() => {
@@ -231,23 +237,23 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             className="nav-transition nav-hamburger-bar select-none absolute top-[16px] left-0"
             style={{
               backgroundColor: "black",
-              marginTop: navOpen ? 0 : "-4.5px",
-              transform: navOpen ? "rotate(45deg)" : "none",
+              marginTop: navOpenSpin ? 0 : "-4.5px",
+              transform: navOpenSpin ? "rotate(45deg)" : "none",
             }}
           ></div>
           <div
             className="nav-transition nav-hamburger-bar select-none absolute top-[16px] left-0"
             style={{
               backgroundColor: "black",
-              opacity: navOpen ? 0 : 1,
+              opacity: navOpenSpin ? 0 : 1,
             }}
           ></div>
           <div
             className="nav-transition nav-hamburger-bar select-none absolute top-[16px] left-0"
             style={{
               backgroundColor: "black",
-              marginTop: navOpen ? 0 : "4.5px",
-              transform: navOpen ? "rotate(-45deg)" : "none",
+              marginTop: navOpenSpin ? 0 : "4.5px",
+              transform: navOpenSpin ? "rotate(-45deg)" : "none",
             }}
           ></div>
         </div>

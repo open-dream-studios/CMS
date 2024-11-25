@@ -126,3 +126,14 @@ code {
   font-family: 'Medio', sans-serif;
 }
 
+/* Mollie */
+@font-face {
+  font-family: 'Mollie';
+  src: url('/public/fonts/mollie/MollieGlaston.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.mollie {
+  font-family: 'Mollie', sans-serif;
+}

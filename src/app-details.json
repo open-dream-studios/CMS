@@ -11,6 +11,70 @@
     "page_backgrounds2": "#F2F2F2"
   },
   "pages": {
+    "home": {
+      "covers": [
+        {
+          "title": "Dreamlike flowers",
+          "subTitle": "CAPSULE CEREMONIE CLAUDIE PIERLOT SS24",
+          "images": [
+            "img1.png",
+            "img2.png",
+            "img3.png",
+            "img4.png",
+            "img5.png",
+            "img6.png"
+          ]
+        },
+        {
+          "title": "La Croisette",
+          "subTitle": "CAPSULE CANNES CLAUDIE PIERLOT SS24",
+          "images": [
+            "img1.png",
+            "img2.png",
+            "img3.png",
+            "img4.png",
+            "img5.png",
+            "img6.png"
+          ]
+        },
+        {
+          "title": "Provence",
+          "subTitle": "VANESSA BRUNO SS24",
+          "images": [
+            "img1.png",
+            "img2.png",
+            "img3.png",
+            "img4.png",
+            "img5.png",
+            "img6.png"
+          ]
+        },
+        {
+          "title": "Dolce Tara",
+          "subTitle": "TARA JARMON SS21",
+          "images": [
+            "img1.png",
+            "img2.png",
+            "img3.png",
+            "img4.png",
+            "img5.png",
+            "img6.png"
+          ]
+        },
+        {
+          "title": "Cavalcade",
+          "subTitle": "CLAUDE PIERLOT SS19",
+          "images": [
+            "img1.png",
+            "img2.png",
+            "img3.png",
+            "img4.png",
+            "img5.png",
+            "img6.png"
+          ]
+        }
+      ]
+    },
     "projects": [
       {
         "title": "Dreamlike flowers"
