@@ -87,6 +87,41 @@
   animation: slideDown 1s cubic-bezier(0.15, 0.55, 0.2, 1) forwards;
 } */
 
+.wave-container {
+  display: inline-flex;
+  overflow: hidden;
+}
+
+.wave-letter {
+  display: inline-block;
+  transform: translateY(100%); 
+  opacity: 0;
+  transition: transform 0s linear, opacity 0s linear; 
+}
+
+/* Translate Up */
+.wave-reveal {
+  animation: waveSlideUp 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  opacity: 0.8; 
+}
+
+.wave-conceal {
+  animation: waveSlideUp2 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 0.8;
+}
+
+.wave-reveal2 {
+  animation: waveSlideUp 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  opacity: 0.8; 
+}
+
+.wave-conceal2 {
+  animation: waveSlideUp2 0.8s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 0.8;
+}
+
 @keyframes waveSlideUp {
   from {
     transform: translateY(100%);
@@ -105,37 +140,45 @@
   }
 }
 
-.wave-container {
-  display: inline-flex;
-  overflow: hidden;
-}
 
-.wave-letter {
-  display: inline-block;
-  transform: translateY(100%); 
-  opacity: 0;
-  transition: transform 0s linear, opacity 0s linear; 
-}
-
-.wave-reveal {
-  animation: waveSlideUp 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+/* Translate Down */
+.wave-reveal-flip {
+  animation: waveSlideDown 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
   opacity: 0.8; 
 }
 
-.wave-conceal {
-  animation: waveSlideUp2 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+.wave-conceal-flip {
+  animation: waveSlideDown2 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
   animation-fill-mode: backwards; 
   opacity: 0.8;
 }
 
-.wave-reveal2 {
-  animation: waveSlideUpSub 1s cubic-bezier(0.65, 0.55, 0.36, 1) forwards;
+.wave-reveal-flip2 {
+  animation: waveSlideDown 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
   opacity: 0.8; 
 }
 
-.wave-conceal2 {
-  animation: waveSlideUpSub2 1s cubic-bezier(0.65, 0.55, 0.36, 1) forwards;
+.wave-conceal-flip2 {
+  animation: waveSlideDown2 0.8s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
   animation-fill-mode: backwards; 
   opacity: 0.8;
 }
 
+
+@keyframes waveSlideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes waveSlideDown2 {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}

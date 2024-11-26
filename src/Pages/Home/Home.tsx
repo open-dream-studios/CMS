@@ -37,20 +37,33 @@ const Home: React.FC<HomePageProps> = ({
   ];
 
   const [currentCover, setCurrentCover] = useState(0);
+  const currentCoverRef = useRef(0);
   const [currentLayout, setCurrentLayout] = useState(
     coverLayouts[layoutOrder[0]]
   );
 
-  const [coverTitle, setCoverTitle] = useState<string[]>([]);
-  const [subTitle, setSubTitle] = useState<string[]>([]);
-
   const [exitingCover, setExitingCover] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // Text
+  const [coverTitle, setCoverTitle] = useState<string[]>([]);
+  const [nextTitle, setNextTitle] = useState<string[]>([]);
+  const [prevTitle, setPrevTitle] = useState<string[]>([]);
+  const [subTitle, setSubTitle] = useState<string[]>([]);
+
+  // Display
   const [isVisible, setIsVisible] = useState(true);
-  const [isSubVisible, setSubIsVisible] = useState(true);
-  const [isRevealing1, setIsRevealing1] = useState(true);
-  const [isRevealing2, setIsRevealing2] = useState(true);
+  const [isRevealing1, setIsRevealing1] = useState([1, true]);
+  const [isDisplayed, setIsDisplayed] = useState(true);
+
+  // Next Display
+  const [isRevealingNext, setIsRevealingNext] = useState([1, true]);
+  const [isNextVisible, setIsNextVisible] = useState(false);
+  const [isNextDisplayed, setIsNextDisplayed] = useState(false);
+
+  // Sub Title
+  const [isSubVisible, setSubIsVisible] = useState(false);
+  const [isRevealing2, setIsRevealing2] = useState([1, true]);
 
   const readyToTransition = useRef(true);
   useEffect(() => {
@@ -66,7 +79,7 @@ const Home: React.FC<HomePageProps> = ({
             if (readyToTransition) {
               readyToTransition.current = true;
             }
-          }, 1200);
+          }, 1810);
         } else if (deltaY < -20) {
           handlePrevCover(event);
           readyToTransition.current = false;
@@ -74,7 +87,7 @@ const Home: React.FC<HomePageProps> = ({
             if (readyToTransition) {
               readyToTransition.current = true;
             }
-          }, 1100);
+          }, 1810);
         }
       }
     };
@@ -131,63 +144,113 @@ const Home: React.FC<HomePageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!slideUpComponent) {
-      const text = covers[currentCover].title.replace(" ", "_").split("");
-      const text2 = covers[currentCover].subTitle.replace(" ", "_").split("");
+    if (!slideUpComponent && currentCoverRef) {
+      const text = covers[currentCoverRef.current].title
+        .replace(" ", "_")
+        .split("");
+      const text2 = covers[currentCoverRef.current].subTitle
+        .replace(" ", "_")
+        .split("");
       setCoverTitle(text);
       setSubTitle(text2);
+      setTimeout(() => {
+        setSubIsVisible(true);
+      }, 200);
     }
-  }, [covers, currentCover, slideUpComponent]);
+  }, []);
 
   function changeCover(direction: number) {
-    if (isTransitioning) return;
+    if (isTransitioning || !currentCoverRef) return;
 
-    const nextProject =
+    console.log("current", currentCoverRef.current);
+    const incomingProject =
       direction === 1
-        ? currentCover === covers.length - 1
+        ? currentCoverRef.current === covers.length - 1
           ? 0
-          : currentCover + 1
-        : currentCover === 0
+          : currentCoverRef.current + 1
+        : currentCoverRef.current === 0
         ? covers.length - 1
-        : currentCover - 1;
+        : currentCoverRef.current - 1;
 
-    setIsRevealing2(false);
-    setTimeout(() => {
-      setSubIsVisible(false);
-    }, 600);
-    setTimeout(() => {
-      setSubIsVisible(true);
-      setIsRevealing2(true);
-    }, 990);
+    console.log(incomingProject);
 
+    const text = covers[incomingProject].title.replace(" ", "_").split("");
+    const text2 = covers[incomingProject].subTitle.replace(" ", "_").split("");
+
+    // Subtitle
+    setIsRevealing2([direction, false]);
     setTimeout(() => {
-      setIsRevealing1(false);
+      setSubTitle(text2);
+      setIsRevealing2([direction, true]);
+    }, 400);
+
+    // Main title
+    setNextTitle(text);
+    setTimeout(() => {
+      setIsRevealing1([direction, false]);
       setTimeout(() => {
-        setIsRevealing1(true);
-      }, 650);
+        if (currentCoverRef) {
+          if (direction === 1) {
+            currentCoverRef.current =
+              currentCoverRef.current === covers.length - 1
+                ? 0
+                : currentCoverRef.current + 1;
+            setCurrentCover((prev) =>
+              prev === covers.length - 1 ? 0 : prev + 1
+            );
+          } else {
+            currentCoverRef.current =
+              currentCoverRef.current === 0
+                ? covers.length - 1
+                : currentCoverRef.current - 1;
+            setCurrentCover((prev) =>
+              prev === 0 ? covers.length - 1 : prev - 1
+            );
+          }
+        }
+        setExitingCover(null);
+      }, 600);
+
+      setTimeout(() => {
+        // reveal the next
+        setIsNextDisplayed(true);
+        setIsRevealingNext([direction, true]);
+        setIsNextVisible(true);
+
+        setTimeout(() => {
+          // hide the first
+          setIsVisible(false);
+          setIsRevealing1([direction, true]);
+          setCoverTitle(text);
+
+          setTimeout(() => {
+            setIsVisible(true);
+            setIsDisplayed(true);
+            setIsNextVisible(false);
+            setIsNextDisplayed(false);
+            setIsRevealingNext([direction, true]);
+          }, 1000);
+        }, 600);
+      }, 100);
     }, 100);
 
     setIsTransitioning(true);
-    setExitingCover(currentCover);
-    setTimeout(() => {
-      if (direction === 1) {
-        setCurrentCover((prev) => (prev === covers.length - 1 ? 0 : prev + 1));
-      } else {
-        setCurrentCover((prev) => (prev === 0 ? covers.length - 1 : prev - 1));
-      }
-      const text2 = covers[nextProject].subTitle.replace(" ", "_").split("");
-      const text = covers[nextProject].title.replace(" ", "_").split("");
-      setCoverTitle(text);
-      setSubTitle(text2);
-      setExitingCover(null);
-    }, 800);
+    setExitingCover(currentCoverRef.current);
 
     setTimeout(() => setIsTransitioning(false), 800);
   }
 
   const handleNextCover = (event: any) => {
     event.stopPropagation();
-    changeCover(1);
+    if (readyToTransition && readyToTransition.current) {
+      changeCover(1);
+      readyToTransition.current = false;
+      setTimeout(() => {
+        if (readyToTransition) {
+          readyToTransition.current = true;
+        }
+      }, 1810);
+    }
   };
 
   const handlePrevCover = (event: any) => {
@@ -252,7 +315,7 @@ const Home: React.FC<HomePageProps> = ({
                     animate={{ opacity: 0 }}
                     exit={{ opacity: 0 }}
                     transition={{
-                      duration: 0.5,
+                      duration: 0.4,
                       ease: "easeInOut",
                       delay: generateRandomDelay(),
                     }}
@@ -273,7 +336,9 @@ const Home: React.FC<HomePageProps> = ({
                       <img
                         alt=""
                         className="image"
-                        src={`${appData.baseURL}${covers[currentCover].images[index]}`}
+                        src={`${appData.baseURL}${
+                          covers[currentCoverRef.current].images[index]
+                        }`}
                         style={{
                           position: "absolute",
                         }}
@@ -287,7 +352,7 @@ const Home: React.FC<HomePageProps> = ({
                 <AnimatePresence>
                   {exitingCover === null && (
                     <motion.div
-                      key={`current-${currentCover}`}
+                      key={`current-${currentCoverRef.current}`}
                       initial={
                         disableTransitionRef.current
                           ? { opacity: 1 }
@@ -307,7 +372,7 @@ const Home: React.FC<HomePageProps> = ({
                         disableTransitionRef.current
                           ? { duration: 0 }
                           : {
-                              duration: 0.9,
+                              duration: 0.7,
                               ease: "easeInOut",
                               delay: generateRandomDelay(),
                             }
@@ -329,7 +394,9 @@ const Home: React.FC<HomePageProps> = ({
                         <img
                           alt=""
                           className="image"
-                          src={`${appData.baseURL}${covers[currentCover].images[index]}`}
+                          src={`${appData.baseURL}${
+                            covers[currentCoverRef.current].images[index]
+                          }`}
                           style={{ position: "absolute" }}
                         />
                       </div>
@@ -341,51 +408,124 @@ const Home: React.FC<HomePageProps> = ({
           );
         })}
 
-        <div
-          className={`home-text-reveal-wrapper ${
-            isVisible ? "visible" : "hidden"
-          } inverted-text klivora text-[calc(20px+9vw)]`}
-        >
-          <div className="klivora wave-container">
-            {coverTitle.map((letter, index) => (
-              <span
-                key={index}
-                className={`wave-letter ${
-                  isRevealing1 ? "wave-reveal" : "wave-conceal"
-                }`}
-                style={{
-                  animationDelay: `${Math.pow(index, 0.8) * 0.02}s`,
-                  opacity: letter === "_" ? 0 : 1,
-                }}
-              >
-                {letter}
-              </span>
-            ))}
+        {isDisplayed && (
+          <div
+            style={{ opacity: isVisible ? 1 : 0 }}
+            className={`home-text-reveal-wrapper inverted-text klivora text-[calc(20px+9vw)] leading-[calc(20px+9vw)]`}
+          >
+            <div className="klivora wave-container">
+              {coverTitle.map((letter, index) => (
+                <span
+                  key={index}
+                  className={`wave-letter ${
+                    isRevealing1[0] === 1
+                      ? isRevealing1[1]
+                        ? "wave-reveal"
+                        : "wave-conceal"
+                      : isRevealing1[1]
+                      ? "wave-reveal-flip"
+                      : "wave-conceal-flip"
+                  }`}
+                  style={{
+                    animationDelay: `${Math.pow(index, 0.65) * 0.025}s`,
+                    opacity: letter === "_" ? 0 : 1,
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-        <div
-          className={`home-text-reveal-wrapper 
-          ${
-            isVisible ? "visible" : "hidden"
-          } inverted-text-black klivora text-[calc(20px+9vw)]`}
-        >
-          <div className="klivora wave-container">
-            {coverTitle.map((letter, index) => (
-              <span
-                key={index}
-                className={`wave-letter ${
-                  isRevealing1 ? "wave-reveal" : "wave-conceal"
-                }`}
-                style={{
-                  animationDelay: `${Math.pow(index, 0.8) * 0.02}s`,
-                  opacity: letter === "_" ? 0 : 1,
-                }}
-              >
-                {letter}
-              </span>
-            ))}
+        )}
+        {isDisplayed && (
+          <div
+            style={{ opacity: isVisible ? 1 : 0 }}
+            className={`home-text-reveal-wrapper 
+           inverted-text-black klivora text-[calc(20px+9vw)] leading-[calc(20px+9vw)]`}
+          >
+            <div className="klivora wave-container">
+              {coverTitle.map((letter, index) => (
+                <span
+                  key={index}
+                  className={`wave-letter ${
+                    isRevealing1[0] === 1
+                      ? isRevealing1[1]
+                        ? "wave-reveal"
+                        : "wave-conceal"
+                      : isRevealing1[1]
+                      ? "wave-reveal-flip"
+                      : "wave-conceal-flip"
+                  }`}
+                  style={{
+                    animationDelay: `${Math.pow(index, 0.75) * 0.02}s`,
+                    opacity: letter === "_" ? 0 : 1,
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {isNextDisplayed && (
+          <div
+            style={{ opacity: isNextVisible ? 1 : 0 }}
+            className={`home-text-reveal-wrapper inverted-text klivora text-[calc(20px+9vw)] leading-[calc(20px+9vw)]`}
+          >
+            <div className="klivora wave-container">
+              {nextTitle.map((letter, index) => (
+                <span
+                  key={index}
+                  className={`wave-letter ${
+                    isRevealingNext[0] === 1
+                      ? isRevealingNext[1]
+                        ? "wave-reveal"
+                        : "wave-conceal"
+                      : isRevealingNext[1]
+                      ? "wave-reveal-flip"
+                      : "wave-conceal-flip"
+                  }`}
+                  style={{
+                    animationDelay: `${Math.pow(index, 0.65) * 0.025}s`,
+                    opacity: letter === "_" ? 0 : 1,
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {isNextDisplayed && (
+          <div
+            style={{ opacity: isNextVisible ? 1 : 0 }}
+            className={`home-text-reveal-wrapper inverted-text-black klivora text-[calc(20px+9vw)] leading-[calc(20px+9vw)]`}
+          >
+            <div className="klivora wave-container">
+              {nextTitle.map((letter, index) => (
+                <span
+                  key={index}
+                  className={`wave-letter ${
+                    isRevealingNext[0] === 1
+                      ? isRevealingNext[1]
+                        ? "wave-reveal"
+                        : "wave-conceal"
+                      : isRevealingNext[1]
+                      ? "wave-reveal-flip"
+                      : "wave-conceal-flip"
+                  }`}
+                  style={{
+                    animationDelay: `${Math.pow(index, 0.75) * 0.02}s`,
+                    opacity: letter === "_" ? 0 : 1,
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div
           className={`inverted-text absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)] ${
@@ -397,7 +537,13 @@ const Home: React.FC<HomePageProps> = ({
               <span
                 key={index}
                 className={`wave-letter ${
-                  isRevealing2 ? "wave-reveal" : "wave-conceal"
+                  isRevealing2[0] === 1
+                    ? isRevealing2[1]
+                      ? "wave-reveal2"
+                      : "wave-conceal2"
+                    : isRevealing2[1]
+                    ? "wave-reveal-flip2"
+                    : "wave-conceal-flip2"
                 }`}
                 style={{
                   opacity: letter === "_" ? 0 : 1,
@@ -418,7 +564,13 @@ const Home: React.FC<HomePageProps> = ({
               <span
                 key={index}
                 className={`wave-letter ${
-                  isRevealing2 ? "wave-reveal2" : "wave-conceal2"
+                  isRevealing2[0] === 1
+                    ? isRevealing2[1]
+                      ? "wave-reveal2"
+                      : "wave-conceal2"
+                    : isRevealing2[1]
+                    ? "wave-reveal-flip2"
+                    : "wave-conceal-flip2"
                 }`}
                 style={{
                   opacity: letter === "_" ? 0 : 1,
