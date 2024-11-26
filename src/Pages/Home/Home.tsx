@@ -48,99 +48,42 @@ const Home: React.FC<HomePageProps> = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const [isVisible, setIsVisible] = useState(true);
+  const [isSubVisible, setSubIsVisible] = useState(true);
   const [isRevealing1, setIsRevealing1] = useState(true);
   const [isRevealing2, setIsRevealing2] = useState(true);
 
+  const readyToTransition = useRef(true);
   useEffect(() => {
-    const text = covers[currentCover].title.replace(" ", "_").split("");
-    const text2 = covers[currentCover].subTitle.replace(" ", "_").split("");
-    setCoverTitle(text);
-    setSubTitle(text2);
-  }, []);
+    const handleScroll = (event: any) => {
+      event.stopPropagation();
+      const deltaY = event.deltaY;
 
-  function changeCover(direction: number) {
-    if (isTransitioning) return;
-
-    setIsRevealing2(false);
-    setTimeout(() => {
-      setIsRevealing1(false);
-      setTimeout(() => {
-        setIsVisible(false);
-        // change the text
-
-        const nextProject = direction === 1? currentCover === covers.length - 1 ? 0 : currentCover + 1 : currentCover === 0 ? covers.length - 1 : currentCover - 1
-        const text = covers[nextProject].title.replace(" ", "_").split("");
-        const text2 = covers[nextProject].subTitle.replace(" ", "_").split("");
-        setCoverTitle(text);
-        setSubTitle(text2);
-
-        setIsRevealing1(true);
-        setIsRevealing2(true);
-        setIsVisible(true);
-      }, 1000);
-    }, 200);
-    setIsTransitioning(true);
-    setExitingCover(currentCover);
-    setTimeout(() => {
-      if (direction === 1) {
-        setCurrentCover((prev) => (prev === covers.length - 1 ? 0 : prev + 1));
-      } else {
-        setCurrentCover((prev) => (prev === 0 ? covers.length - 1 : prev - 1));
+      if (readyToTransition && readyToTransition.current) {
+        if (deltaY > 30) {
+          handleNextCover(event);
+          readyToTransition.current = false;
+          setTimeout(() => {
+            if (readyToTransition) {
+              readyToTransition.current = true;
+            }
+          }, 1200);
+        } else if (deltaY < -20) {
+          handlePrevCover(event);
+          readyToTransition.current = false;
+          setTimeout(() => {
+            if (readyToTransition) {
+              readyToTransition.current = true;
+            }
+          }, 1100);
+        }
       }
-      setExitingCover(null);
-    }, 800);
+    };
+    window.addEventListener("wheel", handleScroll);
 
-    setTimeout(() => setIsTransitioning(false), 800);
-  }
-
-  const handleNextCover = (event: any) => {
-    event.stopPropagation();
-    changeCover(1);
-  };
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "auto";
+      window.removeEventListener("wheel", handleScroll);
     };
   }, []);
-
-  const disableTransitionRef = useRef(true);
-  const disableTransition = () => {
-    disableTransitionRef.current = true;
-    setTimeout(() => {
-      disableTransitionRef.current = false;
-    }, 0);
-  };
-
-  const location = useLocation();
-  const previousRoute = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (
-      previousRoute.current &&
-      previousRoute.current.startsWith(window.location.origin)
-    ) {
-      disableTransition();
-    }
-    previousRoute.current = `${window.location.origin}${location.pathname}`;
-  }, [location]);
-
-  const generateRandomDelay = () => Math.random() * 0.4;
-  const [firstPageLoad, setFirstPageLoad] = useState(false);
-
-  const preloadImages = (urls: string[]) => {
-    return Promise.all(
-      urls.map((url) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.src = appData.baseURL + url;
-          img.onload = () => resolve({ url, success: true });
-          img.onerror = () => resolve({ url, success: false });
-        });
-      })
-    );
-  };
 
   useEffect(() => {
     const pageLoadTime = performance.now();
@@ -180,37 +123,114 @@ const Home: React.FC<HomePageProps> = ({
     }
   }, []);
 
-  const readyToTransition = useRef(true);
   useEffect(() => {
-    const handleScroll = (event: any) => {
-      const deltaY = event.deltaY;
-
-      if (readyToTransition && readyToTransition.current) {
-        if (deltaY > 30) {
-          changeCover(1);
-          readyToTransition.current = false;
-          setTimeout(() => {
-            if (readyToTransition) {
-              readyToTransition.current = true;
-            }
-          }, 1200);
-        } else if (deltaY < -20) {
-          changeCover(-1);
-          readyToTransition.current = false;
-          setTimeout(() => {
-            if (readyToTransition) {
-              readyToTransition.current = true;
-            }
-          }, 1100);
-        }
-      }
-    };
-    window.addEventListener("wheel", handleScroll);
-
+    document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("wheel", handleScroll);
+      document.body.style.overflow = "auto";
     };
   }, []);
+
+  useEffect(() => {
+    if (!slideUpComponent) {
+      const text = covers[currentCover].title.replace(" ", "_").split("");
+      const text2 = covers[currentCover].subTitle.replace(" ", "_").split("");
+      setCoverTitle(text);
+      setSubTitle(text2);
+    }
+  }, [covers, currentCover, slideUpComponent]);
+
+  function changeCover(direction: number) {
+    if (isTransitioning) return;
+
+    const nextProject =
+      direction === 1
+        ? currentCover === covers.length - 1
+          ? 0
+          : currentCover + 1
+        : currentCover === 0
+        ? covers.length - 1
+        : currentCover - 1;
+
+    setIsRevealing2(false);
+    setTimeout(() => {
+      setSubIsVisible(false);
+    }, 600);
+    setTimeout(() => {
+      setSubIsVisible(true);
+      setIsRevealing2(true);
+    }, 990);
+
+    setTimeout(() => {
+      setIsRevealing1(false);
+      setTimeout(() => {
+        setIsRevealing1(true);
+      }, 650);
+    }, 100);
+
+    setIsTransitioning(true);
+    setExitingCover(currentCover);
+    setTimeout(() => {
+      if (direction === 1) {
+        setCurrentCover((prev) => (prev === covers.length - 1 ? 0 : prev + 1));
+      } else {
+        setCurrentCover((prev) => (prev === 0 ? covers.length - 1 : prev - 1));
+      }
+      const text2 = covers[nextProject].subTitle.replace(" ", "_").split("");
+      const text = covers[nextProject].title.replace(" ", "_").split("");
+      setCoverTitle(text);
+      setSubTitle(text2);
+      setExitingCover(null);
+    }, 800);
+
+    setTimeout(() => setIsTransitioning(false), 800);
+  }
+
+  const handleNextCover = (event: any) => {
+    event.stopPropagation();
+    changeCover(1);
+  };
+
+  const handlePrevCover = (event: any) => {
+    event.stopPropagation();
+    changeCover(-1);
+  };
+
+  const disableTransitionRef = useRef(true);
+  const disableTransition = () => {
+    disableTransitionRef.current = true;
+    setTimeout(() => {
+      disableTransitionRef.current = false;
+    }, 0);
+  };
+
+  const location = useLocation();
+  const previousRoute = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      previousRoute.current &&
+      previousRoute.current.startsWith(window.location.origin)
+    ) {
+      disableTransition();
+    }
+    previousRoute.current = `${window.location.origin}${location.pathname}`;
+  }, [location]);
+
+  const generateRandomDelay = () => Math.random() * 0.4;
+  const [firstPageLoad, setFirstPageLoad] = useState(false);
+
+  const preloadImages = (urls: string[]) => {
+    return Promise.all(
+      urls.map((url) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.src = appData.baseURL + url;
+          img.onload = () => resolve({ url, success: true });
+          img.onerror = () => resolve({ url, success: false });
+        });
+      })
+    );
+  };
 
   return (
     <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
@@ -367,7 +387,11 @@ const Home: React.FC<HomePageProps> = ({
           </div>
         </div>
 
-        <div className="inverted-text absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)]">
+        <div
+          className={`inverted-text absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)] ${
+            isSubVisible ? "visible" : "hidden"
+          }`}
+        >
           <div className="wave-container">
             {subTitle.map((letter, index) => (
               <span
@@ -384,7 +408,11 @@ const Home: React.FC<HomePageProps> = ({
             ))}
           </div>
         </div>
-        <div className="inverted-text-black absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)]">
+        <div
+          className={`inverted-text-black absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)] ${
+            isSubVisible ? "visible" : "hidden"
+          }`}
+        >
           <div className="wave-container">
             {subTitle.map((letter, index) => (
               <span

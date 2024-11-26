@@ -119,22 +119,23 @@
 
 .wave-reveal {
   animation: waveSlideUp 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
-  opacity: 1; 
+  opacity: 0.8; 
 }
 
 .wave-conceal {
   animation: waveSlideUp2 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
   animation-fill-mode: backwards; 
-  opacity: 1;
+  opacity: 0.8;
 }
 
 .wave-reveal2 {
-  animation: waveSlideUp 1s cubic-bezier(0.65, 0.55, 0.36, 1) forwards;
-  opacity: 1; 
+  animation: waveSlideUpSub 1s cubic-bezier(0.65, 0.55, 0.36, 1) forwards;
+  opacity: 0.8; 
 }
 
 .wave-conceal2 {
-  animation: waveSlideUp2 1s cubic-bezier(0.65, 0.55, 0.36, 1) forwards;
+  animation: waveSlideUpSub2 1s cubic-bezier(0.65, 0.55, 0.36, 1) forwards;
   animation-fill-mode: backwards; 
-  opacity: 1;
+  opacity: 0.8;
 }
+
