@@ -164,6 +164,11 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     },200)
   },[])
 
+  const handleSendNewEmailClick = () => {
+    const sendEmail = "jessshul27@gmail.com";
+    window.location.href = `mailto:${sendEmail}`;
+  };
+
   return (
     <>
       <div
@@ -171,7 +176,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         style={{ backgroundColor: "transparent", opacity: firstPageLoad ? 1 : 0, transition: "opacity 0.9s ease-in-out"}}
       >
         <div
-          className="cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
+          className="select-none cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
           onClick={() => {
             if (canSelectPage) {
               if (navOpen) {
@@ -185,18 +190,18 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           JESSICA SHULMAN
         </div>
         <div className="mt-[32px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]">
-          <div className="text-[14px]">PHOTOGRAPHER & DESIGNER</div>
+          <div className="select-none text-[14px]">PHOTOGRAPHER & DESIGNER</div>
           <div className="flex flex-row gap-[6px] text-[14px] h-[15px]">
-            <a className="nav-item cursor-pointer" href="/">
-              JESSSHULMAN27@GMAIL.COM
-            </a>
-            <p className="text-[13px] mt-[-1.3px] font-[400]">/</p>
-            <a className="nav-item cursor-pointer" href="/">
+            <div onClick={handleSendNewEmailClick} className="nav-item cursor-pointer">
+              JESSSHUL27@GMAIL.COM
+            </div>
+            <p className="select-none text-[13px] mt-[-1.3px] font-[400]">/</p>
+            <a className="select-none nav-item cursor-pointer" href="https://www.instagram.com/jessica.shulman.design/">
               INSTAGRAM
             </a>
           </div>
         </div>
-        <div className="mt-[32px] hidden md:flex flex-row h-[15px] text-[14px] leading-[14px]">
+        <div className="select-none mt-[32px] hidden md:flex flex-row h-[15px] text-[14px] leading-[14px]">
           <div
             className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
             onClick={() => {
