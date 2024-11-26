@@ -35,7 +35,7 @@ const Home: React.FC<HomePageProps> = ({
       { x: 73, y: 6, w: 18, h: 1.2, z: 104, top: false },
     ],
   ];
-
+  const nextMove = useRef([0, false]);
   const [currentCover, setCurrentCover] = useState(0);
   const currentCoverRef = useRef(0);
   const [currentLayout, setCurrentLayout] = useState(
@@ -48,7 +48,6 @@ const Home: React.FC<HomePageProps> = ({
   // Text
   const [coverTitle, setCoverTitle] = useState<string[]>([]);
   const [nextTitle, setNextTitle] = useState<string[]>([]);
-  const [prevTitle, setPrevTitle] = useState<string[]>([]);
   const [subTitle, setSubTitle] = useState<string[]>([]);
 
   // Display
@@ -66,28 +65,47 @@ const Home: React.FC<HomePageProps> = ({
   const [isRevealing2, setIsRevealing2] = useState([1, true]);
 
   const readyToTransition = useRef(true);
+  const animatingRef = useRef([0,0]);
+  const [firstPageLoad, setFirstPageLoad] = useState(false);
+
+  const readyToRetrigger = useRef(false);
+
   useEffect(() => {
     const handleScroll = (event: any) => {
       event.stopPropagation();
       const deltaY = event.deltaY;
 
-      if (readyToTransition && readyToTransition.current) {
+      if (readyToTransition) {
+        // console.log(deltaY);
         if (deltaY > 30) {
-          handleNextCover(event);
-          readyToTransition.current = false;
-          setTimeout(() => {
-            if (readyToTransition) {
-              readyToTransition.current = true;
+          if (readyToTransition.current) {
+            handleNextCover(event);
+          } else {
+            console.log(readyToRetrigger.current);
+            if (nextMove && !nextMove.current[1] && readyToRetrigger.current) {
+              nextMove.current = [1, true];
+              readyToRetrigger.current = false;
             }
-          }, 1910);
+          }
         } else if (deltaY < -20) {
-          handlePrevCover(event);
-          readyToTransition.current = false;
-          setTimeout(() => {
-            if (readyToTransition) {
-              readyToTransition.current = true;
+          if (readyToTransition.current) {
+            handlePrevCover(event);
+          } else {
+            console.log(readyToRetrigger.current, "prev", !nextMove.current[1]);
+            if (nextMove && !nextMove.current[1] && readyToRetrigger.current) {
+              nextMove.current = [-1, true];
+              readyToRetrigger.current = false;
             }
-          }, 1910);
+          }
+        } else if (deltaY < 4 && deltaY > -4) {
+          console.log("about to set", readyToRetrigger.current, animatingRef.current)
+          if (!readyToRetrigger.current && !nextMove.current[1] && (animatingRef.current[0] !== animatingRef.current[1])) {
+              console.log("ANIMATING, and less than 4 so ENABLE TRIGGER")
+              readyToRetrigger.current = true;
+          } 
+          if (readyToRetrigger.current && (animatingRef.current[0] === animatingRef.current[1])) {
+              readyToRetrigger.current = false;
+          } 
         }
       }
     };
@@ -97,6 +115,19 @@ const Home: React.FC<HomePageProps> = ({
       window.removeEventListener("wheel", handleScroll);
     };
   }, []);
+
+  const preloadImages = (urls: string[]) => {
+    return Promise.all(
+      urls.map((url) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.src = appData.baseURL + url;
+          img.onload = () => resolve({ url, success: true });
+          img.onerror = () => resolve({ url, success: false });
+        });
+      })
+    );
+  };
 
   useEffect(() => {
     const pageLoadTime = performance.now();
@@ -111,12 +142,12 @@ const Home: React.FC<HomePageProps> = ({
           .map((res: any) => res.url);
 
         const logResults = () => {
-          console.log("has been 300ms");
+          // console.log("has been 300ms");
           if (failed.length === 0) {
-            console.log("All images preloaded successfully:", successful);
+            // console.log("All images preloaded successfully:", successful);
           } else {
-            console.warn("Some images failed to preload:", failed);
-            console.log("Successfully preloaded images:", successful);
+            // console.warn("Some images failed to preload:", failed);
+            // console.log("Successfully preloaded images:", successful);
           }
           setFirstPageLoad(true);
 
@@ -161,8 +192,6 @@ const Home: React.FC<HomePageProps> = ({
 
   function changeCover(direction: number) {
     if (isTransitioning || !currentCoverRef) return;
-
-    console.log("current", currentCoverRef.current);
     const incomingProject =
       direction === 1
         ? currentCoverRef.current === covers.length - 1
@@ -171,8 +200,6 @@ const Home: React.FC<HomePageProps> = ({
         : currentCoverRef.current === 0
         ? covers.length - 1
         : currentCoverRef.current - 1;
-
-    console.log(incomingProject);
 
     const text = covers[incomingProject].title.replace(" ", "_").split("");
     const text2 = covers[incomingProject].subTitle.replace(" ", "_").split("");
@@ -247,9 +274,20 @@ const Home: React.FC<HomePageProps> = ({
     if (readyToTransition && readyToTransition.current) {
       changeCover(1);
       readyToTransition.current = false;
+      if (animatingRef) {animatingRef.current[0] += 1}
       setTimeout(() => {
         if (readyToTransition) {
           readyToTransition.current = true;
+          readyToRetrigger.current = true;
+          if (nextMove.current[1]) {
+            if (animatingRef) {animatingRef.current[1] += 1}
+            doNextMove();
+          } else {
+            nextMove.current = [0, false];
+            readyToRetrigger.current = false;
+            readyToTransition.current = true;
+            if (animatingRef) {animatingRef.current[1] += 1}
+          }
         }
       }, 1910);
     }
@@ -257,8 +295,39 @@ const Home: React.FC<HomePageProps> = ({
 
   const handlePrevCover = (event: any) => {
     event.stopPropagation();
-    changeCover(-1);
+    if (readyToTransition && readyToTransition.current) {
+      changeCover(-1);
+      readyToTransition.current = false;
+      if (animatingRef)  {animatingRef.current[0] += 1}
+      setTimeout(() => {
+        if (readyToTransition) {
+          readyToTransition.current = true;
+          readyToRetrigger.current = true;
+          if (nextMove.current[1]) {
+            if (animatingRef) {animatingRef.current[1] += 1}
+            doNextMove();
+          } else {
+            nextMove.current = [0, false];
+            readyToRetrigger.current = false;
+            readyToTransition.current = true;
+            if (animatingRef) {animatingRef.current[1] += 1}
+          }
+        }
+      }, 1910);
+    }
   };
+
+  function doNextMove() {
+    const fakeEvent = { stopPropagation: () => {} };
+    if (nextMove.current[0] === 1) {
+      nextMove.current = [0, false];
+      handleNextCover(fakeEvent);
+    }
+    if (nextMove.current[0] === -1) {
+      nextMove.current = [0, false];
+      handlePrevCover(fakeEvent);
+    }
+  }
 
   const disableTransitionRef = useRef(true);
   const disableTransition = () => {
@@ -282,20 +351,6 @@ const Home: React.FC<HomePageProps> = ({
   }, [location]);
 
   const generateRandomDelay = () => Math.random() * 0.4;
-  const [firstPageLoad, setFirstPageLoad] = useState(false);
-
-  const preloadImages = (urls: string[]) => {
-    return Promise.all(
-      urls.map((url) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.src = appData.baseURL + url;
-          img.onload = () => resolve({ url, success: true });
-          img.onerror = () => resolve({ url, success: false });
-        });
-      })
-    );
-  };
 
   return (
     <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
@@ -304,7 +359,15 @@ const Home: React.FC<HomePageProps> = ({
         style={{
           backgroundColor: "white",
         }}
-        onClick={handleNextCover}
+        onClick={(event: any) => {
+          if (readyToTransition.current) {
+            handleNextCover(event);
+          } else {
+            if (nextMove && !nextMove.current[1]) {
+              nextMove.current = [1, true];
+            }
+          }
+        }}
       >
         {currentLayout.map((item, index) => {
           return (

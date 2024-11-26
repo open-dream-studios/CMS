@@ -17,11 +17,11 @@ code {
 }
 
 .white-dim {
-  transition: opacity 0.2s ease-in-out;
+  transition: color 1s ease-in-out;
 }
 
 .white-dim:hover {
-  opacity: 0.5;
+  color: #7F7F7F;
 }
 
 .hover-dim5 {
@@ -30,6 +30,15 @@ code {
 
 .hover-dim5:hover {
   opacity: 0.5
+}
+
+.select-dark {
+  color: #7F7F7F;
+  transition: color 1s ease-in-out;
+}
+
+.select-dark:hover {
+  color: black;
 }
 
 

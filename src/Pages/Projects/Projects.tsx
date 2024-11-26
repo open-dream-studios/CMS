@@ -34,7 +34,8 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [coversVisible, setCoversVisible] = useState(false);
   const [titleAnimation, setTitleAnimation] = useState(true);
-  const [titlesVisible, setTitlesVisible] = useState(false);
+  const [titlesVisible, setTitlesVisible] = useState(currentPage);
+  const [animateWave, setAimateWave] = useState(!currentPage);
 
   useEffect(() => {
     if (currentPage) {
@@ -47,7 +48,6 @@ const Projects: React.FC<ProjectsPageProps> = ({
           setHoveredIndex(null);
           setCoversVisible(false);
           setTitleAnimation(false);
-          setTitlesVisible(true);
         }
       } else {
         setTitleAnimation(true);
@@ -88,7 +88,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
           <div
             style={{
               transform: selectedProject === null ? "none" : "scale(0.6)",
-              transition: titleAnimation
+              transition: titleAnimation 
                 ? "transform 1s cubic-bezier(0.6, 0.05, 0.3, 1"
                 : "none",
               transformOrigin: "left",
@@ -98,7 +98,8 @@ const Projects: React.FC<ProjectsPageProps> = ({
             {projects.map((item, index) => {
               return (
                 <div
-                  className="white-dim text-[30px] leading-[38px] md:text-[37px] md:leading-[46px] lg:text-[46px] lg:leading-[59px]"
+                  className={`text-[30px] leading-[38px] md:text-[37px] md:leading-[46px] lg:text-[46px] lg:leading-[59px]`}
+                  style={{transition: "opacity 0.5s ease-in-out"}}
                   key={index}
                   onMouseEnter={() => {
                     if (selectedProject === null) {
@@ -120,13 +121,15 @@ const Projects: React.FC<ProjectsPageProps> = ({
                       titlesVisible ? "visible" : "hidden"
                     }`}
                   >
-                    <div className="wave-container">
+                    <div className="project-container">
                       <div
                         key={index}
-                        className={`wave-letter  ${
-                          titlesVisible ? "wave-reveal2" : ""
+                        className={`${selectedProject === null ? "white-dim" : "select-dark"} project-letter  ${
+                          titlesVisible && animateWave ? "project-reveal" : ""
                         }`}
-                        style={{animationDelay: `${Math.pow(index, 0.75) * 0.045}s`}}
+                        style={{animationDelay: `${Math.pow(index, 0.75) * 0.045}s`, 
+                          color: animateWave? "black" : selectedProject === index ? "black" : "#747474",
+                          transform: animateWave ? "translateY(%100)" :  "translateY(0)"}}
                       >
                         {item.title}
                       </div>
