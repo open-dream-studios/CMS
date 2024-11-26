@@ -41,22 +41,61 @@ const Home: React.FC<HomePageProps> = ({
     coverLayouts[layoutOrder[0]]
   );
 
+  const [coverTitle, setCoverTitle] = useState<string[]>([]);
+  const [subTitle, setSubTitle] = useState<string[]>([]);
+
   const [exitingCover, setExitingCover] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const handleNextCover = (event: any) => {
-    event.stopPropagation();
+  const [isVisible, setIsVisible] = useState(true);
+  const [isRevealing1, setIsRevealing1] = useState(true);
+  const [isRevealing2, setIsRevealing2] = useState(true);
+
+  useEffect(() => {
+    const text = covers[currentCover].title.replace(" ", "_").split("");
+    const text2 = covers[currentCover].subTitle.replace(" ", "_").split("");
+    setCoverTitle(text);
+    setSubTitle(text2);
+  }, []);
+
+  function changeCover(direction: number) {
     if (isTransitioning) return;
-    setIsTransitioning(true);
 
-    setExitingCover(currentCover);
-
+    setIsRevealing2(false);
     setTimeout(() => {
-      setCurrentCover((prev) => prev + 1);
+      setIsRevealing1(false);
+      setTimeout(() => {
+        setIsVisible(false);
+        // change the text
+
+        const nextProject = direction === 1? currentCover === covers.length - 1 ? 0 : currentCover + 1 : currentCover === 0 ? covers.length - 1 : currentCover - 1
+        const text = covers[nextProject].title.replace(" ", "_").split("");
+        const text2 = covers[nextProject].subTitle.replace(" ", "_").split("");
+        setCoverTitle(text);
+        setSubTitle(text2);
+
+        setIsRevealing1(true);
+        setIsRevealing2(true);
+        setIsVisible(true);
+      }, 1000);
+    }, 200);
+    setIsTransitioning(true);
+    setExitingCover(currentCover);
+    setTimeout(() => {
+      if (direction === 1) {
+        setCurrentCover((prev) => (prev === covers.length - 1 ? 0 : prev + 1));
+      } else {
+        setCurrentCover((prev) => (prev === 0 ? covers.length - 1 : prev - 1));
+      }
       setExitingCover(null);
     }, 800);
 
     setTimeout(() => setIsTransitioning(false), 800);
+  }
+
+  const handleNextCover = (event: any) => {
+    event.stopPropagation();
+    changeCover(1);
   };
 
   useEffect(() => {
@@ -95,7 +134,7 @@ const Home: React.FC<HomePageProps> = ({
       urls.map((url) => {
         return new Promise((resolve) => {
           const img = new Image();
-          img.src = "/assets/" + url;
+          img.src = appData.baseURL + url;
           img.onload = () => resolve({ url, success: true });
           img.onerror = () => resolve({ url, success: false });
         });
@@ -106,37 +145,71 @@ const Home: React.FC<HomePageProps> = ({
   useEffect(() => {
     const pageLoadTime = performance.now();
 
-    preloadImages(covers[0].images).then((results) => {
-      const successful = results
-        .filter((result: any) => result.success)
-        .map((res: any) => res.url);
-      const failed = results
-        .filter((result: any) => !result.success)
-        .map((res: any) => res.url);
+    if (!slideUpComponent) {
+      preloadImages(covers[0].images).then((results) => {
+        const successful = results
+          .filter((result: any) => result.success)
+          .map((res: any) => res.url);
+        const failed = results
+          .filter((result: any) => !result.success)
+          .map((res: any) => res.url);
 
-      const logResults = () => {
-        console.log("has been 300ms");
-        if (failed.length === 0) {
-          console.log("All images preloaded successfully:", successful);
+        const logResults = () => {
+          console.log("has been 300ms");
+          if (failed.length === 0) {
+            console.log("All images preloaded successfully:", successful);
+          } else {
+            console.warn("Some images failed to preload:", failed);
+            console.log("Successfully preloaded images:", successful);
+          }
+          setFirstPageLoad(true);
+
+          for (let i = 1; i < covers.length; i++) {
+            preloadImages(covers[i].images);
+          }
+        };
+
+        const elapsedTime = performance.now() - pageLoadTime;
+        if (elapsedTime >= 300) {
+          logResults();
         } else {
-          console.warn("Some images failed to preload:", failed);
-          console.log("Successfully preloaded images:", successful);
+          const delay = 300 - elapsedTime;
+          setTimeout(logResults, delay);
         }
-        setFirstPageLoad(true);
+      });
+    }
+  }, []);
 
-        for (let i = 1; i < covers.length; i++) {
-          preloadImages(covers[i].images);
+  const readyToTransition = useRef(true);
+  useEffect(() => {
+    const handleScroll = (event: any) => {
+      const deltaY = event.deltaY;
+
+      if (readyToTransition && readyToTransition.current) {
+        if (deltaY > 30) {
+          changeCover(1);
+          readyToTransition.current = false;
+          setTimeout(() => {
+            if (readyToTransition) {
+              readyToTransition.current = true;
+            }
+          }, 1200);
+        } else if (deltaY < -20) {
+          changeCover(-1);
+          readyToTransition.current = false;
+          setTimeout(() => {
+            if (readyToTransition) {
+              readyToTransition.current = true;
+            }
+          }, 1100);
         }
-      };
-
-      const elapsedTime = performance.now() - pageLoadTime;
-      if (elapsedTime >= 300) {
-        logResults();
-      } else {
-        const delay = 300 - elapsedTime;
-        setTimeout(logResults, delay);
       }
-    });
+    };
+    window.addEventListener("wheel", handleScroll);
+
+    return () => {
+      window.removeEventListener("wheel", handleScroll);
+    };
   }, []);
 
   return (
@@ -180,11 +253,10 @@ const Home: React.FC<HomePageProps> = ({
                       <img
                         alt=""
                         className="image"
-                        src={`/assets/${covers[currentCover].images[index]}`}
+                        src={`${appData.baseURL}${covers[currentCover].images[index]}`}
                         style={{
                           position: "absolute",
                         }}
-                        // onLoad={handleImageLoad}
                       />
                     </div>
                   </motion.div>
@@ -215,7 +287,7 @@ const Home: React.FC<HomePageProps> = ({
                         disableTransitionRef.current
                           ? { duration: 0 }
                           : {
-                              duration: 0.5,
+                              duration: 0.9,
                               ease: "easeInOut",
                               delay: generateRandomDelay(),
                             }
@@ -237,7 +309,7 @@ const Home: React.FC<HomePageProps> = ({
                         <img
                           alt=""
                           className="image"
-                          src={`/assets/${covers[currentCover].images[index]}`}
+                          src={`${appData.baseURL}${covers[currentCover].images[index]}`}
                           style={{ position: "absolute" }}
                         />
                       </div>
@@ -249,18 +321,85 @@ const Home: React.FC<HomePageProps> = ({
           );
         })}
 
-        <div className="inverted-text klivora text-[calc(20px+9vw)]">
-          {covers[currentCover].title}
+        <div
+          className={`home-text-reveal-wrapper ${
+            isVisible ? "visible" : "hidden"
+          } inverted-text klivora text-[calc(20px+9vw)]`}
+        >
+          <div className="klivora wave-container">
+            {coverTitle.map((letter, index) => (
+              <span
+                key={index}
+                className={`wave-letter ${
+                  isRevealing1 ? "wave-reveal" : "wave-conceal"
+                }`}
+                style={{
+                  animationDelay: `${Math.pow(index, 0.8) * 0.02}s`,
+                  opacity: letter === "_" ? 0 : 1,
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className="inverted-text-black klivora text-[calc(20px+9vw)]">
-          {covers[currentCover].title}
+        <div
+          className={`home-text-reveal-wrapper 
+          ${
+            isVisible ? "visible" : "hidden"
+          } inverted-text-black klivora text-[calc(20px+9vw)]`}
+        >
+          <div className="klivora wave-container">
+            {coverTitle.map((letter, index) => (
+              <span
+                key={index}
+                className={`wave-letter ${
+                  isRevealing1 ? "wave-reveal" : "wave-conceal"
+                }`}
+                style={{
+                  animationDelay: `${Math.pow(index, 0.8) * 0.02}s`,
+                  opacity: letter === "_" ? 0 : 1,
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="inverted-text absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)]">
-          {covers[currentCover].subTitle}
+          <div className="wave-container">
+            {subTitle.map((letter, index) => (
+              <span
+                key={index}
+                className={`wave-letter ${
+                  isRevealing2 ? "wave-reveal" : "wave-conceal"
+                }`}
+                style={{
+                  opacity: letter === "_" ? 0 : 1,
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+          </div>
         </div>
         <div className="inverted-text-black absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)]">
-          {covers[currentCover].subTitle}
+          <div className="wave-container">
+            {subTitle.map((letter, index) => (
+              <span
+                key={index}
+                className={`wave-letter ${
+                  isRevealing2 ? "wave-reveal2" : "wave-conceal2"
+                }`}
+                style={{
+                  opacity: letter === "_" ? 0 : 1,
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -40,4 +40,101 @@
   z-index: 102;
 }
 
+/* @keyframes slideUp {
+  from {
+    bottom: -100%;
+  }
+  to {
+    bottom: 0;
+  }
+}
 
+@keyframes slideDown {
+  from {
+    bottom: 0;
+  }
+  to {
+    bottom: -100%;
+  }
+} 
+.home-text-reveal-wrapper {
+  width: 100%;
+  height: 36px;
+  overflow: hidden;
+  position: relative;
+  background-color: transparent;
+  visibility: hidden;  
+  opacity: 0;  
+  transition: visibility 0s;
+}
+
+.home-text-reveal-wrapper.visible {
+  visibility: visible;
+  opacity: 1; 
+}
+
+.home-text-reveal {
+  position: absolute;
+  bottom: -100%;
+  width: 100%;
+  animation: slideUp 1s cubic-bezier(0.15, 0.55, 0.2, 1) forwards;
+}
+
+.home-text-conceal {
+  position: absolute;
+  bottom: -100%;
+  width: 100%;
+  animation: slideDown 1s cubic-bezier(0.15, 0.55, 0.2, 1) forwards;
+} */
+
+@keyframes waveSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes waveSlideUp2 {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+.wave-container {
+  display: inline-flex;
+  overflow: hidden;
+}
+
+.wave-letter {
+  display: inline-block;
+  transform: translateY(100%); 
+  opacity: 0;
+  transition: transform 0s linear, opacity 0s linear; 
+}
+
+.wave-reveal {
+  animation: waveSlideUp 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  opacity: 1; 
+}
+
+.wave-conceal {
+  animation: waveSlideUp2 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 1;
+}
+
+.wave-reveal2 {
+  animation: waveSlideUp 1s cubic-bezier(0.65, 0.55, 0.36, 1) forwards;
+  opacity: 1; 
+}
+
+.wave-conceal2 {
+  animation: waveSlideUp2 1s cubic-bezier(0.65, 0.55, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 1;
+}

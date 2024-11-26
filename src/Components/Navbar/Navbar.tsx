@@ -140,7 +140,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             setNavOnScreen(false);
             setIsAnimatingNav(false);
           }, 700);
-        }, 700);
+        }, 680);
       } else {
         // Open Nav
         document.body.style.overflow = "hidden";
@@ -168,7 +168,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     <>
       <div
         className="w-[100vw] h-[88px] fixed z-[910] flex justify-between lg:px-[32px] px-[18px]"
-        style={{ backgroundColor: "transparent", opacity: firstPageLoad ? 1 : 0, transition: "opacity 1.2s ease-in-out"}}
+        style={{ backgroundColor: "transparent", opacity: firstPageLoad ? 1 : 0, transition: "opacity 0.9s ease-in-out"}}
       >
         <div
           className="cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"

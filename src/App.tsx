@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import Home from "./Pages/Home/Home";
+import Home from "./Pages/Home/Home"
 import About from "./Pages/About/About";
 import Projects from "./Pages/Projects/Projects";
 import Navbar from "./Components/Navbar/Navbar";
