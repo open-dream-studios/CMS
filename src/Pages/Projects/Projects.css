@@ -1,3 +1,34 @@
-.container-query {
-  container-type: size;
+.project-container {
+  display: inline-flex;
+  overflow: hidden;
+  background-color: red;
+}
+
+.project-letter {
+  display: inline-block;
+  transform: translateY(100%); 
+  opacity: 0;
+  transition: transform 0s linear, opacity 0s linear; 
+}
+
+/* Translate Up */
+
+.project-reveal {
+  animation: waveSlideUp 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  opacity: 0.8; 
+}
+
+.project-conceal {
+  animation: projectSlideUp 0.8s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 0.8;
+}
+
+@keyframes projectSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }

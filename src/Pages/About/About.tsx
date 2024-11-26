@@ -12,7 +12,7 @@ const About: React.FC<PageProps> = ({ navigate }) => (
       alignItems: "center",
     }}
   >
-    <h1>About Page</h1>
+    <h1 onClick={()=>{navigate("projects/provence")}}>GO TO PROVENCE</h1>
   </div>
 );
 

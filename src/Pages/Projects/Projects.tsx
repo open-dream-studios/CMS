@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { PageProps } from "../../App";
+import React, { useEffect, useState } from "react";
+import { IncomingPage, Page, PageProps } from "../../App";
 import appData from "../../app-details.json";
 import Cover1 from "./ProjectCovers/Cover1";
 import Cover2 from "./ProjectCovers/Cover2";
@@ -14,12 +14,48 @@ import Cover10 from "./ProjectCovers/Cover10";
 import Cover11 from "./ProjectCovers/Cover11";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";
+import ProjectsPage from "./ProjectsPage/ProjectsPage";
 
-const Projects: React.FC<PageProps> = ({ navigate }) => {
+export interface ProjectsPageProps {
+  navigate: (page: Page) => void;
+  page: Page | IncomingPage;
+  currentPage: boolean;
+}
+
+const Projects: React.FC<ProjectsPageProps> = ({
+  navigate,
+  page,
+  currentPage,
+}) => {
   const projects = appData.pages.projects;
+  const projectsList = projects.map((item) => item.link);
   const projects_count = appData.pages.projects.length;
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [coversVisible, setCoversVisible] = useState(false);
+  const [titleAnimation, setTitleAnimation] = useState(true);
+  const [titlesVisible, setTitlesVisible] = useState(false);
+
+  useEffect(() => {
+    if (currentPage) {
+      if (page !== null) {
+        const targetPage = page.split("/")[1];
+        if (projectsList.includes(targetPage)) {
+          setSelectedProject(
+            projectsList.findIndex((item) => item === targetPage)
+          );
+          setHoveredIndex(null);
+          setCoversVisible(false);
+          setTitleAnimation(false);
+          setTitlesVisible(true);
+        }
+      } else {
+        setTitleAnimation(true);
+        setCoversVisible(true);
+        setTitlesVisible(true);
+      }
+    }
+  }, [currentPage, page, projectsList]);
 
   const covers = [
     Cover1,
@@ -36,37 +72,66 @@ const Projects: React.FC<PageProps> = ({ navigate }) => {
   ];
 
   return (
-    <div className="min-h-[100vh] w-[100vw] flex flex-row">
+    <div className="min-h-[100vh] w-[100vw] flex">
       <div
         className="mt-[75px] h-[calc(100vh-75px)] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]"
         style={{
-          backgroundColor: "pink",
+          backgroundColor: "transparent",
         }}
       >
         <div
-          className="w-[300px] sm:w-[350px] md:w-[400px] container-query min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
+          className="w-[300px] sm:w-[350px] md:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
           style={{
-            backgroundColor: "red",
+            backgroundColor: "transparent",
           }}
         >
           <div
             style={{
-              transform: selectedProject === null ? "none" : "scale(0.5)",
-              transition: "transform 1s cubic-bezier(0.6, 0.05, 0.3, 1",
+              transform: selectedProject === null ? "none" : "scale(0.6)",
+              transition: titleAnimation
+                ? "transform 1s cubic-bezier(0.6, 0.05, 0.3, 1"
+                : "none",
               transformOrigin: "left",
             }}
-            className="caster cursor-pointer"
+            className="caster cursor-pointer flex flex-col"
           >
             {projects.map((item, index) => {
               return (
                 <div
-                  className="white-dim text-[11cqw] leading-[14cqw]"
+                  className="white-dim text-[30px] leading-[38px] md:text-[37px] md:leading-[46px] lg:text-[46px] lg:leading-[59px]"
                   key={index}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  onClick={() => setSelectedProject(index)}
+                  onMouseEnter={() => {
+                    if (selectedProject === null) {
+                      setHoveredIndex(index);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (selectedProject === null) {
+                      setHoveredIndex(null);
+                    }
+                  }}
+                  onClick={() => {
+                    setSelectedProject(index);
+                    navigate("projects/" + projects[index].link);
+                  }}
                 >
-                  {item.title}
+                  <div
+                    className={` ${
+                      titlesVisible ? "visible" : "hidden"
+                    }`}
+                  >
+                    <div className="wave-container">
+                      <div
+                        key={index}
+                        className={`wave-letter  ${
+                          titlesVisible ? "wave-reveal2" : ""
+                        }`}
+                        style={{animationDelay: `${Math.pow(index, 0.75) * 0.045}s`}}
+                      >
+                        {item.title}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -74,11 +139,11 @@ const Projects: React.FC<PageProps> = ({ navigate }) => {
         </div>
       </div>
 
-      <div
-        className="min-h-[100vh] sm:flex hidden px-[calc(30px+3vw)] pt-[100px]"
-        style={{ backgroundColor: "darkgreen", flex: 1 }}
-      >
-        {selectedProject === null && (
+      {coversVisible && (
+        <div
+          className="w-[calc(98vw-310px)] sm:w-[calc(98vw-360px)] md:w-[calc(98vw-410px) min-h-[100vh] sm:flex hidden px-[calc(30px+3vw)] pt-[100px]"
+          style={{ backgroundColor: "lightblue" }}
+        >
           <div
             className="w-[100%] h-[auto] relative"
             style={{ backgroundColor: "blue" }}
@@ -107,8 +172,8 @@ const Projects: React.FC<PageProps> = ({ navigate }) => {
               )}
             </AnimatePresence>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

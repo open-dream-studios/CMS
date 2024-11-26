@@ -77,37 +77,48 @@
     },
     "projects": [
       {
-        "title": "Dreamlike flowers"
+        "title": "Dreamlike flowers",
+        "link": "dreamlikeflowers"
       },
       {
-        "title": "La Croisette"
+        "title": "La Croisette",
+        "link": "lacroisette"
       },
       {
-        "title": "Provence"
+        "title": "Provence",
+        "link": "provence"
       },
       {
-        "title": "Dolce Tara"
+        "title": "Dolce Tara",
+        "link": "dolcetara"
       },
       {
-        "title": "Cavalcade"
+        "title": "Cavalcade",
+        "link": "cavalcade"
       },
       {
-        "title": "Winter fantasy"
+        "title": "Winter fantasy",
+        "link": "winterfantasy"
       },
       {
-        "title": "Twisted classics"
+        "title": "Twisted classics",
+        "link": "twistedclassics"
       },
       {
-        "title": "Mix it up"
+        "title": "Mix it up",
+        "link": "mixitup"
       },
       {
-        "title": "Cyanotype"
+        "title": "Cyanotype",
+        "link": "cyanotype"
       },
       {
-        "title": "Summer breeze"
+        "title": "Summer breeze",
+        "link": "summerbreeze"
       },
       {
-        "title": "Prairie & Co"
+        "title": "Prairie & Co",
+        "link": "prairieco"
       }
     ]
   }
