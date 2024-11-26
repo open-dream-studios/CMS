@@ -273,7 +273,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
 
       <div
         ref={navOverlayBG}
-        className={`fixed z-[102] min-h-[500px] top-0 left-0 md:hidden flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
+        className={`fixed z-[701] min-h-[500px] top-0 left-0 md:hidden flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
         style={{
           backgroundColor: "white",
           transition: "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
@@ -282,7 +282,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       ></div>
 
       <div
-        className={`fixed z-[102] min-h-[500px] top-0 left-0 md:hidden 
+        className={`fixed z-[701] min-h-[500px] top-0 left-0 md:hidden 
           ${navOnScreen ? "flex" : "hidden"}
           w-[100vw] h-[calc(100vh-20px)] mt-[20px] items-center justify-center pl-[20px]`}
         style={{ backgroundColor: "transparent" }}

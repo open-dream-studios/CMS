@@ -20,12 +20,14 @@ export interface ProjectsPageProps {
   navigate: (page: Page) => void;
   page: Page | IncomingPage;
   currentPage: boolean;
+  animate: boolean;
 }
 
 const Projects: React.FC<ProjectsPageProps> = ({
   navigate,
   page,
   currentPage,
+  animate,
 }) => {
   const projects = appData.pages.projects;
   const projectsList = projects.map((item) => item.link);
@@ -35,9 +37,14 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [coversVisible, setCoversVisible] = useState(false);
   const [titleAnimation, setTitleAnimation] = useState(true);
   const [titlesVisible, setTitlesVisible] = useState(currentPage);
-  const [animateWave, setAimateWave] = useState(!currentPage);
+  const [animateWave, setAnimateWave] = useState(false);
 
   useEffect(() => {
+    console.log(animate)
+    if (animate === true) {
+      setAnimateWave (true)
+    }
+
     if (currentPage) {
       if (page !== null) {
         const targetPage = page.split("/")[1];
@@ -54,8 +61,8 @@ const Projects: React.FC<ProjectsPageProps> = ({
         setCoversVisible(true);
         setTitlesVisible(true);
       }
-    }
-  }, [currentPage, page, projectsList]);
+    } 
+  }, [animate, currentPage, page, projectsList]);
 
   const covers = [
     Cover1,
@@ -127,7 +134,8 @@ const Projects: React.FC<ProjectsPageProps> = ({
                         className={`${selectedProject === null ? "white-dim" : "select-dark"} project-letter  ${
                           titlesVisible && animateWave ? "project-reveal" : ""
                         }`}
-                        style={{animationDelay: `${Math.pow(index, 0.75) * 0.045}s`, 
+                        style={{
+                          // animationDelay: animateWave? `${Math.pow(index, 0.75) * 0.045}s` : "none", 
                           color: animateWave? "black" : selectedProject === index ? "black" : "#747474",
                           transform: animateWave ? "translateY(%100)" :  "translateY(0)"}}
                       >

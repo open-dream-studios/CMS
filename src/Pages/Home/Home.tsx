@@ -76,12 +76,10 @@ const Home: React.FC<HomePageProps> = ({
       const deltaY = event.deltaY;
 
       if (readyToTransition) {
-        // console.log(deltaY);
         if (deltaY > 30) {
           if (readyToTransition.current) {
             handleNextCover(event);
           } else {
-            console.log(readyToRetrigger.current);
             if (nextMove && !nextMove.current[1] && readyToRetrigger.current) {
               nextMove.current = [1, true];
               readyToRetrigger.current = false;
@@ -91,16 +89,13 @@ const Home: React.FC<HomePageProps> = ({
           if (readyToTransition.current) {
             handlePrevCover(event);
           } else {
-            console.log(readyToRetrigger.current, "prev", !nextMove.current[1]);
             if (nextMove && !nextMove.current[1] && readyToRetrigger.current) {
               nextMove.current = [-1, true];
               readyToRetrigger.current = false;
             }
           }
         } else if (deltaY < 4 && deltaY > -4) {
-          console.log("about to set", readyToRetrigger.current, animatingRef.current)
           if (!readyToRetrigger.current && !nextMove.current[1] && (animatingRef.current[0] !== animatingRef.current[1])) {
-              console.log("ANIMATING, and less than 4 so ENABLE TRIGGER")
               readyToRetrigger.current = true;
           } 
           if (readyToRetrigger.current && (animatingRef.current[0] === animatingRef.current[1])) {
@@ -652,3 +647,5 @@ const Home: React.FC<HomePageProps> = ({
 };
 
 export default Home;
+
+

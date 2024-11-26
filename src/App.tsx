@@ -25,7 +25,11 @@ export interface PageProps {
   navigate: (page: Page) => void;
 }
 
-const SlideUpPage: React.FC<SlideUpPageProps> = ({ children, isVisible, full }) => (
+const SlideUpPage: React.FC<SlideUpPageProps> = ({
+  children,
+  isVisible,
+  full,
+}) => (
   <motion.div
     initial={{ y: "100%" }}
     animate={isVisible ? { y: "0%" } : {}}
@@ -38,7 +42,7 @@ const SlideUpPage: React.FC<SlideUpPageProps> = ({ children, isVisible, full }) 
       width: "100%",
       height: "100%",
       background: full ? "white" : "transparent",
-      zIndex: isVisible ? 103 : 0, // Ensure the incoming page overlays the current one
+      zIndex: isVisible ? 702 : 0, // Ensure the incoming page overlays the current one
     }}
   >
     {children}
@@ -67,8 +71,10 @@ const App = () => {
   }, [currentPage, location, projectsList]);
 
   const [disableTransition, setDisableTransition] = useState(false);
+  const [cachedCurrent, setCachedCurrent] = useState<Page>("home");
   const navigate = (page: Page) => {
     if (page === currentPage) return;
+    const newVal = currentPage
     setIncomingPage(page); // Set the incoming page to trigger animation
     setTimeout(() => {
       setCurrentPage(page); // Once animation is done, switch to the new page
@@ -79,6 +85,7 @@ const App = () => {
       setTimeout(() => {
         setDisableTransition(false);
       }, 10);
+      setCachedCurrent(newVal)
     }, 1000); // Match this timeout to the animation duration
   };
 
@@ -98,13 +105,12 @@ const App = () => {
             !(
               incomingPage.startsWith("projects/") &&
               projectsList.includes(incomingPage.split("/")[1]) &&
-              incomingPage.split("/").length === 2 && ((
-                currentPage === "projects"
-              ) || (
-              currentPage.startsWith("projects/") &&
-              projectsList.includes(currentPage.split("/")[1]) &&
-              currentPage.split("/").length === 2))
-            ) 
+              incomingPage.split("/").length === 2 &&
+              (currentPage === "projects" ||
+                (currentPage.startsWith("projects/") &&
+                  projectsList.includes(currentPage.split("/")[1]) &&
+                  currentPage.split("/").length === 2))
+            )
               ? { y: "-15%" }
               : { y: 0 }
           }
@@ -131,7 +137,12 @@ const App = () => {
             />
           )}
           {currentPage === "projects" && (
-            <Projects navigate={navigate} page={null} currentPage={true} />
+            <Projects
+              navigate={navigate}
+              page={null}
+              currentPage={true}
+              animate={true}
+            />
           )}
           {currentPage === "about" && <About navigate={navigate} />}
           {currentPage === "archives" && <Archives navigate={navigate} />}
@@ -143,6 +154,17 @@ const App = () => {
                   navigate={navigate}
                   page={currentPage}
                   currentPage={true}
+                  animate={incomingPage ? (
+                    incomingPage.startsWith("projects/") &&
+                    projectsList.includes(incomingPage.split("/")[1]) &&
+                    incomingPage.split("/").length === 2 &&
+                    (currentPage !== "projects" &&
+                      !(currentPage.startsWith("projects/") &&
+                        projectsList.includes(currentPage.split("/")[1]) &&
+                        currentPage.split("/").length === 2))) : (!(cachedCurrent.startsWith("projects/") &&
+                    projectsList.includes(cachedCurrent.split("/")[1]) && 
+                    cachedCurrent.split("/").length === 2) && cachedCurrent !== "projects")
+                  }
                 />
 
                 <motion.div
@@ -191,25 +213,38 @@ const App = () => {
         )}
         {incomingPage === "projects" && (
           <SlideUpPage isVisible full={true}>
-            <Projects navigate={navigate} page={null} currentPage={false} />
+            <Projects
+              navigate={navigate}
+              page={null}
+              currentPage={false}
+              animate={false}
+            />
           </SlideUpPage>
         )}
         {incomingPage?.startsWith("projects/") &&
           projectsList.includes(incomingPage.split("/")[1]) &&
           incomingPage.split("/").length === 2 && (
-            <>
+            <div className="z-[702]">
               <Projects
                 navigate={navigate}
                 page={incomingPage}
                 currentPage={false}
+                animate={false}
               />
-              <SlideUpPage isVisible full={!((
-                    currentPage.startsWith("projects/") &&
-                    projectsList.includes(currentPage.split("/")[1]) &&
-                    currentPage.split("/").length === 2) || currentPage === "projects")}>
+              <SlideUpPage
+                isVisible
+                full={
+                  !(
+                    (currentPage.startsWith("projects/") &&
+                      projectsList.includes(currentPage.split("/")[1]) &&
+                      currentPage.split("/").length === 2) ||
+                    currentPage === "projects"
+                  )
+                }
+              >
                 <ProjectsPage navigate={navigate} page={incomingPage} />
               </SlideUpPage>
-            </>
+            </div>
           )}
         {incomingPage === "about" && (
           <SlideUpPage isVisible full={true}>
