@@ -79,7 +79,7 @@ const Home: React.FC<HomePageProps> = ({
             if (readyToTransition) {
               readyToTransition.current = true;
             }
-          }, 1810);
+          }, 1910);
         } else if (deltaY < -20) {
           handlePrevCover(event);
           readyToTransition.current = false;
@@ -87,7 +87,7 @@ const Home: React.FC<HomePageProps> = ({
             if (readyToTransition) {
               readyToTransition.current = true;
             }
-          }, 1810);
+          }, 1910);
         }
       }
     };
@@ -224,11 +224,13 @@ const Home: React.FC<HomePageProps> = ({
           setCoverTitle(text);
 
           setTimeout(() => {
-            setIsVisible(true);
             setIsDisplayed(true);
-            setIsNextVisible(false);
-            setIsNextDisplayed(false);
-            setIsRevealingNext([direction, true]);
+            setTimeout(() => {
+              setIsVisible(true);
+              setIsNextVisible(false);
+              setIsNextDisplayed(false);
+              setIsRevealingNext([direction, true]);
+            }, 100);
           }, 1000);
         }, 600);
       }, 100);
@@ -249,7 +251,7 @@ const Home: React.FC<HomePageProps> = ({
         if (readyToTransition) {
           readyToTransition.current = true;
         }
-      }, 1810);
+      }, 1910);
     }
   };
 
