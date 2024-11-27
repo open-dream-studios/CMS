@@ -19,6 +19,7 @@ export interface SlideUpPageProps {
   isVisible: boolean;
   full: boolean;
   zIdx: number;
+  nextColor: string;
 }
 
 export interface SlideUpProjectPageProps {
@@ -39,6 +40,7 @@ const SlideUpPage: React.FC<SlideUpPageProps> = ({
   isVisible,
   full,
   zIdx,
+  nextColor,
 }) => {
   return (
     <motion.div
@@ -52,7 +54,7 @@ const SlideUpPage: React.FC<SlideUpPageProps> = ({
         left: 0,
         width: "100%",
         height: "100%",
-        background: full ? "white" : "transparent",
+        background: full ? nextColor : "transparent",
         zIndex: isVisible ? zIdx : 0,
       }}
     >
@@ -138,7 +140,7 @@ const App = () => {
       setDisableTransition(true);
       setTimeout(() => {
         setDisableTransition(false);
-      }, 10);
+      }, 50);
       if (
         page.startsWith("projects/") &&
         projectsList.includes(page.split("/")[1]) &&
@@ -283,7 +285,7 @@ const App = () => {
 
         {/* Animate the incoming page */}
         {incomingPage === "home" && (
-          <SlideUpPage zIdx={702} isVisible full={true}>
+          <SlideUpPage zIdx={702} isVisible full={true} nextColor={"white"}>
             <Home
               layoutOrder={layoutOrder}
               navigate={navigate}
@@ -292,7 +294,7 @@ const App = () => {
           </SlideUpPage>
         )}
         {incomingPage === "projects" && (
-          <SlideUpPage zIdx={702} isVisible full={true}>
+          <SlideUpPage zIdx={702} isVisible full={true} nextColor={"white"}>
             <Projects
               navigate={navigate}
               page={null}
@@ -307,7 +309,7 @@ const App = () => {
             <>
               <div
                 className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
-                style={{ backgroundColor: projectColorsPrev[0] }}
+                style={{ backgroundColor: projectColorsPrev[0]}}
               ></div>
 
               <Projects
@@ -322,13 +324,21 @@ const App = () => {
                 zIdx={702}
                 isVisible
                 full={
-                  !(
+                  (
                     (currentPage.startsWith("projects/") &&
                       projectsList.includes(currentPage.split("/")[1]) &&
                       currentPage.split("/").length === 2) ||
                     currentPage === "projects"
-                  )
+                  ) ? false : true
                 }
+                 nextColor={
+                  (
+                    (currentPage.startsWith("projects/") &&
+                      projectsList.includes(currentPage.split("/")[1]) &&
+                      currentPage.split("/").length === 2) ||
+                    currentPage === "projects"
+                  ) ? "white" : projectColorsNext[0]
+                 }
               >
                 <ProjectsPage
                   navigate={navigate}
@@ -339,12 +349,12 @@ const App = () => {
             </>
           )}
         {incomingPage === "about" && (
-          <SlideUpPage isVisible zIdx={702} full={true}>
+          <SlideUpPage isVisible zIdx={702} full={true} nextColor={"white"}>
             <About navigate={navigate} />
           </SlideUpPage>
         )}
         {incomingPage === "archives" && (
-          <SlideUpPage isVisible zIdx={702} full={true}>
+          <SlideUpPage isVisible zIdx={702} full={true} nextColor={"white"}>
             <Archives navigate={navigate} />
           </SlideUpPage>
         )}
