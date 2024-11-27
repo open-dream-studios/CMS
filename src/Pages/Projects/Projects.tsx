@@ -34,7 +34,6 @@ const Projects: React.FC<ProjectsPageProps> = ({
 }) => {
   const projects = appData.pages.projects;
   const projectsList = projects.map((item) => item.link);
-  // const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
   const { projectColors, setProjectColors } = useProjectColorsState();
   const { projectColorsNext, setProjectColorsNext } =
@@ -47,17 +46,15 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [titleAnimation, setTitleAnimation] = useState(true);
   const [titlesVisible, setTitlesVisible] = useState(currentPage);
   const [animateWave, setAnimateWave] = useState(false);
+  const [animateWaveTrigger, setAnimateWaveTrigger] = useState(false);
   const [canSelectProject, setCanSelectProject] = useState(true);
-
-  useEffect(() => {
-    if (page === null) {
-      setSelectedProject(null);
-    }
-  }, [page, setSelectedProject]);
 
   useEffect(() => {
     if (animate === true) {
       setAnimateWave(true);
+      setTimeout(()=>{
+        setAnimateWaveTrigger(true)
+      },200)
     }
 
     if (currentPage) {
@@ -164,16 +161,16 @@ const Projects: React.FC<ProjectsPageProps> = ({
                         className={`${
                           selectedProject === null ? "white-dim" : "select-dark"
                         } project-letter  ${
-                          titlesVisible && animateWave ? "project-reveal" : ""
+                          titlesVisible && animate ? "project-reveal" : ""
                         }`}
                         style={{
-                          // animationDelay: animateWave? `${Math.pow(index, 0.75) * 0.045}s` : "none",
-                          color: animateWave
+                          animationDelay: animateWave? `${Math.pow(index, 0.75) * 0.045}s` : "none",
+                          color: animate
                             ? "black"
                             : selectedProject === index
                             ? "black"
                             : "#747474",
-                          transform: animateWave
+                          transform: animate
                             ? "translateY(%100)"
                             : "translateY(0)",
                         }}

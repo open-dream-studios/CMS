@@ -15,7 +15,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ navigate, page, slideUpComp
 
   return (
     <div
-      className={`right-0 top-0 w-[100vw] min-h-[100vh] sm:flex hidden px-[calc(30px+3vw)] pt-[100px]`}
+      className={`right-0 top-0 w-[100vw] min-h-[100vh] flex px-[calc(30px+3vw)] pt-[100px]`}
       style={{
         pointerEvents: "none",
         backgroundColor: "transparent",
@@ -23,7 +23,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ navigate, page, slideUpComp
       }}
     >
       <div
-        className={`absolute right-0 top-0 w-[calc(98vw-190px)] sm:w-[calc(98vw-220px)] md:w-[calc(98vw-250px)] min-h-[100vh] sm:flex hidden px-[calc(30px+3vw)] pt-[100px]`}
+        className={`absolute right-0 top-0 w-[100vw] sm:w-[calc(98vw-220px)] md:w-[calc(98vw-250px)] min-h-[100vh] flex px-[calc(30px+3vw)] pt-[100px]`}
         style={{
           pointerEvents: "all",
           backgroundColor: slideUpComponent ? projectColorsNext[0] : projectColors[0],

@@ -13,6 +13,7 @@ import appData from "./app-details.json";
 import useProjectColorsState from "./store/useProjectColorsStore";
 import useProjectColorsNextState from "./store/useProjectColorsNextStore";
 import useProjectColorsPrevState from "./store/useProjectColorsPrevStore";
+import useCurrentPageState from "./store/useCurrentPageStore";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -93,7 +94,7 @@ const SlideUpProjectPage: React.FC<SlideUpProjectPageProps> = ({
 };
 
 const App = () => {
-  const [currentPage, setCurrentPage] = useState<Page>("home");
+  // const [currentPage, setCurrentPage] = useState<Page>("home");
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
   const navigateTo = useNavigate();
   const location = useLocation();
@@ -101,21 +102,35 @@ const App = () => {
   const { projectColors, setProjectColors } = useProjectColorsState();
   const { projectColorsNext, setProjectColorsNext } = useProjectColorsNextState();
   const { projectColorsPrev, setProjectColorsPrev } = useProjectColorsPrevState();
+  const { currentPage, setCurrentPage } = useCurrentPageState();
 
   const projects = appData.pages.projects;
   const projectsList = projects.map((item) => item.link);
 
   useEffect(() => {
-    const path = location.pathname.replace("/", "") || "home";
-    if (
-      ["home", "about", "projects", "archives"].includes(path) ||
-      (path.startsWith("projects/") &&
-        projectsList.includes(path.split("/")[1]) &&
-        path.split("/").length === 2)
-    ) {
-      setCurrentPage(path as Page);
-    }
-  }, [currentPage, location, projectsList]);
+      const path = location.pathname.replace("/", "") || "home";
+      if (
+        path !== currentPage && // Prevent redundant updates
+        (["home", "about", "projects", "archives"].includes(path) ||
+          (path.startsWith("projects/") &&
+            projectsList.includes(path.split("/")[1]) &&
+            path.split("/").length === 2))
+      ) {
+        setCurrentPage(path as Page);
+      }
+  }, [location, projectsList]);
+
+  // useEffect(() => {
+  //   const path = location.pathname.replace("/", "") || "home";
+  //   if (
+  //     ["home", "about", "projects", "archives"].includes(path) ||
+  //     (path.startsWith("projects/") &&
+  //       projectsList.includes(path.split("/")[1]) &&
+  //       path.split("/").length === 2)
+  //   ) {
+  //     setCurrentPage(path as Page);
+  //   }
+  // }, [currentPage, location, projectsList]);
 
   const [disableTransition, setDisableTransition] = useState(false);
   const [cachedCurrent, setCachedCurrent] = useState<Page>("home");
@@ -123,6 +138,7 @@ const App = () => {
 
   const navigate = (page: Page) => {
     if (page === currentPage) return;
+    
     const newVal = currentPage;
     if (
       page.startsWith("projects/") &&

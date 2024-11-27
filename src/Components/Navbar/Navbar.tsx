@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Page } from "../../App";
 import "./Navbar.css";
 import { useLocation } from "react-router-dom";
+import useCurrentPageState from "../../store/useCurrentPageStore";
+import useSelectedProjectState from "../../store/useSelectedProjectStore";
 
 interface PageProps {
   navigate: (page: Page) => void;
@@ -24,6 +26,9 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const [dropdown1Display, setDropdown1Display] = useState(false);
   const [dropdown2Display, setDropdown2Display] = useState(false);
   const [dropdown3Display, setDropdown3Display] = useState(false);
+
+  const { currentPage, setCurrentPage } = useCurrentPageState();
+  const { selectedProject, setSelectedProject } = useSelectedProjectState();
 
   function showText() {
     setTimeout(() => {
@@ -65,7 +70,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       if (window.innerWidth >= 768 && isOpenRef && isOpenRef.current) {
         isOpenRef.current = false;
         setNavOpen(false);
-        setNavOpenSpin(false)
+        setNavOpenSpin(false);
         setNavOnScreen(false);
         hideText();
         document.body.style.overflow = "";
@@ -82,17 +87,17 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     if (isOpenRef && isOpenRef.current) {
       isOpenRef.current = false;
       setNavOpen(false);
-      setNavOpenSpin(false)
+      setNavOpenSpin(false);
       setNavOnScreen(false);
       document.body.style.overflow = "";
     }
   }
 
   function selectedPage() {
-    setCanSelectPage(false) 
-    setTimeout(()=>{
-      setCanSelectPage(true)
-    },1000)
+    setCanSelectPage(false);
+    setTimeout(() => {
+      setCanSelectPage(true);
+    }, 1000);
   }
 
   function clickedDropdownPage(newPage: string) {
@@ -105,7 +110,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       return;
     }
 
-    setNavOpenSpin(false)
+    setNavOpenSpin(false);
     hideText();
 
     if (navOverlayBG && navOverlayBG.current !== null) {
@@ -133,7 +138,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         document.body.style.overflow = "";
         hideText();
         setIsAnimatingNav(true);
-        setNavOpenSpin(newVal)
+        setNavOpenSpin(newVal);
         setTimeout(() => {
           setNavOpen(newVal);
           setTimeout(() => {
@@ -145,7 +150,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         // Open Nav
         document.body.style.overflow = "hidden";
         setNavOpen(newVal);
-        setNavOpenSpin(newVal)
+        setNavOpenSpin(newVal);
         showText();
         setNavOnScreen(true);
         setIsAnimatingNav(true);
@@ -158,11 +163,11 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   }
 
   const [firstPageLoad, setFirstPageLoad] = useState(false);
-  useEffect(()=>{
-    setTimeout(()=>{
-      setFirstPageLoad(true); 
-    },200)
-  },[])
+  useEffect(() => {
+    setTimeout(() => {
+      setFirstPageLoad(true);
+    }, 200);
+  }, []);
 
   const handleSendNewEmailClick = () => {
     const sendEmail = "jessshul27@gmail.com";
@@ -173,7 +178,11 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     <>
       <div
         className="w-[100vw] h-[88px] fixed z-[910] flex justify-between lg:px-[32px] px-[18px]"
-        style={{ backgroundColor: "transparent", opacity: firstPageLoad ? 1 : 0, transition: "opacity 0.9s ease-in-out"}}
+        style={{
+          backgroundColor: "transparent",
+          opacity: firstPageLoad ? 1 : 0,
+          transition: "opacity 0.9s ease-in-out",
+        }}
       >
         <div
           className="select-none cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
@@ -181,8 +190,8 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             if (canSelectPage) {
               if (navOpen) {
                 clickedDropdownPage("home");
-              } 
-              selectedPage()
+              }
+              selectedPage();
               navigate("home");
             }
           }}
@@ -192,11 +201,17 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         <div className="mt-[32px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]">
           <div className="select-none text-[14px]">PHOTOGRAPHER & DESIGNER</div>
           <div className="flex flex-row gap-[6px] text-[14px] h-[15px]">
-            <div onClick={handleSendNewEmailClick} className="nav-item cursor-pointer">
+            <div
+              onClick={handleSendNewEmailClick}
+              className="nav-item cursor-pointer"
+            >
               JESSSHUL27@GMAIL.COM
             </div>
             <p className="select-none text-[13px] mt-[-1.3px] font-[400]">/</p>
-            <a className="select-none nav-item cursor-pointer" href="https://www.instagram.com/jessica.shulman.design/">
+            <a
+              className="select-none nav-item cursor-pointer"
+              href="https://www.instagram.com/jessica.shulman.design/"
+            >
               INSTAGRAM
             </a>
           </div>
@@ -206,7 +221,12 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
             onClick={() => {
               if (canSelectPage) {
-                selectedPage()
+                selectedPage();
+                if (currentPage !== "projects") {
+                  setTimeout(() => {
+                    setSelectedProject(null);
+                  }, 1000);
+                }
                 navigate("projects");
               }
             }}
@@ -217,7 +237,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
             onClick={() => {
               if (canSelectPage) {
-                selectedPage()
+                selectedPage();
                 navigate("about");
               }
             }}
@@ -228,7 +248,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
             onClick={() => {
               if (canSelectPage) {
-                selectedPage()
+                selectedPage();
                 navigate("archives");
               }
             }}
@@ -299,7 +319,15 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             <div
               onClick={() => {
                 clickedDropdownPage("projects");
-                navigate("projects");
+                if (canSelectPage) {
+                  selectedPage();
+                  if (currentPage !== "projects") {
+                    setTimeout(() => {
+                      setSelectedProject(null);
+                    }, 1000);
+                  }
+                  navigate("projects");
+                }
               }}
               className={`klivora ${
                 isRevealing1 ? "text-reveal" : "text-conceal"
