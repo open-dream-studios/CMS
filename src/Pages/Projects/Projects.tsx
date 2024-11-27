@@ -15,6 +15,9 @@ import Cover11 from "./ProjectCovers/Cover11";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";
 import ProjectsPage from "./ProjectsPage/ProjectsPage";
+import useProjectColorsState from "../../store/useProjectColorsStore";
+import useProjectColorsNextState from "../../store/useProjectColorsNextStore";
+import useProjectColorsPrevState from "../../store/useProjectColorsPrevStore";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -40,7 +43,6 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [animateWave, setAnimateWave] = useState(false);
 
   useEffect(() => {
-    console.log(animate)
     if (animate === true) {
       setAnimateWave (true)
     }
@@ -78,13 +80,14 @@ const Projects: React.FC<ProjectsPageProps> = ({
     Cover11,
   ];
 
+  const { projectColors, setProjectColors } = useProjectColorsState();
+  const { projectColorsNext, setProjectColorsNext } = useProjectColorsNextState();
+  const { projectColorsPrev, setProjectColorsPrev } = useProjectColorsPrevState();
+
   return (
     <div className="min-h-[100vh] w-[100vw] flex">
       <div
-        className="mt-[75px] h-[calc(100vh-75px)] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]"
-        style={{
-          backgroundColor: "transparent",
-        }}
+        className="py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]"
       >
         <div
           className="w-[300px] sm:w-[350px] md:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
@@ -119,8 +122,15 @@ const Projects: React.FC<ProjectsPageProps> = ({
                     }
                   }}
                   onClick={() => {
+                    const currentProj = selectedProject
                     setSelectedProject(index);
                     navigate("projects/" + projects[index].link);
+
+                    setProjectColorsNext([item.background_color, item.text_color])
+                    setProjectColorsPrev([projects[currentProj? currentProj : 0].background_color, projects[currentProj? currentProj : 0].text_color])
+                    setTimeout(() => {
+                      setProjectColors([item.background_color, item.text_color])
+                    }, 1000);
                   }}
                 >
                   <div

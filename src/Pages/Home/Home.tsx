@@ -76,7 +76,7 @@ const Home: React.FC<HomePageProps> = ({
       const deltaY = event.deltaY;
 
       if (readyToTransition) {
-        if (deltaY > 30) {
+        if (deltaY > 20) {
           if (readyToTransition.current) {
             handleNextCover(event);
           } else {

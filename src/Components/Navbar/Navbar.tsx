@@ -92,7 +92,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     setCanSelectPage(false) 
     setTimeout(()=>{
       setCanSelectPage(true)
-    },700)
+    },1000)
   }
 
   function clickedDropdownPage(newPage: string) {

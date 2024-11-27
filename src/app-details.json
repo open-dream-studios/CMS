@@ -78,47 +78,69 @@
     "projects": [
       {
         "title": "Dreamlike flowers",
-        "link": "dreamlikeflowers"
+        "link": "dreamlikeflowers",
+        "background_color": "white",
+        "text_color": "lightblue"
       },
       {
         "title": "La Croisette",
-        "link": "lacroisette"
+        "link": "lacroisette",
+        "background_color": "violet",
+        "text_color": "lightblue"
       },
       {
         "title": "Provence",
-        "link": "provence"
+        "link": "provence",
+        "background_color": "red",
+        "text_color": "lightblue"
       },
       {
         "title": "Dolce Tara",
-        "link": "dolcetara"
+        "link": "dolcetara",
+        "background_color": "green",
+        "text_color": "lightblue"
       },
       {
         "title": "Cavalcade",
-        "link": "cavalcade"
+        "link": "cavalcade",
+        "background_color": "violet",
+        "text_color": "lightblue"
       },
       {
         "title": "Winter fantasy",
-        "link": "winterfantasy"
+        "link": "winterfantasy",
+        "background_color": "violet",
+        "text_color": "lightblue"
       },
       {
         "title": "Twisted classics",
-        "link": "twistedclassics"
+        "link": "twistedclassics",
+        "background_color": "violet",
+        "text_color": "lightblue"
       },
       {
         "title": "Mix it up",
-        "link": "mixitup"
+        "link": "mixitup",
+        "background_color": "violet",
+        "text_color": "lightblue"
       },
       {
         "title": "Cyanotype",
-        "link": "cyanotype"
+        "link": "cyanotype",
+        "background_color": "violet",
+        "text_color": "lightblue"
       },
       {
         "title": "Summer breeze",
-        "link": "summerbreeze"
+        "link": "summerbreeze",
+        "background_color": "violet",
+        "text_color": "lightblue"
       },
       {
         "title": "Prairie & Co",
-        "link": "prairieco"
+        "link": "prairieco",
+        "background_color": "violet",
+        "text_color": "lightblue"
       }
     ]
   }

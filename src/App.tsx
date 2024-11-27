@@ -10,11 +10,20 @@ import Archives from "./Pages/Archives/Archives";
 import "./App.css";
 import ProjectsPage from "./Pages/Projects/ProjectsPage/ProjectsPage";
 import appData from "./app-details.json";
+import useProjectColorsState from "./store/useProjectColorsStore";
+import useProjectColorsNextState from "./store/useProjectColorsNextStore";
+import useProjectColorsPrevState from "./store/useProjectColorsPrevStore";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
   isVisible: boolean;
   full: boolean;
+  zIdx: number;
+}
+
+export interface SlideUpProjectPageProps {
+  isVisible: boolean;
+  zIdx: number;
 }
 
 // export type Page = "home" | "about" | "projects" | "archives";
@@ -29,31 +38,67 @@ const SlideUpPage: React.FC<SlideUpPageProps> = ({
   children,
   isVisible,
   full,
-}) => (
-  <motion.div
-    initial={{ y: "100%" }}
-    animate={isVisible ? { y: "0%" } : {}}
-    exit={{}}
-    transition={{ duration: 1, ease: [0.95, 0, 0.4, 1] }}
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      background: full ? "white" : "transparent",
-      zIndex: isVisible ? 702 : 0, // Ensure the incoming page overlays the current one
-    }}
-  >
-    {children}
-  </motion.div>
-);
+  zIdx,
+}) => {
+  return (
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={isVisible ? { y: "0%" } : {}}
+      exit={{}}
+      transition={{ duration: 1, ease: [0.95, 0, 0.4, 1] }}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        background: full ? "white" : "transparent",
+        zIndex: isVisible ? zIdx : 0,
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const SlideUpProjectPage: React.FC<SlideUpProjectPageProps> = ({
+  isVisible,
+  zIdx,
+}) => {
+  const { projectColors, setProjectColors } = useProjectColorsState();
+  const { projectColorsNext, setProjectColorsNext } =
+    useProjectColorsNextState();
+
+  return (
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={isVisible ? { y: "0%" } : {}}
+      exit={{}}
+      transition={{ duration: 1, ease: [0.95, 0, 0.4, 1] }}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        background: projectColorsNext[0],
+        // background: full ? "white" : "transparent",
+        // zIndex: isVisible ? zIdx : 0, // Ensure the incoming page overlays the current one
+        zIndex: 100,
+      }}
+    ></motion.div>
+  );
+};
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
   const navigateTo = useNavigate();
   const location = useLocation();
+
+  const { projectColors, setProjectColors } = useProjectColorsState();
+  const { projectColorsNext, setProjectColorsNext } = useProjectColorsNextState();
+  const { projectColorsPrev, setProjectColorsPrev } = useProjectColorsPrevState();
 
   const projects = appData.pages.projects;
   const projectsList = projects.map((item) => item.link);
@@ -72,9 +117,18 @@ const App = () => {
 
   const [disableTransition, setDisableTransition] = useState(false);
   const [cachedCurrent, setCachedCurrent] = useState<Page>("home");
+  const [sittingProject, setSittingProject] = useState(false);
+
   const navigate = (page: Page) => {
     if (page === currentPage) return;
-    const newVal = currentPage
+    const newVal = currentPage;
+    if (
+      page.startsWith("projects/") &&
+      projectsList.includes(page.split("/")[1]) &&
+      page.split("/").length === 2
+    ) {
+      setSittingProject(false);
+    }
     setIncomingPage(page); // Set the incoming page to trigger animation
     setTimeout(() => {
       setCurrentPage(page); // Once animation is done, switch to the new page
@@ -85,7 +139,16 @@ const App = () => {
       setTimeout(() => {
         setDisableTransition(false);
       }, 10);
-      setCachedCurrent(newVal)
+      if (
+        page.startsWith("projects/") &&
+        projectsList.includes(page.split("/")[1]) &&
+        page.split("/").length === 2
+      ) {
+        setSittingProject(true);
+      } else {
+        setSittingProject(false);
+      }
+      setCachedCurrent(newVal);
     }, 1000); // Match this timeout to the animation duration
   };
 
@@ -150,20 +213,33 @@ const App = () => {
             projectsList.includes(currentPage.split("/")[1]) &&
             currentPage.split("/").length === 2 && (
               <>
+                {sittingProject && (
+                  <div
+                    className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
+                    style={{ backgroundColor: projectColors[0] }}
+                  ></div>
+                )}
+
                 <Projects
                   navigate={navigate}
                   page={currentPage}
                   currentPage={true}
-                  animate={incomingPage ? (
-                    incomingPage.startsWith("projects/") &&
-                    projectsList.includes(incomingPage.split("/")[1]) &&
-                    incomingPage.split("/").length === 2 &&
-                    (currentPage !== "projects" &&
-                      !(currentPage.startsWith("projects/") &&
-                        projectsList.includes(currentPage.split("/")[1]) &&
-                        currentPage.split("/").length === 2))) : (!(cachedCurrent.startsWith("projects/") &&
-                    projectsList.includes(cachedCurrent.split("/")[1]) && 
-                    cachedCurrent.split("/").length === 2) && cachedCurrent !== "projects")
+                  animate={
+                    incomingPage
+                      ? incomingPage.startsWith("projects/") &&
+                        projectsList.includes(incomingPage.split("/")[1]) &&
+                        incomingPage.split("/").length === 2 &&
+                        currentPage !== "projects" &&
+                        !(
+                          currentPage.startsWith("projects/") &&
+                          projectsList.includes(currentPage.split("/")[1]) &&
+                          currentPage.split("/").length === 2
+                        )
+                      : !(
+                          cachedCurrent.startsWith("projects/") &&
+                          projectsList.includes(cachedCurrent.split("/")[1]) &&
+                          cachedCurrent.split("/").length === 2
+                        ) && cachedCurrent !== "projects"
                   }
                 />
 
@@ -195,7 +271,11 @@ const App = () => {
                     pointerEvents: "none",
                   }}
                 >
-                  <ProjectsPage navigate={navigate} page={currentPage} />
+                  <ProjectsPage
+                    navigate={navigate}
+                    page={currentPage}
+                    slideUpComponent={false}
+                  />
                 </motion.div>
               </>
             )}
@@ -203,7 +283,7 @@ const App = () => {
 
         {/* Animate the incoming page */}
         {incomingPage === "home" && (
-          <SlideUpPage isVisible full={true}>
+          <SlideUpPage zIdx={702} isVisible full={true}>
             <Home
               layoutOrder={layoutOrder}
               navigate={navigate}
@@ -212,7 +292,7 @@ const App = () => {
           </SlideUpPage>
         )}
         {incomingPage === "projects" && (
-          <SlideUpPage isVisible full={true}>
+          <SlideUpPage zIdx={702} isVisible full={true}>
             <Projects
               navigate={navigate}
               page={null}
@@ -224,14 +304,22 @@ const App = () => {
         {incomingPage?.startsWith("projects/") &&
           projectsList.includes(incomingPage.split("/")[1]) &&
           incomingPage.split("/").length === 2 && (
-            <div className="z-[702]">
+            <>
+              <div
+                className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
+                style={{ backgroundColor: projectColorsPrev[0] }}
+              ></div>
+
               <Projects
                 navigate={navigate}
                 page={incomingPage}
                 currentPage={false}
                 animate={false}
               />
+              <SlideUpProjectPage zIdx={100} isVisible></SlideUpProjectPage>
+
               <SlideUpPage
+                zIdx={702}
                 isVisible
                 full={
                   !(
@@ -242,17 +330,21 @@ const App = () => {
                   )
                 }
               >
-                <ProjectsPage navigate={navigate} page={incomingPage} />
+                <ProjectsPage
+                  navigate={navigate}
+                  page={incomingPage}
+                  slideUpComponent={true}
+                />
               </SlideUpPage>
-            </div>
+            </>
           )}
         {incomingPage === "about" && (
-          <SlideUpPage isVisible full={true}>
+          <SlideUpPage isVisible zIdx={702} full={true}>
             <About navigate={navigate} />
           </SlideUpPage>
         )}
         {incomingPage === "archives" && (
-          <SlideUpPage isVisible full={true}>
+          <SlideUpPage isVisible zIdx={702} full={true}>
             <Archives navigate={navigate} />
           </SlideUpPage>
         )}
