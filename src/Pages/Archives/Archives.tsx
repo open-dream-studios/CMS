@@ -1,20 +1,22 @@
 import React from 'react'
 import { PageProps } from '../../App';
-import OliveDisplay from '../../Components/Navbar/OliveDisplay/OliveDisplay';
+import BoardDisplay from '../../Components/BoardDisplay/BoardDisplay';
+import OliveDisplay from '../../Components/OliveDisplay/OliveDisplay';
 
 const Archives: React.FC<PageProps> = ({ navigate }) => (
   <div
     className="w-[100%] min-h-[100vh]"
     style={{
       width: "100%",
-      backgroundColor: "pink",
+      // backgroundColor: "transparent",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
     }}
   >
     <h1>
-      {/* <OliveDisplay /> */}
+      {/* <BoardDisplay /> */}
+      <OliveDisplay />
     </h1>
   </div>
 );

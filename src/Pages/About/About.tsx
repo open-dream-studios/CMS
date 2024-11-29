@@ -5,6 +5,7 @@ import useProjectColorsNextState from "../../store/useProjectColorsNextStore";
 import useProjectColorsPrevState from "../../store/useProjectColorsPrevStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import appData from "../../app-details.json";
+import BoardDisplay from "../../Components/BoardDisplay/BoardDisplay";
 const About: React.FC<PageProps> = ({ navigate }) => {
   const projects = appData.pages.projects;
   const { projectColors, setProjectColors } = useProjectColorsState();
@@ -46,14 +47,15 @@ const About: React.FC<PageProps> = ({ navigate }) => {
         alignItems: "center",
       }}
     >
-      <h1
+      {/* <h1
         onClick={() => {
           setUpdatedProject(2);
           navigate("projects/provence");
         }}
       >
         GO TO PROVENCE
-      </h1>
+      </h1> */}
+      <BoardDisplay />
     </div>
   );
 };

@@ -12,6 +12,18 @@
   },
   "pages": {
     "home": {
+      "boardDisplay": {
+        "image1": "/assets/home1.jpeg",
+        "image2": "/assets/home2.jpeg",
+        "image3": "/assets/home3.jpeg",
+        "image4": "/assets/home4.jpeg",
+        "image5": "/assets/home5.jpeg",
+        "image6": "/assets/home1.jpeg",
+        "image7": "/assets/home2.jpeg",
+        "tape1": "/assets/home/board-tape.png",
+        "pin": "/assets/home/board-button.png",
+        "background": "/assets/home/board-bg.png"
+      },
       "covers": [
         {
           "title": "Dreamlike flowers",
