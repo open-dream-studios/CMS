@@ -4,6 +4,7 @@ import "./Navbar.css";
 import { useLocation } from "react-router-dom";
 import useCurrentPageState from "../../store/useCurrentPageStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
+import appData from "../../app-details.json";
 
 interface PageProps {
   navigate: (page: Page) => void;
@@ -16,6 +17,10 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const isOpenRef = useRef<boolean>(false);
   const navOverlayBG = useRef<HTMLDivElement>(null);
   const location = useLocation();
+
+  const indexRef = useRef<HTMLDivElement>(null);
+  const infosRef = useRef<HTMLDivElement>(null);
+  const archivesRef = useRef<HTMLDivElement>(null);
 
   const [canSelectPage, setCanSelectPage] = useState(true);
 
@@ -93,42 +98,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     }
   }
 
-  function selectedPage() {
-    setCanSelectPage(false);
-    setTimeout(() => {
-      setCanSelectPage(true);
-    }, 1000);
-  }
-
-  function clickedDropdownPage(newPage: string) {
-    const currentPage = location.pathname.replace("/", "") || "home";
-    if (
-      ["home", "about", "projects", "archives"].includes(currentPage) &&
-      newPage === currentPage
-    ) {
-      toggleNav();
-      return;
-    }
-
-    setNavOpenSpin(false);
-    hideText();
-
-    if (navOverlayBG && navOverlayBG.current !== null) {
-      navOverlayBG.current.style.transition = "none";
-    }
-
-    setTimeout(() => {
-      closeNavQuick();
-    }, 990);
-
-    setTimeout(() => {
-      if (navOverlayBG && navOverlayBG.current !== null) {
-        navOverlayBG.current.style.transition =
-          "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)";
-      }
-    }, 1200);
-  }
-
   const [isAnimatingNav, setIsAnimatingNav] = useState<boolean>(false);
   function toggleNav() {
     if (isOpenRef) {
@@ -174,6 +143,171 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     window.location.href = `mailto:${sendEmail}`;
   };
 
+  const [pageTrue, setPageTrue] = useState(0);
+  const projects = appData.pages.projects;
+  const projectsList = projects.map((item) => item.link);
+
+  useEffect(() => {
+    if (
+      location.pathname.startsWith("/projects/") &&
+      projectsList.includes(location.pathname.split("/")[2]) &&
+      location.pathname.split("/").length === 3 &&
+      indexRef &&
+      infosRef &&
+      archivesRef &&
+      indexRef.current &&
+      infosRef.current &&
+      archivesRef.current &&
+      !indexRef.current.classList.contains("nav-item2")
+    ) {
+      indexRef.current.classList.add("nav-item2");
+      infosRef.current.classList.remove("nav-item2");
+      archivesRef.current.classList.remove("nav-item2");
+      setPageTrue(1);
+    }
+
+    // if (
+    //   ["/about", "/projects", "/archives"].includes(location.pathname) ||
+    //   (location.pathname.startsWith("/projects/") &&
+    //     projectsList.includes(location.pathname.split("/")[2]) &&
+    //     location.pathname.split("/").length === 3)
+    // ) {
+    //   if (location.pathname.includes("/projects")) {
+    //     setPageTrue(1);
+    //   } else if (location.pathname.includes("/about")) {
+    //     setPageTrue(2);
+    //   } else if (location.pathname.includes("/archives")) {
+    //     setPageTrue(3);
+    //   } else setPageTrue(0);
+    // }
+  }, [location, projectsList]);
+
+  function updateClasses(item: number) {
+    const current = pageTrue;
+    if (
+      indexRef &&
+      infosRef &&
+      archivesRef &&
+      indexRef.current &&
+      infosRef.current &&
+      archivesRef.current
+    ) {
+      // console.log(item, current, indexRef.current)
+      if (item === 1 && current !== 1) {
+        indexRef.current.classList.add("nav-item2");
+        infosRef.current.classList.remove("nav-item2");
+        archivesRef.current.classList.remove("nav-item2");
+      }
+
+      if (item === 2 && current !== 2) {
+        indexRef.current.classList.remove("nav-item2");
+        infosRef.current.classList.add("nav-item2");
+        archivesRef.current.classList.remove("nav-item2");
+      }
+
+      if (item === 3 && current !== 3) {
+        indexRef.current.classList.remove("nav-item2");
+        infosRef.current.classList.remove("nav-item2");
+        archivesRef.current.classList.add("nav-item2");
+      }
+
+      if (item !== 3 && item !== 2 && item !== 1) {
+        indexRef.current.classList.remove("nav-item2");
+        infosRef.current.classList.remove("nav-item2");
+        archivesRef.current.classList.remove("nav-item2");
+      }
+    }
+  }
+
+  function selectedPage() {
+    setCanSelectPage(false);
+    setTimeout(() => {
+      setCanSelectPage(true);
+    }, 1000);
+  }
+
+  function clickedDropdownPage(newPage: string) {
+    const currentPage = location.pathname.replace("/", "") || "home";
+    if (
+      ["home", "about", "projects", "archives"].includes(currentPage) &&
+      newPage === currentPage
+    ) {
+      toggleNav();
+      return;
+    }
+
+    setNavOpenSpin(false);
+    hideText();
+
+    if (navOverlayBG && navOverlayBG.current !== null) {
+      navOverlayBG.current.style.transition = "none";
+    }
+
+    setTimeout(() => {
+      closeNavQuick();
+    }, 990);
+
+    setTimeout(() => {
+      if (navOverlayBG && navOverlayBG.current !== null) {
+        navOverlayBG.current.style.transition =
+          "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)";
+      }
+    }, 1200);
+  }
+
+  const handleHomeClick = () => {
+    if (canSelectPage) {
+      updateClasses(0);
+      if (navOpen) {
+        clickedDropdownPage("home");
+      }
+      selectedPage();
+      navigate("home");
+    }
+  };
+
+  const handleIndexClick = (dropdown: boolean) => {
+    if (canSelectPage) {
+      selectedPage();
+      if (dropdown) {
+        clickedDropdownPage("projects");
+      } else {
+        if (currentPage !== "projects") {
+          setTimeout(() => {
+            setSelectedProject(null);
+          }, 1000);
+        }
+      }
+      updateClasses(1);
+      setPageTrue(1);
+      navigate("projects");
+    }
+  };
+
+  const handleInfosClick = (dropdown: boolean) => {
+    if (canSelectPage) {
+      selectedPage();
+      if (dropdown) {
+        clickedDropdownPage("about");
+      }
+      updateClasses(2);
+      setPageTrue(2);
+      navigate("about");
+    }
+  };
+
+  const handleArchivesClick = (dropdown: boolean) => {
+    if (canSelectPage) {
+      selectedPage();
+      if (dropdown) {
+        clickedDropdownPage("archives");
+      }
+      updateClasses(3);
+      setPageTrue(3);
+      navigate("archives");
+    }
+  };
+
   return (
     <>
       <div
@@ -186,15 +320,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       >
         <div
           className="select-none cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
-          onClick={() => {
-            if (canSelectPage) {
-              if (navOpen) {
-                clickedDropdownPage("home");
-              }
-              selectedPage();
-              navigate("home");
-            }
-          }}
+          onClick={handleHomeClick}
         >
           JESSICA SHULMAN
         </div>
@@ -218,40 +344,23 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         </div>
         <div className="select-none mt-[32px] hidden md:flex flex-row h-[15px] text-[14px] leading-[14px]">
           <div
-            className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
-            onClick={() => {
-              if (canSelectPage) {
-                selectedPage();
-                if (currentPage !== "projects") {
-                  setTimeout(() => {
-                    setSelectedProject(null);
-                  }, 1000);
-                }
-                navigate("projects");
-              }
-            }}
+            ref={indexRef}
+            className={`nav-item cursor-pointer mx-[calc(3px+0.3vw)]`}
+            onClick={() => handleIndexClick(false)}
           >
             INDEX
           </div>
           <div
-            className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
-            onClick={() => {
-              if (canSelectPage) {
-                selectedPage();
-                navigate("about");
-              }
-            }}
+            ref={infosRef}
+            className={`cursor-pointer nav-item mx-[calc(3px+0.3vw)]`}
+            onClick={() => handleInfosClick(false)}
           >
             INFOS
           </div>
           <div
-            className="cursor-pointer nav-item mx-[calc(3px+0.3vw)]"
-            onClick={() => {
-              if (canSelectPage) {
-                selectedPage();
-                navigate("archives");
-              }
-            }}
+            ref={archivesRef}
+            className={`cursor-pointer nav-item mx-[calc(3px+0.3vw)]`}
+            onClick={() => handleArchivesClick(false)}
           >
             ARCHIVES
           </div>
@@ -318,16 +427,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           >
             <div
               onClick={() => {
-                clickedDropdownPage("projects");
-                if (canSelectPage) {
-                  selectedPage();
-                  if (currentPage !== "projects") {
-                    setTimeout(() => {
-                      setSelectedProject(null);
-                    }, 1000);
-                  }
-                  navigate("projects");
-                }
+                handleIndexClick(true);
               }}
               className={`klivora ${
                 isRevealing1 ? "text-reveal" : "text-conceal"
@@ -344,8 +444,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           >
             <div
               onClick={() => {
-                clickedDropdownPage("about");
-                navigate("about");
+                handleInfosClick(true);
               }}
               className={`klivora ${
                 isRevealing2 ? "text-reveal" : "text-conceal"
@@ -362,8 +461,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           >
             <div
               onClick={() => {
-                clickedDropdownPage("archives");
-                navigate("archives");
+                handleArchivesClick(true);
               }}
               className={`klivora ${
                 isRevealing3 ? "text-reveal" : "text-conceal"

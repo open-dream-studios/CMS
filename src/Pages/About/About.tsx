@@ -47,15 +47,15 @@ const About: React.FC<PageProps> = ({ navigate }) => {
         alignItems: "center",
       }}
     >
-      {/* <h1
+      <h1
         onClick={() => {
           setUpdatedProject(2);
           navigate("projects/provence");
         }}
       >
         GO TO PROVENCE
-      </h1> */}
-      <BoardDisplay />
+      </h1>
+      {/* <BoardDisplay /> */}
     </div>
   );
 };

@@ -109,6 +109,7 @@ const App = () => {
 
   useEffect(() => {
       const path = location.pathname.replace("/", "") || "home";
+      // console.log(path)
       if (
         path !== currentPage && // Prevent redundant updates
         (["home", "about", "projects", "archives"].includes(path) ||

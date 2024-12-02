@@ -3,7 +3,7 @@ import appData from "../../app-details.json";
 
 const OliveDisplay = () => {
   let initialImages = appData.pages.home.covers[0].images;
-  console.log(initialImages)
+  // console.log(initialImages);
   const [images, setImages] = useState([
     initialImages[0],
     initialImages[1],
@@ -12,14 +12,26 @@ const OliveDisplay = () => {
     initialImages[4],
   ]);
   const [displayImage, setDisplayImage] = useState(initialImages[1]);
+  const [displayImage1, setDisplayImage1] = useState(1);
 
   const handleMouseEnter = (item: number) => {
     setDisplayImage(images[item]);
+    setDisplayImage1(item);
+    if (imageShown && displayImage1 !== item) {
+      setImageShown(false)
+    }
   };
 
   const handleMouseLeave = (item: number) => {
-    setDisplayImage(images[0]);
+    if (!imageShown) {
+      setDisplayImage(images[0]);
+      if (displayImage1 !== item) {
+        setImageShown(false);
+      }
+    }
   };
+
+  const [imageShown, setImageShown] = useState(false);
 
   return (
     <div
@@ -41,7 +53,7 @@ const OliveDisplay = () => {
         >
           <div
             className="w-[100%] aspect-[0.74/1] flex justify-center items-center"
-            style={{ position: "relative"}}
+            style={{ position: "relative" }}
           >
             <img
               style={{ position: "absolute", zIndex: 202 }}
@@ -72,6 +84,12 @@ const OliveDisplay = () => {
             <div
               onMouseEnter={() => handleMouseEnter(1)}
               onMouseLeave={() => handleMouseLeave(1)}
+              onClick={() => {
+                handleMouseEnter(1);
+                if (displayImage1 === 1) {
+                  setImageShown((prev) => !prev);
+                }
+              }}
               className="dim-dark h-[calc((100%-30px)*0.25)] w-[100%] relative"
             >
               <img
@@ -89,6 +107,12 @@ const OliveDisplay = () => {
             <div
               onMouseEnter={() => handleMouseEnter(2)}
               onMouseLeave={() => handleMouseLeave(2)}
+              onClick={() => {
+                handleMouseEnter(2);
+                if (displayImage1 === 2) {
+                  setImageShown((prev) => !prev);
+                }
+              }}
               className="dim-dark h-[calc((100%-30px)*0.25)] w-[100%] relative"
             >
               <img
@@ -106,6 +130,12 @@ const OliveDisplay = () => {
             <div
               onMouseEnter={() => handleMouseEnter(3)}
               onMouseLeave={() => handleMouseLeave(3)}
+              onClick={() => {
+                handleMouseEnter(3);
+                if (displayImage1 === 3) {
+                  setImageShown((prev) => !prev);
+                }
+              }}
               className="dim-dark h-[calc((100%-30px)*0.25)] w-[100%] relative"
             >
               <img
@@ -122,6 +152,12 @@ const OliveDisplay = () => {
             <div
               onMouseEnter={() => handleMouseEnter(4)}
               onMouseLeave={() => handleMouseLeave(4)}
+              onClick={() => {
+                handleMouseEnter(4);
+                if (displayImage1 === 4) {
+                  setImageShown((prev) => !prev);
+                }
+              }}
               className="dim-dark h-[calc((100%-30px)*0.25)] w-[100%] relative"
             >
               <img

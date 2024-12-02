@@ -18,6 +18,7 @@ import useProjectColorsState from "../../store/useProjectColorsStore";
 import useProjectColorsNextState from "../../store/useProjectColorsNextStore";
 import useProjectColorsPrevState from "../../store/useProjectColorsPrevStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
+import { useLocation } from "react-router-dom";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -49,12 +50,27 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [animateWaveTrigger, setAnimateWaveTrigger] = useState(false);
   const [canSelectProject, setCanSelectProject] = useState(true);
 
+  const location = useLocation();
+  useEffect(() => {
+    const path = location.pathname;
+    if (
+      path.startsWith("/projects/") &&
+      projectsList.includes(path.split("/")[2]) &&
+      path.split("/").length === 3
+    ) {
+      const newIndex = projectsList.findIndex(
+        (project) => project === path.split("/")[2]
+      );
+      // setSelectedProject(newIndex);
+    }
+  }, [location]);
+
   useEffect(() => {
     if (animate === true) {
       setAnimateWave(true);
-      setTimeout(()=>{
-        setAnimateWaveTrigger(true)
-      },200)
+      setTimeout(() => {
+        setAnimateWaveTrigger(true);
+      }, 200);
     }
 
     if (currentPage) {
@@ -77,7 +93,6 @@ const Projects: React.FC<ProjectsPageProps> = ({
     page,
     projectsList,
     selectedProject,
-    setSelectedProject,
   ]);
 
   const covers = [
@@ -131,26 +146,27 @@ const Projects: React.FC<ProjectsPageProps> = ({
                   }}
                   onClick={() => {
                     if (canSelectProject) {
-                      setCanSelectProject(false)
-                    const currentProj = selectedProject;
-                    setSelectedProject(index);
-                    navigate("projects/" + projects[index].link);
+                      setCanSelectProject(false);
+                      const currentProj = selectedProject;
+                      setSelectedProject(index);
+                      navigate("projects/" + projects[index].link);
 
-                    setProjectColorsNext([
-                      item.background_color,
-                      item.text_color,
-                    ]);
-                    setProjectColorsPrev([
-                      projects[currentProj ? currentProj : 0].background_color,
-                      projects[currentProj ? currentProj : 0].text_color,
-                    ]);
-                    setTimeout(() => {
-                      setProjectColors([
+                      setProjectColorsNext([
                         item.background_color,
                         item.text_color,
                       ]);
-                      setCanSelectProject(true)
-                    }, 1000);
+                      setProjectColorsPrev([
+                        projects[currentProj ? currentProj : 0]
+                          .background_color,
+                        projects[currentProj ? currentProj : 0].text_color,
+                      ]);
+                      setTimeout(() => {
+                        setProjectColors([
+                          item.background_color,
+                          item.text_color,
+                        ]);
+                        setCanSelectProject(true);
+                      }, 1000);
                     }
                   }}
                 >
@@ -164,7 +180,9 @@ const Projects: React.FC<ProjectsPageProps> = ({
                           titlesVisible && animate ? "project-reveal" : ""
                         }`}
                         style={{
-                          animationDelay: animateWave? `${Math.pow(index, 0.75) * 0.045}s` : "none",
+                          animationDelay: animateWave
+                            ? `${Math.pow(index, 0.75) * 0.045}s`
+                            : "none",
                           color: animate
                             ? "black"
                             : selectedProject === index
@@ -189,7 +207,14 @@ const Projects: React.FC<ProjectsPageProps> = ({
       {coversVisible && (
         <div
           className="w-[calc(98vw-310px)] sm:w-[calc(98vw-360px)] md:w-[calc(98vw-410px) min-h-[100vh] sm:flex hidden px-[calc(30px+3vw)] pt-[100px]"
-          style={{ backgroundColor: "lightblue" }}
+          style={{
+            backgroundColor: "lightblue",
+            transition: "transform 2s ease-in-out",
+            transform:
+              selectedProject === null
+                ? "translateY(0)"
+                : "translateY(calc(-20vh))",
+          }}
         >
           <div
             className="w-[100%] h-[auto] relative"
