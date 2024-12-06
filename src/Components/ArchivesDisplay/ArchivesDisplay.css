@@ -1,0 +1,26 @@
+.wrapper {
+
+}
+
+.archives-container {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 200vh;
+  overflow-x: hidden;
+  overflow-y: scroll; 
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.archives-container::-webkit-scrollbar {
+  display: none; 
+}
+
+.archive-page {
+  width: 100vw;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  transition: background-color 0.3s ease-in-out;
+}

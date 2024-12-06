@@ -227,7 +227,7 @@ const App = () => {
             />
           )}
           {currentPage === "about" && <About navigate={navigate} />}
-          {currentPage === "archives" && <Archives navigate={navigate} />}
+          {currentPage === "archives" && <Archives navigate={navigate} slideUpComponent={false}/>}
           {currentPage?.startsWith("projects/") &&
             projectsList.includes(currentPage.split("/")[1]) &&
             currentPage.split("/").length === 2 && (
@@ -372,7 +372,7 @@ const App = () => {
         )}
         {incomingPage === "archives" && (
           <SlideUpPage isVisible zIdx={702} full={true} nextColor={"white"}>
-            <Archives navigate={navigate} />
+            <Archives navigate={navigate} slideUpComponent={true}/>
           </SlideUpPage>
         )}
       </div>

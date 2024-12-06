@@ -157,13 +157,15 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       archivesRef &&
       indexRef.current &&
       infosRef.current &&
-      archivesRef.current &&
-      !indexRef.current.classList.contains("nav-item2")
+      archivesRef.current 
+      // &&
+      // !indexRef.current.classList.contains("nav-item2")
     ) {
-      indexRef.current.classList.add("nav-item2");
-      infosRef.current.classList.remove("nav-item2");
-      archivesRef.current.classList.remove("nav-item2");
-      setPageTrue(1);
+      // indexRef.current.classList.add("nav-item2");
+      // infosRef.current.classList.remove("nav-item2");
+      // archivesRef.current.classList.remove("nav-item2");
+      // setPageTrue(1);
+
     }
 
     // if (
