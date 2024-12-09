@@ -185,6 +185,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   }, [location, projectsList]);
 
   function updateClasses(item: number) {
+    
     const current = pageTrue;
     if (
       indexRef &&
@@ -195,29 +196,29 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       archivesRef.current
     ) {
       // console.log(item, current, indexRef.current)
-      if (item === 1 && current !== 1) {
-        indexRef.current.classList.add("nav-item2");
-        infosRef.current.classList.remove("nav-item2");
-        archivesRef.current.classList.remove("nav-item2");
-      }
+      // if (item === 1 && current !== 1) {
+      //   indexRef.current.classList.add("nav-item2");
+      //   infosRef.current.classList.remove("nav-item2");
+      //   archivesRef.current.classList.remove("nav-item2");
+      // }
 
-      if (item === 2 && current !== 2) {
-        indexRef.current.classList.remove("nav-item2");
-        infosRef.current.classList.add("nav-item2");
-        archivesRef.current.classList.remove("nav-item2");
-      }
+      // if (item === 2 && current !== 2) {
+      //   indexRef.current.classList.remove("nav-item2");
+      //   infosRef.current.classList.add("nav-item2");
+      //   archivesRef.current.classList.remove("nav-item2");
+      // }
 
-      if (item === 3 && current !== 3) {
-        indexRef.current.classList.remove("nav-item2");
-        infosRef.current.classList.remove("nav-item2");
-        archivesRef.current.classList.add("nav-item2");
-      }
+      // if (item === 3 && current !== 3) {
+      //   indexRef.current.classList.remove("nav-item2");
+      //   infosRef.current.classList.remove("nav-item2");
+      //   archivesRef.current.classList.add("nav-item2");
+      // }
 
-      if (item !== 3 && item !== 2 && item !== 1) {
-        indexRef.current.classList.remove("nav-item2");
-        infosRef.current.classList.remove("nav-item2");
-        archivesRef.current.classList.remove("nav-item2");
-      }
+      // if (item !== 3 && item !== 2 && item !== 1) {
+      //   indexRef.current.classList.remove("nav-item2");
+      //   infosRef.current.classList.remove("nav-item2");
+      //   archivesRef.current.classList.remove("nav-item2");
+      // }
     }
   }
 

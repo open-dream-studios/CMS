@@ -100,25 +100,27 @@ const App = () => {
   const location = useLocation();
 
   const { projectColors, setProjectColors } = useProjectColorsState();
-  const { projectColorsNext, setProjectColorsNext } = useProjectColorsNextState();
-  const { projectColorsPrev, setProjectColorsPrev } = useProjectColorsPrevState();
+  const { projectColorsNext, setProjectColorsNext } =
+    useProjectColorsNextState();
+  const { projectColorsPrev, setProjectColorsPrev } =
+    useProjectColorsPrevState();
   const { currentPage, setCurrentPage } = useCurrentPageState();
 
   const projects = appData.pages.projects;
   const projectsList = projects.map((item) => item.link);
 
   useEffect(() => {
-      const path = location.pathname.replace("/", "") || "home";
-      // console.log(path)
-      if (
-        path !== currentPage && // Prevent redundant updates
-        (["home", "about", "projects", "archives"].includes(path) ||
-          (path.startsWith("projects/") &&
-            projectsList.includes(path.split("/")[1]) &&
-            path.split("/").length === 2))
-      ) {
-        setCurrentPage(path as Page);
-      }
+    const path = location.pathname.replace("/", "") || "home";
+    // console.log(path)
+    if (
+      path !== currentPage && // Prevent redundant updates
+      (["home", "about", "projects", "archives"].includes(path) ||
+        (path.startsWith("projects/") &&
+          projectsList.includes(path.split("/")[1]) &&
+          path.split("/").length === 2))
+    ) {
+      setCurrentPage(path as Page);
+    }
   }, [location, projectsList]);
 
   // useEffect(() => {
@@ -139,7 +141,7 @@ const App = () => {
 
   const navigate = (page: Page) => {
     if (page === currentPage) return;
-    
+
     const newVal = currentPage;
     if (
       page.startsWith("projects/") &&
@@ -171,10 +173,31 @@ const App = () => {
     }, 1000); // Match this timeout to the animation duration
   };
 
-  // COVER LAYOUT ORDER (5 projects, 2 layouts available so far)
-  const [layoutOrder, setLayoutOrder] = useState(
-    Array.from({ length: 5 }, () => Math.floor(Math.random() * 2))
-  );
+  // HOME PAGE COVER LAYOUT ORDER (num covers, 2 layouts available so far)
+  const numberOfLayoutsCreated = 7;
+  // Generate an array where each number is unique to the two next to it
+const [layoutOrder, setLayoutOrder] = useState(() => {
+  let previous = -1; // Start with a value that can't match the first random number
+  const array = Array.from({ length: appData.pages.home.covers.length }, (_, index) => {
+    let next;
+    do {
+      next = Math.floor(Math.random() * numberOfLayoutsCreated);
+    } while (next === previous);
+    previous = next;
+    return next;
+  });
+
+  // Ensure the first and last elements are different
+  if (array.length > 1 && array[0] === array[array.length - 1]) {
+    let replacement;
+    do {
+      replacement = Math.floor(Math.random() * numberOfLayoutsCreated);
+    } while (replacement === array[array.length - 2] || replacement === array[0]);
+    array[array.length - 1] = replacement;
+  }
+
+  return array;
+});
 
   return (
     <>
@@ -227,7 +250,9 @@ const App = () => {
             />
           )}
           {currentPage === "about" && <About navigate={navigate} />}
-          {currentPage === "archives" && <Archives navigate={navigate} slideUpComponent={false}/>}
+          {currentPage === "archives" && (
+            <Archives navigate={navigate} slideUpComponent={false} />
+          )}
           {currentPage?.startsWith("projects/") &&
             projectsList.includes(currentPage.split("/")[1]) &&
             currentPage.split("/").length === 2 && (
@@ -326,7 +351,7 @@ const App = () => {
             <>
               <div
                 className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
-                style={{ backgroundColor: projectColorsPrev[0]}}
+                style={{ backgroundColor: projectColorsPrev[0] }}
               ></div>
 
               <Projects
@@ -341,21 +366,21 @@ const App = () => {
                 zIdx={702}
                 isVisible
                 full={
-                  (
-                    (currentPage.startsWith("projects/") &&
-                      projectsList.includes(currentPage.split("/")[1]) &&
-                      currentPage.split("/").length === 2) ||
-                    currentPage === "projects"
-                  ) ? false : true
+                  (currentPage.startsWith("projects/") &&
+                    projectsList.includes(currentPage.split("/")[1]) &&
+                    currentPage.split("/").length === 2) ||
+                  currentPage === "projects"
+                    ? false
+                    : true
                 }
-                 nextColor={
-                  (
-                    (currentPage.startsWith("projects/") &&
-                      projectsList.includes(currentPage.split("/")[1]) &&
-                      currentPage.split("/").length === 2) ||
-                    currentPage === "projects"
-                  ) ? "white" : projectColorsNext[0]
-                 }
+                nextColor={
+                  (currentPage.startsWith("projects/") &&
+                    projectsList.includes(currentPage.split("/")[1]) &&
+                    currentPage.split("/").length === 2) ||
+                  currentPage === "projects"
+                    ? "white"
+                    : projectColorsNext[0]
+                }
               >
                 <ProjectsPage
                   navigate={navigate}
@@ -372,7 +397,7 @@ const App = () => {
         )}
         {incomingPage === "archives" && (
           <SlideUpPage isVisible zIdx={702} full={true} nextColor={"white"}>
-            <Archives navigate={navigate} slideUpComponent={true}/>
+            <Archives navigate={navigate} slideUpComponent={true} />
           </SlideUpPage>
         )}
       </div>

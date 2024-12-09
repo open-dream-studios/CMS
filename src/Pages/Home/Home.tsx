@@ -19,12 +19,52 @@ const Home: React.FC<HomePageProps> = ({
   const covers = appData.pages.home.covers;
   const coverLayouts = [
     [
-      { x: 0, y: 9, w: 16, h: 1.4, z: 104, top: true },
+      { x: 10, y: 9, w: 24, h: 1.4, z: 104, top: true },
+      { x: 45, y: 10, w: 19, h: 1.2, z: 103, top: true },
+      { x: 73, y: 5, w: 20, h: 1.3, z: 104, top: true },
+      { x: 4, y: 15, w: 18, h: 1.4, z: 104, top: false },
+      { x: 37, y: 2, w: 23, h: 1.2, z: 104, top: false },
+      { x: 62, y: 6, w: 28, h: 1.3, z: 104, top: false },
+    ],
+    [
+      { x: 5, y: 9, w: 16, h: 1.2, z: 104, top: true },
+      { x: 37, y: 3, w: 22, h: 1.2, z: 103, top: true },
+      { x: 72, y: 9, w: 20, h: 1.3, z: 104, top: true },
+      { x: 11, y: 15, w: 24, h: 1.4, z: 104, top: false },
+      { x: 45, y: 0, w: 23, h: 1.2, z: 104, top: false },
+      { x: 72, y: 13, w: 15, h: 1.3, z: 104, top: false },
+    ],
+    [
+      { x: 3, y: 8, w: 23, h: 1.3, z: 104, top: true },
+      { x: 44, y: 0, w: 23, h: 1.3, z: 103, top: true },
+      { x: 70, y: 10, w: 23, h: 1.3, z: 104, top: true },
+      { x: 15, y: 10, w: 25, h: 1.2, z: 104, top: false },
+      { x: 44, y: 0, w: 24, h: 1.35, z: 104, top: false },
+      { x: 81, y: 6, w: 16, h: 1.25, z: 104, top: false },
+    ],
+    [
+      { x: 14, y: 8, w: 17, h: 1.3, z: 104, top: true },
+      { x: 47, y: 10, w: 24, h: 1.3, z: 103, top: true },
+      { x: 78, y: 13.5, w: 20, h: 1.3, z: 104, top: true },
+      { x: 0, y: 9, w: 16, h: 1.25, z: 104, top: false },
+      { x: 26, y: 0, w: 25, h: 1.35, z: 104, top: false },
+      { x: 68, y: 9, w: 20, h: 1.25, z: 104, top: false },
+    ],
+    [
+      { x: 12, y: 9, w: 14, h: 1.3, z: 104, top: true },
+      { x: 34, y: 11, w: 25, h: 1.3, z: 103, top: true },
+      { x: 77, y: 8, w: 13, h: 1.3, z: 104, top: true },
+      { x: 4.5, y: 0, w: 19, h: 1.25, z: 104, top: false },
+      { x: 27, y: 7, w: 24, h: 1.35, z: 104, top: false },
+      { x: 75.5, y: 9, w: 20, h: 1.25, z: 104, top: false },
+    ],
+    [
+      { x: 0, y: 9, w: 16, h: 1.2, z: 104, top: true },
       { x: 37, y: 0, w: 22, h: 1.2, z: 103, top: true },
       { x: 72, y: 3, w: 15, h: 1.3, z: 104, top: true },
-      { x: 11, y: 15, w: 24, h: 1.2, z: 104, top: false },
+      { x: 11, y: 15, w: 24, h: 1.4, z: 104, top: false },
       { x: 37, y: 0, w: 23, h: 1.2, z: 104, top: false },
-      { x: 73, y: 6, w: 18, h: 1.2, z: 104, top: false },
+      { x: 73, y: 6, w: 18, h: 1.3, z: 104, top: false },
     ],
     [
       { x: 12, y: 5, w: 21, h: 1.3, z: 104, top: true },
@@ -35,12 +75,11 @@ const Home: React.FC<HomePageProps> = ({
       { x: 73, y: 6, w: 18, h: 1.2, z: 104, top: false },
     ],
   ];
+  const pageLayouts = layoutOrder.map((item) => coverLayouts[item]);
   const nextMove = useRef([0, false]);
   const [currentCover, setCurrentCover] = useState(0);
   const currentCoverRef = useRef(0);
-  const [currentLayout, setCurrentLayout] = useState(
-    coverLayouts[layoutOrder[0]]
-  );
+  const [currentLayout, setCurrentLayout] = useState(pageLayouts[0]);
 
   const [exitingCover, setExitingCover] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -65,7 +104,7 @@ const Home: React.FC<HomePageProps> = ({
   const [isRevealing2, setIsRevealing2] = useState([1, true]);
 
   const readyToTransition = useRef(true);
-  const animatingRef = useRef([0,0]);
+  const animatingRef = useRef([0, 0]);
   const [firstPageLoad, setFirstPageLoad] = useState(false);
 
   const readyToRetrigger = useRef(false);
@@ -95,12 +134,19 @@ const Home: React.FC<HomePageProps> = ({
             }
           }
         } else if (deltaY < 4 && deltaY > -4) {
-          if (!readyToRetrigger.current && !nextMove.current[1] && (animatingRef.current[0] !== animatingRef.current[1])) {
-              readyToRetrigger.current = true;
-          } 
-          if (readyToRetrigger.current && (animatingRef.current[0] === animatingRef.current[1])) {
-              readyToRetrigger.current = false;
-          } 
+          if (
+            !readyToRetrigger.current &&
+            !nextMove.current[1] &&
+            animatingRef.current[0] !== animatingRef.current[1]
+          ) {
+            readyToRetrigger.current = true;
+          }
+          if (
+            readyToRetrigger.current &&
+            animatingRef.current[0] === animatingRef.current[1]
+          ) {
+            readyToRetrigger.current = false;
+          }
         }
       }
     };
@@ -213,21 +259,21 @@ const Home: React.FC<HomePageProps> = ({
       setTimeout(() => {
         if (currentCoverRef) {
           if (direction === 1) {
-            currentCoverRef.current =
+            const nextCover =
               currentCoverRef.current === covers.length - 1
                 ? 0
                 : currentCoverRef.current + 1;
-            setCurrentCover((prev) =>
-              prev === covers.length - 1 ? 0 : prev + 1
-            );
+            currentCoverRef.current = nextCover;
+            setCurrentCover(nextCover);
+            setCurrentLayout(pageLayouts[nextCover]);
           } else {
-            currentCoverRef.current =
+            const nextCover =
               currentCoverRef.current === 0
                 ? covers.length - 1
                 : currentCoverRef.current - 1;
-            setCurrentCover((prev) =>
-              prev === 0 ? covers.length - 1 : prev - 1
-            );
+            currentCoverRef.current = nextCover;
+            setCurrentCover(nextCover);
+            setCurrentLayout(pageLayouts[nextCover]);
           }
         }
         setExitingCover(null);
@@ -269,19 +315,25 @@ const Home: React.FC<HomePageProps> = ({
     if (readyToTransition && readyToTransition.current) {
       changeCover(1);
       readyToTransition.current = false;
-      if (animatingRef) {animatingRef.current[0] += 1}
+      if (animatingRef) {
+        animatingRef.current[0] += 1;
+      }
       setTimeout(() => {
         if (readyToTransition) {
           readyToTransition.current = true;
           readyToRetrigger.current = true;
           if (nextMove.current[1]) {
-            if (animatingRef) {animatingRef.current[1] += 1}
+            if (animatingRef) {
+              animatingRef.current[1] += 1;
+            }
             doNextMove();
           } else {
             nextMove.current = [0, false];
             readyToRetrigger.current = false;
             readyToTransition.current = true;
-            if (animatingRef) {animatingRef.current[1] += 1}
+            if (animatingRef) {
+              animatingRef.current[1] += 1;
+            }
           }
         }
       }, 1910);
@@ -293,19 +345,25 @@ const Home: React.FC<HomePageProps> = ({
     if (readyToTransition && readyToTransition.current) {
       changeCover(-1);
       readyToTransition.current = false;
-      if (animatingRef)  {animatingRef.current[0] += 1}
+      if (animatingRef) {
+        animatingRef.current[0] += 1;
+      }
       setTimeout(() => {
         if (readyToTransition) {
           readyToTransition.current = true;
           readyToRetrigger.current = true;
           if (nextMove.current[1]) {
-            if (animatingRef) {animatingRef.current[1] += 1}
+            if (animatingRef) {
+              animatingRef.current[1] += 1;
+            }
             doNextMove();
           } else {
             nextMove.current = [0, false];
             readyToRetrigger.current = false;
             readyToTransition.current = true;
-            if (animatingRef) {animatingRef.current[1] += 1}
+            if (animatingRef) {
+              animatingRef.current[1] += 1;
+            }
           }
         }
       }, 1910);
@@ -395,13 +453,11 @@ const Home: React.FC<HomePageProps> = ({
                     >
                       <img
                         alt=""
-                        className="image"
+                        className="image w-[100%] h-[100%]"
+                        style={{ objectFit: "cover" }}
                         src={`${appData.baseURL}${
                           covers[currentCoverRef.current].images[index]
                         }`}
-                        style={{
-                          position: "absolute",
-                        }}
                       />
                     </div>
                   </motion.div>
@@ -453,11 +509,11 @@ const Home: React.FC<HomePageProps> = ({
                       >
                         <img
                           alt=""
-                          className="image"
+                          className="image w-[100%] h-[100%]"
+                          style={{ objectFit: "cover" }}
                           src={`${appData.baseURL}${
                             covers[currentCoverRef.current].images[index]
                           }`}
-                          style={{ position: "absolute" }}
                         />
                       </div>
                     </motion.div>
@@ -647,5 +703,3 @@ const Home: React.FC<HomePageProps> = ({
 };
 
 export default Home;
-
-

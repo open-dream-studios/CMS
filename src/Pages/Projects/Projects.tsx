@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IncomingPage, Page, PageProps } from "../../App";
 import appData from "../../app-details.json";
-import Cover1 from "./ProjectCovers/Cover1";
-import Cover2 from "./ProjectCovers/Cover2";
-import Cover3 from "./ProjectCovers/Cover3";
-import Cover4 from "./ProjectCovers/Cover4";
-import Cover6 from "./ProjectCovers/Cover6";
-import Cover5 from "./ProjectCovers/Cover5";
-import Cover7 from "./ProjectCovers/Cover7";
-import Cover8 from "./ProjectCovers/Cover8";
-import Cover9 from "./ProjectCovers/Cover9";
-import Cover10 from "./ProjectCovers/Cover10";
-import Cover11 from "./ProjectCovers/Cover11";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";
 import useProjectColorsState from "../../store/useProjectColorsStore";
@@ -19,6 +8,7 @@ import useProjectColorsNextState from "../../store/useProjectColorsNextStore";
 import useProjectColorsPrevState from "../../store/useProjectColorsPrevStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import { useLocation } from "react-router-dom";
+import ProjectCover from "./ProjectCover";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -95,25 +85,11 @@ const Projects: React.FC<ProjectsPageProps> = ({
     selectedProject,
   ]);
 
-  const covers = [
-    Cover1,
-    Cover2,
-    Cover3,
-    Cover4,
-    Cover5,
-    Cover6,
-    Cover7,
-    Cover8,
-    Cover9,
-    Cover10,
-    Cover11,
-  ];
-
   return (
     <div className="min-h-[100vh] w-[100vw] flex">
-      <div className="py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]">
+      <div style={{backgroundColor: "transparent"}} className="py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]">
         <div
-          className="w-[300px] sm:w-[350px] md:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
+          className="w-[300px] sm:w-[270px] md:w-[330px] lg:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
           style={{
             backgroundColor: "transparent",
           }}
@@ -206,9 +182,9 @@ const Projects: React.FC<ProjectsPageProps> = ({
 
       {coversVisible && (
         <div
-          className="w-[calc(98vw-310px)] sm:w-[calc(98vw-360px)] md:w-[calc(98vw-410px) min-h-[100vh] sm:flex hidden px-[calc(30px+3vw)] pt-[100px]"
+          className="w-[calc(98vw-310px)] sm:w-[calc(98vw-280px)] md:w-[calc(98vw-340px)] lg:w-[calc(98vw-410px)] min-h-[100vh] sm:flex hidden pr-[calc(3px+3vw)] pl-[30px] pt-[100px]"
           style={{
-            backgroundColor: "lightblue",
+            backgroundColor: "transparent",
             transition: "transform 2s ease-in-out",
             transform:
               selectedProject === null
@@ -218,7 +194,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
         >
           <div
             className="w-[100%] h-[auto] relative"
-            style={{ backgroundColor: "blue" }}
+            style={{ backgroundColor: "transparent" }}
           >
             <AnimatePresence>
               {hoveredIndex !== null && (
@@ -239,7 +215,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
                     ease: "easeInOut",
                   }}
                 >
-                  {React.createElement(covers[hoveredIndex])}
+                  <ProjectCover projectIndex={hoveredIndex} />
                 </motion.div>
               )}
             </AnimatePresence>

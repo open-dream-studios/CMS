@@ -92,67 +92,177 @@
         "title": "Dreamlike flowers",
         "link": "dreamlikeflowers",
         "background_color": "white",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home2.jpeg", "home1.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "La Croisette",
         "link": "lacroisette",
         "background_color": "violet",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Provence",
         "link": "provence",
         "background_color": "pink",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Dolce Tara",
         "link": "dolcetara",
         "background_color": "green",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Cavalcade",
         "link": "cavalcade",
         "background_color": "violet",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Winter fantasy",
         "link": "winterfantasy",
         "background_color": "violet",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Twisted classics",
         "link": "twistedclassics",
         "background_color": "violet",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Mix it up",
         "link": "mixitup",
         "background_color": "violet",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Cyanotype",
         "link": "cyanotype",
         "background_color": "violet",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Summer breeze",
         "link": "summerbreeze",
         "background_color": "violet",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       },
       {
         "title": "Faint lights",
         "link": "faintlights",
         "background_color": "violet",
-        "text_color": "lightblue"
+        "text_color": "lightblue",
+        "images": {
+          "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
+          "project_images": [
+            "home1.jpeg",
+            "home2.jpeg",
+            "home3.jpeg",
+            "home3.jpeg",
+            "home3.jpeg"
+          ]
+        }
       }
     ]
   }
