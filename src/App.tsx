@@ -14,6 +14,7 @@ import useProjectColorsState from "./store/useProjectColorsStore";
 import useProjectColorsNextState from "./store/useProjectColorsNextStore";
 import useProjectColorsPrevState from "./store/useProjectColorsPrevStore";
 import useCurrentPageState from "./store/useCurrentPageStore";
+import useCurrentNavColorState from "./store/useCurrentNavColorStore";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -138,10 +139,18 @@ const App = () => {
   const [disableTransition, setDisableTransition] = useState(false);
   const [cachedCurrent, setCachedCurrent] = useState<Page>("home");
   const [sittingProject, setSittingProject] = useState(false);
+  const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState();
 
   const navigate = (page: Page) => {
     if (page === currentPage) return;
 
+    if (page.startsWith("archives")) {
+      setTimeout(() => {
+        setCurrentNavColor("white");
+      }, 2000);
+    } else {
+      setCurrentNavColor("black");
+    }
     const newVal = currentPage;
     if (
       page.startsWith("projects/") &&
@@ -176,28 +185,34 @@ const App = () => {
   // HOME PAGE COVER LAYOUT ORDER (num covers, 2 layouts available so far)
   const numberOfLayoutsCreated = 7;
   // Generate an array where each number is unique to the two next to it
-const [layoutOrder, setLayoutOrder] = useState(() => {
-  let previous = -1; // Start with a value that can't match the first random number
-  const array = Array.from({ length: appData.pages.home.covers.length }, (_, index) => {
-    let next;
-    do {
-      next = Math.floor(Math.random() * numberOfLayoutsCreated);
-    } while (next === previous);
-    previous = next;
-    return next;
+  const [layoutOrder, setLayoutOrder] = useState(() => {
+    let previous = -1; // Start with a value that can't match the first random number
+    const array = Array.from(
+      { length: appData.pages.home.covers.length },
+      (_, index) => {
+        let next;
+        do {
+          next = Math.floor(Math.random() * numberOfLayoutsCreated);
+        } while (next === previous);
+        previous = next;
+        return next;
+      }
+    );
+
+    // Ensure the first and last elements are different
+    if (array.length > 1 && array[0] === array[array.length - 1]) {
+      let replacement;
+      do {
+        replacement = Math.floor(Math.random() * numberOfLayoutsCreated);
+      } while (
+        replacement === array[array.length - 2] ||
+        replacement === array[0]
+      );
+      array[array.length - 1] = replacement;
+    }
+
+    return array;
   });
-
-  // Ensure the first and last elements are different
-  if (array.length > 1 && array[0] === array[array.length - 1]) {
-    let replacement;
-    do {
-      replacement = Math.floor(Math.random() * numberOfLayoutsCreated);
-    } while (replacement === array[array.length - 2] || replacement === array[0]);
-    array[array.length - 1] = replacement;
-  }
-
-  return array;
-});
 
   return (
     <>

@@ -1,0 +1,184 @@
+/* .container {
+  width: 100vw;
+  height: 100vh;
+} */
+
+.image {
+  /* width: 100%; */
+  /* height: 100%; */
+  /* object-fit: cover; */
+  /* z-index: 2; */
+  /* position: absolute; */
+}
+
+.image::before {
+  mix-blend-mode: overlay;
+}
+
+.inverted-text {
+  user-select: none;
+  position: absolute;
+  /* top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); */
+  /* font-size: 9rem; */
+  /* font-weight: bold; */
+  color: white;
+  mix-blend-mode: difference;
+  z-index: 110;
+}
+
+.inverted-text-black {
+  user-select: none;
+  position: absolute;
+  /* top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 9rem; */
+  /* font-weight: bold; */
+  color: white;
+  z-index: 102;
+}
+
+/* @keyframes slideUp {
+  from {
+    bottom: -100%;
+  }
+  to {
+    bottom: 0;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    bottom: 0;
+  }
+  to {
+    bottom: -100%;
+  }
+} 
+.home-text-reveal-wrapper {
+  width: 100%;
+  height: 36px;
+  overflow: hidden;
+  position: relative;
+  background-color: transparent;
+  visibility: hidden;  
+  opacity: 0;  
+  transition: visibility 0s;
+}
+
+.home-text-reveal-wrapper.visible {
+  visibility: visible;
+  opacity: 1; 
+}
+
+.home-text-reveal {
+  position: absolute;
+  bottom: -100%;
+  width: 100%;
+  animation: slideUp 1s cubic-bezier(0.15, 0.55, 0.2, 1) forwards;
+}
+
+.home-text-conceal {
+  position: absolute;
+  bottom: -100%;
+  width: 100%;
+  animation: slideDown 1s cubic-bezier(0.15, 0.55, 0.2, 1) forwards;
+} */
+
+.wave-container {
+  display: inline-flex;
+  overflow: hidden;
+}
+
+.wave-letter {
+  display: inline-block;
+  transform: translateY(100%); 
+  opacity: 0;
+  transition: transform 0s linear, opacity 0s linear; 
+}
+
+/* Translate Up */
+.wave-reveal {
+  animation: waveSlideUp 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  opacity: 0.8; 
+}
+
+.wave-conceal {
+  animation: waveSlideUp2 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 0.8;
+}
+
+.wave-reveal2 {
+  animation: waveSlideUp 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  opacity: 0.8; 
+}
+
+.wave-conceal2 {
+  animation: waveSlideUp2 0.8s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 0.8;
+}
+
+@keyframes waveSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes waveSlideUp2 {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+
+/* Translate Down */
+.wave-reveal-flip {
+  animation: waveSlideDown 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  opacity: 0.8; 
+}
+
+.wave-conceal-flip {
+  animation: waveSlideDown2 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 0.8;
+}
+
+.wave-reveal-flip2 {
+  animation: waveSlideDown 1s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  opacity: 0.8; 
+}
+
+.wave-conceal-flip2 {
+  animation: waveSlideDown2 0.8s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  animation-fill-mode: backwards; 
+  opacity: 0.8;
+}
+
+
+@keyframes waveSlideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes waveSlideDown2 {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}

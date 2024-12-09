@@ -2,6 +2,11 @@
 .nav-item {
   display: inline-block;
   position: relative;
+  transition: color 3s cubic-bezier(0.3, 0.8, 0.25, 0.8);
+}
+
+.nav-text-item {
+  transition: color 3s cubic-bezier(0.3, 0.8, 0.25, 0.8);
 }
 
 .nav-item::after {
@@ -11,7 +16,7 @@
   bottom: 0;
   height: 0.9px;
   width: 100%;
-  background-color: black;
+  background-color: currentColor; 
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.6s cubic-bezier(0.3, 0.8, 0.25, 0.8);

@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import useCurrentPageState from "../../store/useCurrentPageStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import appData from "../../app-details.json";
+import useCurrentNavColorState from "../../store/useCurrentNavColorStore";
 
 interface PageProps {
   navigate: (page: Page) => void;
@@ -17,6 +18,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const isOpenRef = useRef<boolean>(false);
   const navOverlayBG = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState();
 
   const indexRef = useRef<HTMLDivElement>(null);
   const infosRef = useRef<HTMLDivElement>(null);
@@ -157,7 +159,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       archivesRef &&
       indexRef.current &&
       infosRef.current &&
-      archivesRef.current 
+      archivesRef.current
       // &&
       // !indexRef.current.classList.contains("nav-item2")
     ) {
@@ -165,7 +167,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       // infosRef.current.classList.remove("nav-item2");
       // archivesRef.current.classList.remove("nav-item2");
       // setPageTrue(1);
-
     }
 
     // if (
@@ -185,7 +186,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   }, [location, projectsList]);
 
   function updateClasses(item: number) {
-    
     const current = pageTrue;
     if (
       indexRef &&
@@ -201,19 +201,16 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       //   infosRef.current.classList.remove("nav-item2");
       //   archivesRef.current.classList.remove("nav-item2");
       // }
-
       // if (item === 2 && current !== 2) {
       //   indexRef.current.classList.remove("nav-item2");
       //   infosRef.current.classList.add("nav-item2");
       //   archivesRef.current.classList.remove("nav-item2");
       // }
-
       // if (item === 3 && current !== 3) {
       //   indexRef.current.classList.remove("nav-item2");
       //   infosRef.current.classList.remove("nav-item2");
       //   archivesRef.current.classList.add("nav-item2");
       // }
-
       // if (item !== 3 && item !== 2 && item !== 1) {
       //   indexRef.current.classList.remove("nav-item2");
       //   infosRef.current.classList.remove("nav-item2");
@@ -323,34 +320,43 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         }}
       >
         <div
-          className="select-none cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
+          className="nav-text-item select-none cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
           onClick={handleHomeClick}
+          style={{ color: currentNavColor }}
         >
           JESSICA SHULMAN
         </div>
-        <div className="mt-[32px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]">
-          <div className="select-none text-[14px]">PHOTOGRAPHER & DESIGNER</div>
+        <div
+          className="mt-[32px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]"
+        >
+          <div style={{ color: currentNavColor }} className="nav-text-item select-none text-[14px]">PHOTOGRAPHER & DESIGNER</div>
           <div className="flex flex-row gap-[6px] text-[14px] h-[15px]">
             <div
               onClick={handleSendNewEmailClick}
               className="nav-item cursor-pointer"
+              style={{ color: currentNavColor }}
             >
               JESSSHUL27@GMAIL.COM
             </div>
-            <p className="select-none text-[13px] mt-[-1.3px] font-[400]">/</p>
+            <p style={{ color: currentNavColor }} className="nav-text-item select-none text-[13px] mt-[-1.3px] font-[400]">/</p>
             <a
               className="select-none nav-item cursor-pointer"
               href="https://www.instagram.com/jessica.shulman.design/"
+              style={{ color: currentNavColor }}
             >
               INSTAGRAM
             </a>
           </div>
         </div>
-        <div className="select-none mt-[32px] hidden md:flex flex-row h-[15px] text-[14px] leading-[14px]">
+        <div
+          style={{ color: currentNavColor }}
+          className="select-none mt-[32px] hidden md:flex flex-row h-[15px] text-[14px] leading-[14px]"
+        >
           <div
             ref={indexRef}
             className={`nav-item cursor-pointer mx-[calc(3px+0.3vw)]`}
             onClick={() => handleIndexClick(false)}
+            style={{ color: currentNavColor }}
           >
             INDEX
           </div>
@@ -358,6 +364,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             ref={infosRef}
             className={`cursor-pointer nav-item mx-[calc(3px+0.3vw)]`}
             onClick={() => handleInfosClick(false)}
+            style={{ color: currentNavColor }}
           >
             INFOS
           </div>
@@ -365,6 +372,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             ref={archivesRef}
             className={`cursor-pointer nav-item mx-[calc(3px+0.3vw)]`}
             onClick={() => handleArchivesClick(false)}
+            style={{ color: currentNavColor }}
           >
             ARCHIVES
           </div>

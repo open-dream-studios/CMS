@@ -1,653 +1,230 @@
-import React, { useEffect, useRef, useState } from "react";
-import appData from "../../app-details.json";
-import "./Archives.css";
+import React, { useEffect, useState } from "react";
 import { Page } from "../../App";
-import { AnimatePresence, motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import Slider from "../../Components/Slider/Slider";
+// import ArchivesDisplay from "../../Components/ArchivesDisplay/ArchivesDisplay";
+import "./Archives.css";
+import Hero from "../../Components/Slider/Hero/Hero";
+import useCurrentNavColorState from "../../store/useCurrentNavColorStore";
 
 type ArchivesPageProps = {
   navigate: (page: Page) => void;
   slideUpComponent: boolean;
 };
 
-
 const Archives: React.FC<ArchivesPageProps> = ({
   navigate,
   slideUpComponent,
 }) => {
-  const covers = appData.pages.home.covers;
-  const [layoutOrder, setLayoutOrder] = useState(
-    Array.from({ length: 5 }, () => Math.floor(Math.random() * 2))
-  );
-  const coverLayouts = [
-    [
-      { x: 0, y: 9, w: 16, h: 1.4, z: 104, top: true },
-      { x: 37, y: 0, w: 22, h: 1.2, z: 103, top: true },
-      { x: 72, y: 3, w: 15, h: 1.3, z: 104, top: true },
-      { x: 11, y: 15, w: 24, h: 1.2, z: 104, top: false },
-      { x: 37, y: 0, w: 23, h: 1.2, z: 104, top: false },
-      { x: 73, y: 6, w: 18, h: 1.2, z: 104, top: false },
-    ],
-    [
-      { x: 12, y: 5, w: 21, h: 1.3, z: 104, top: true },
-      { x: 31, y: 0, w: 19, h: 1.3, z: 103, top: true },
-      { x: 70, y: 0, w: 15, h: 1.3, z: 104, top: true },
-      { x: 5, y: 10, w: 24, h: 1.25, z: 104, top: false },
-      { x: 37, y: 0, w: 23, h: 1.2, z: 104, top: false },
-      { x: 73, y: 6, w: 18, h: 1.2, z: 104, top: false },
-    ],
-  ];
-  const nextMove = useRef([0, false]);
-  const [currentCover, setCurrentCover] = useState(0);
-  const currentCoverRef = useRef(0);
-  const [currentLayout, setCurrentLayout] = useState(
-    coverLayouts[layoutOrder[0]]
-  );
-
-  const [exitingCover, setExitingCover] = useState<number | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  // Text
-  const [coverTitle, setCoverTitle] = useState<string[]>([]);
-  const [nextTitle, setNextTitle] = useState<string[]>([]);
-  const [subTitle, setSubTitle] = useState<string[]>([]);
-
-  // Display
-  const [isVisible, setIsVisible] = useState(true);
-  const [isRevealing1, setIsRevealing1] = useState([1, true]);
-  const [isDisplayed, setIsDisplayed] = useState(true);
-
-  // Next Display
-  const [isRevealingNext, setIsRevealingNext] = useState([1, true]);
-  const [isNextVisible, setIsNextVisible] = useState(false);
-  const [isNextDisplayed, setIsNextDisplayed] = useState(false);
-
-  // Sub Title
-  const [isSubVisible, setSubIsVisible] = useState(false);
-  const [isRevealing2, setIsRevealing2] = useState([1, true]);
-
-  const readyToTransition = useRef(true);
-  const animatingRef = useRef([0,0]);
-  const [firstPageLoad, setFirstPageLoad] = useState(false);
-
-  const readyToRetrigger = useRef(false);
+  const [isRevealing1, setIsRevealing1] = useState(true);
+  const [dropdown1Display, setDropdown1Display] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [borderRadius, setBorderRadius] = useState("50%");
+  const [slideOpen, setSlideOpen] = useState(true);
+  const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState()
 
   useEffect(() => {
-    const handleScroll = (event: any) => {
-      event.stopPropagation();
-      const deltaY = event.deltaY;
+    setTimeout(() => {
+      if (!slideUpComponent) {
+        setSlideOpen(false);
+      }
+    }, 1000);
+    
+    setIsRevealing1(true);
+    setIsVisible(true);
+    setDropdown1Display(true);
 
-      if (readyToTransition) {
-        if (deltaY > 20) {
-          if (readyToTransition.current) {
-            handleNextCover(event);
-          } else {
-            if (nextMove && !nextMove.current[1] && readyToRetrigger.current) {
-              nextMove.current = [1, true];
-              readyToRetrigger.current = false;
-            }
-          }
-        } else if (deltaY < -20) {
-          if (readyToTransition.current) {
-            handlePrevCover(event);
-          } else {
-            if (nextMove && !nextMove.current[1] && readyToRetrigger.current) {
-              nextMove.current = [-1, true];
-              readyToRetrigger.current = false;
-            }
-          }
-        } else if (deltaY < 4 && deltaY > -4) {
-          if (!readyToRetrigger.current && !nextMove.current[1] && (animatingRef.current[0] !== animatingRef.current[1])) {
-              readyToRetrigger.current = true;
-          } 
-          if (readyToRetrigger.current && (animatingRef.current[0] === animatingRef.current[1])) {
-              readyToRetrigger.current = false;
-          } 
-        }
+    // document.body.style.overflow = "hidden";
+    // return () => {
+    //   document.body.style.overflow = "auto";
+    // };
+  }, []);
+
+  // Custom scroll function for any target position
+  const duration = 1200;
+  const customScroll = (targetY: any) => {
+    const startY = window.pageYOffset;
+    const distance = targetY - startY;
+    const startTime = performance.now();
+
+    const scroll = (currentTime: any) => {
+      const timeElapsed = currentTime - startTime;
+      const progress = Math.min(timeElapsed / duration, 1); // Ensure it doesn't exceed 1
+      const ease = easeInOutCubic(progress); // Apply easing
+
+      window.scrollTo(0, startY + distance * ease); // Scroll to the appropriate Y position
+
+      if (progress < 1) {
+        requestAnimationFrame(scroll); // Continue scrolling until done
       }
     };
-    window.addEventListener("wheel", handleScroll);
 
-    return () => {
-      window.removeEventListener("wheel", handleScroll);
-    };
-  }, []);
-
-  const preloadImages = (urls: string[]) => {
-    return Promise.all(
-      urls.map((url) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.src = appData.baseURL + url;
-          img.onload = () => resolve({ url, success: true });
-          img.onerror = () => resolve({ url, success: false });
-        });
-      })
-    );
+    requestAnimationFrame(scroll);
   };
 
-  useEffect(() => {
-    const pageLoadTime = performance.now();
-
-    if (!slideUpComponent) {
-      preloadImages(covers[0].images).then((results) => {
-        const successful = results
-          .filter((result: any) => result.success)
-          .map((res: any) => res.url);
-        const failed = results
-          .filter((result: any) => !result.success)
-          .map((res: any) => res.url);
-
-        const logResults = () => {
-          // console.log("has been 300ms");
-          if (failed.length === 0) {
-            // console.log("All images preloaded successfully:", successful);
-          } else {
-            // console.warn("Some images failed to preload:", failed);
-            // console.log("Successfully preloaded images:", successful);
-          }
-          setFirstPageLoad(true);
-
-          for (let i = 1; i < covers.length; i++) {
-            preloadImages(covers[i].images);
-          }
-        };
-
-        const elapsedTime = performance.now() - pageLoadTime;
-        if (elapsedTime >= 300) {
-          logResults();
-        } else {
-          const delay = 300 - elapsedTime;
-          setTimeout(logResults, delay);
-        }
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!slideUpComponent && currentCoverRef) {
-      const text = covers[currentCoverRef.current].title
-        .replace(" ", "_")
-        .split("");
-      const text2 = covers[currentCoverRef.current].subTitle
-        .replace(" ", "_")
-        .split("");
-      setCoverTitle(text);
-      setSubTitle(text2);
-      setTimeout(() => {
-        setSubIsVisible(true);
-      }, 200);
-    }
-  }, []);
-
-  function changeCover(direction: number) {
-    if (isTransitioning || !currentCoverRef) return;
-    const incomingProject =
-      direction === 1
-        ? currentCoverRef.current === covers.length - 1
-          ? 0
-          : currentCoverRef.current + 1
-        : currentCoverRef.current === 0
-        ? covers.length - 1
-        : currentCoverRef.current - 1;
-
-    const text = covers[incomingProject].title.replace(" ", "_").split("");
-    const text2 = covers[incomingProject].subTitle.replace(" ", "_").split("");
-
-    // Subtitle
-    setIsRevealing2([direction, false]);
-    setTimeout(() => {
-      setSubTitle(text2);
-      setIsRevealing2([direction, true]);
-    }, 400);
-
-    // Main title
-    setNextTitle(text);
-    setTimeout(() => {
-      setIsRevealing1([direction, false]);
-      setTimeout(() => {
-        if (currentCoverRef) {
-          if (direction === 1) {
-            currentCoverRef.current =
-              currentCoverRef.current === covers.length - 1
-                ? 0
-                : currentCoverRef.current + 1;
-            setCurrentCover((prev) =>
-              prev === covers.length - 1 ? 0 : prev + 1
-            );
-          } else {
-            currentCoverRef.current =
-              currentCoverRef.current === 0
-                ? covers.length - 1
-                : currentCoverRef.current - 1;
-            setCurrentCover((prev) =>
-              prev === 0 ? covers.length - 1 : prev - 1
-            );
-          }
-        }
-        setExitingCover(null);
-      }, 600);
-
-      setTimeout(() => {
-        // reveal the next
-        setIsNextDisplayed(true);
-        setIsRevealingNext([direction, true]);
-        setIsNextVisible(true);
-
-        setTimeout(() => {
-          // hide the first
-          setIsVisible(false);
-          setIsRevealing1([direction, true]);
-          setCoverTitle(text);
-
-          setTimeout(() => {
-            setIsDisplayed(true);
-            setTimeout(() => {
-              setIsVisible(true);
-              setIsNextVisible(false);
-              setIsNextDisplayed(false);
-              setIsRevealingNext([direction, true]);
-            }, 100);
-          }, 1000);
-        }, 600);
-      }, 100);
-    }, 100);
-
-    setIsTransitioning(true);
-    setExitingCover(currentCoverRef.current);
-
-    setTimeout(() => setIsTransitioning(false), 800);
-  }
-
-  const handleNextCover = (event: any) => {
-    event.stopPropagation();
-    if (readyToTransition && readyToTransition.current) {
-      changeCover(1);
-      readyToTransition.current = false;
-      if (animatingRef) {animatingRef.current[0] += 1}
-      setTimeout(() => {
-        if (readyToTransition) {
-          readyToTransition.current = true;
-          readyToRetrigger.current = true;
-          if (nextMove.current[1]) {
-            if (animatingRef) {animatingRef.current[1] += 1}
-            doNextMove();
-          } else {
-            nextMove.current = [0, false];
-            readyToRetrigger.current = false;
-            readyToTransition.current = true;
-            if (animatingRef) {animatingRef.current[1] += 1}
-          }
-        }
-      }, 1910);
-    }
+  // Easing function for smooth acceleration and deceleration
+  const easeInOutCubic = (t: any) => {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   };
 
-  const handlePrevCover = (event: any) => {
-    event.stopPropagation();
-    if (readyToTransition && readyToTransition.current) {
-      changeCover(-1);
-      readyToTransition.current = false;
-      if (animatingRef)  {animatingRef.current[0] += 1}
-      setTimeout(() => {
-        if (readyToTransition) {
-          readyToTransition.current = true;
-          readyToRetrigger.current = true;
-          if (nextMove.current[1]) {
-            if (animatingRef) {animatingRef.current[1] += 1}
-            doNextMove();
-          } else {
-            nextMove.current = [0, false];
-            readyToRetrigger.current = false;
-            readyToTransition.current = true;
-            if (animatingRef) {animatingRef.current[1] += 1}
-          }
-        }
-      }, 1910);
-    }
+  // Scroll Down function (1.2 seconds long)
+  const scrollDown = () => {
+    customScroll(window.innerHeight); // Scroll down to the viewport height
   };
 
-  function doNextMove() {
-    const fakeEvent = { stopPropagation: () => {} };
-    if (nextMove.current[0] === 1) {
-      nextMove.current = [0, false];
-      handleNextCover(fakeEvent);
-    }
-    if (nextMove.current[0] === -1) {
-      nextMove.current = [0, false];
-      handlePrevCover(fakeEvent);
-    }
-  }
-
-  const disableTransitionRef = useRef(true);
-  const disableTransition = () => {
-    disableTransitionRef.current = true;
-    setTimeout(() => {
-      disableTransitionRef.current = false;
-    }, 0);
+  const handleProjectClick = (item: number) => {
+    console.log(item);
   };
-
-  const location = useLocation();
-  const previousRoute = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (
-      previousRoute.current &&
-      previousRoute.current.startsWith(window.location.origin)
-    ) {
-      disableTransition();
-    }
-    previousRoute.current = `${window.location.origin}${location.pathname}`;
-  }, [location]);
-
-  const generateRandomDelay = () => Math.random() * 0.4;
 
   return (
-    <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
-      <div
-        className="cursor-pointer relative w-[100vw] h-[100%] flex items-center justify-center"
+    <div className="w-[100%] h-[100vh]">
+      {/* <div
+        // className={`absolute z-[300] flex w-[100vw] h-[100vh] items-center justify-center pl-[20px]`}
+        className={`fixed z-[300] flex w-[100vw] h-[100vh] items-center justify-center`}
         style={{
-          backgroundColor: "white",
-        }}
-        onClick={(event: any) => {
-          if (readyToTransition.current) {
-            handleNextCover(event);
-          } else {
-            if (nextMove && !nextMove.current[1]) {
-              nextMove.current = [1, true];
-            }
-          }
+          backgroundColor: slideOpen ? "white" : "transparent",
+          // transition: "transform 1.6s cubic-bezier(0.5, 0, 0.1, 1)",
+          transition: "background-color 1.1s cubic-bezier(0.5, 0, 0.1, 1)",
+          // transform: slideOpen ? "translateY(0%)" : "translateY(-100%)",
         }}
       >
-        {currentLayout.map((item, index) => {
-          return (
-            <React.Fragment key={`layout-${index}`}>
-              <AnimatePresence>
-                {exitingCover !== null && (
-                  <motion.div
-                    key={`exiting-${exitingCover}`}
-                    initial={{ opacity: 1 }}
-                    animate={{ opacity: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      duration: 0.4,
-                      ease: "easeInOut",
-                      delay: generateRandomDelay(),
-                    }}
-                    style={{
-                      zIndex: item.z,
-                    }}
-                  >
-                    <div
-                      className="image absolute"
-                      style={{
-                        aspectRatio: `1/${item.h}`,
-                        width: `${item.w}vw`,
-                        left: `${item.x}vw`,
-                        top: item.top ? `${item.y}vh` : "none",
-                        bottom: item.top ? "none" : `${item.y}vh`,
-                      }}
-                    >
-                      <img
-                        alt=""
-                        className="image"
-                        src={`${appData.baseURL}${
-                          covers[currentCoverRef.current].images[index]
-                        }`}
-                        style={{
-                          position: "absolute",
-                        }}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {firstPageLoad && (
-                <AnimatePresence>
-                  {exitingCover === null && (
-                    <motion.div
-                      key={`current-${currentCoverRef.current}`}
-                      initial={
-                        disableTransitionRef.current
-                          ? { opacity: 1 }
-                          : { opacity: 0 }
-                      }
-                      animate={
-                        disableTransitionRef.current
-                          ? { opacity: 1 }
-                          : { opacity: 1 }
-                      }
-                      exit={
-                        disableTransitionRef.current
-                          ? { opacity: 1 }
-                          : { opacity: 0 }
-                      }
-                      transition={
-                        disableTransitionRef.current
-                          ? { duration: 0 }
-                          : {
-                              duration: 0.7,
-                              ease: "easeInOut",
-                              delay: generateRandomDelay(),
-                            }
-                      }
-                      style={{
-                        zIndex: item.z,
-                      }}
-                    >
-                      <div
-                        className="image absolute"
-                        style={{
-                          aspectRatio: `1/${item.h}`,
-                          width: `${item.w}vw`,
-                          left: `${item.x}vw`,
-                          top: item.top ? `${item.y}vh` : "none",
-                          bottom: item.top ? "none" : `${item.y}vh`,
-                        }}
-                      >
-                        <img
-                          alt=""
-                          className="image"
-                          src={`${appData.baseURL}${
-                            covers[currentCoverRef.current].images[index]
-                          }`}
-                          style={{ position: "absolute" }}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              )}
-            </React.Fragment>
-          );
-        })}
-
-        {isDisplayed && (
-          <div
-            style={{ opacity: isVisible ? 1 : 0 }}
-            className={`home-text-reveal-wrapper inverted-text klivora text-[calc(20px+9vw)] leading-[calc(20px+9vw)]`}
-          >
-            <div className="klivora wave-container">
-              {coverTitle.map((letter, index) => (
-                <span
-                  key={index}
-                  className={`wave-letter ${
-                    isRevealing1[0] === 1
-                      ? isRevealing1[1]
-                        ? "wave-reveal"
-                        : "wave-conceal"
-                      : isRevealing1[1]
-                      ? "wave-reveal-flip"
-                      : "wave-conceal-flip"
-                  }`}
-                  style={{
-                    animationDelay: `${Math.pow(index, 0.65) * 0.025}s`,
-                    opacity: letter === "_" ? 0 : 1,
-                  }}
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {isDisplayed && (
-          <div
-            style={{ opacity: isVisible ? 1 : 0 }}
-            className={`home-text-reveal-wrapper 
-           inverted-text-black klivora text-[calc(20px+9vw)] leading-[calc(20px+9vw)]`}
-          >
-            <div className="klivora wave-container">
-              {coverTitle.map((letter, index) => (
-                <span
-                  key={index}
-                  className={`wave-letter ${
-                    isRevealing1[0] === 1
-                      ? isRevealing1[1]
-                        ? "wave-reveal"
-                        : "wave-conceal"
-                      : isRevealing1[1]
-                      ? "wave-reveal-flip"
-                      : "wave-conceal-flip"
-                  }`}
-                  style={{
-                    animationDelay: `${Math.pow(index, 0.75) * 0.02}s`,
-                    opacity: letter === "_" ? 0 : 1,
-                  }}
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {isNextDisplayed && (
-          <div
-            style={{ opacity: isNextVisible ? 1 : 0 }}
-            className={`home-text-reveal-wrapper inverted-text klivora text-[calc(20px+9vw)] leading-[calc(20px+9vw)]`}
-          >
-            <div className="klivora wave-container">
-              {nextTitle.map((letter, index) => (
-                <span
-                  key={index}
-                  className={`wave-letter ${
-                    isRevealingNext[0] === 1
-                      ? isRevealingNext[1]
-                        ? "wave-reveal"
-                        : "wave-conceal"
-                      : isRevealingNext[1]
-                      ? "wave-reveal-flip"
-                      : "wave-conceal-flip"
-                  }`}
-                  style={{
-                    animationDelay: `${Math.pow(index, 0.65) * 0.025}s`,
-                    opacity: letter === "_" ? 0 : 1,
-                  }}
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {isNextDisplayed && (
-          <div
-            style={{ opacity: isNextVisible ? 1 : 0 }}
-            className={`home-text-reveal-wrapper inverted-text-black klivora text-[calc(20px+9vw)] leading-[calc(20px+9vw)]`}
-          >
-            <div className="klivora wave-container">
-              {nextTitle.map((letter, index) => (
-                <span
-                  key={index}
-                  className={`wave-letter ${
-                    isRevealingNext[0] === 1
-                      ? isRevealingNext[1]
-                        ? "wave-reveal"
-                        : "wave-conceal"
-                      : isRevealingNext[1]
-                      ? "wave-reveal-flip"
-                      : "wave-conceal-flip"
-                  }`}
-                  style={{
-                    animationDelay: `${Math.pow(index, 0.75) * 0.02}s`,
-                    opacity: letter === "_" ? 0 : 1,
-                  }}
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div
-          className={`inverted-text absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)] ${
-            isSubVisible ? "visible" : "hidden"
-          }`}
-        >
-          <div className="wave-container">
-            {subTitle.map((letter, index) => (
-              <span
-                key={index}
-                className={`wave-letter ${
-                  isRevealing2[0] === 1
-                    ? isRevealing2[1]
-                      ? "wave-reveal2"
-                      : "wave-conceal2"
-                    : isRevealing2[1]
-                    ? "wave-reveal-flip2"
-                    : "wave-conceal-flip2"
-                }`}
+        {!slideUpComponent && (
+          <div className="w-[100%]">
+            <div
+              className={`archives-text-reveal-wrapper 
+            ${dropdown1Display ? "flex" : "hidden"}
+            ${isVisible ? "visible" : ""}`}
+            >
+              <div
+                className={`klivora wave-container flex w-[100%] items-center justify-center ${
+                  isRevealing1 ? "archives-text-reveal" : ""
+                } 
+                text-[calc(30px+3vw)] tracking-[1px] leading-[62px] dimmer`}
                 style={{
-                  opacity: letter === "_" ? 0 : 1,
+                  color: slideOpen ? "black" : "white",
+                  opacity: textVisible ? 1 : 0,
+                  transition:
+                    "color 0.4s cubic-bezier(0.5, 0, 0.1, 1), opacity 0.9s cubic-bezier(0.5, 0, 0.1, 1)",
                 }}
               >
-                {letter}
-              </span>
-            ))}
+                <div className="archives-wave-container">
+                  {subTitle.map((letter, index) => (
+                    <span
+                      key={index}
+                      className={`archives-wave-letter ${
+                        textVisible
+                          ? "archives-wave-reveal2"
+                          : "archives-wave-conceal2"
+                      }`}
+                    >
+                      {letter}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div> */}
+
+      <div
+        className={`absolute z-[300] flex w-[100vw] h-[100vh] items-center justify-center pl-[20px]`}
+        style={{
+          backgroundColor: "white",
+          transition: "transform 1.6s cubic-bezier(0.5, 0, 0.1, 1)",
+          transform: slideOpen ? "translateY(0%)" : "translateY(-100%)",
+        }}
+      >
+        {!slideUpComponent && (
+          <div
+            className="w-[100%] flex"
+            style={{ backgroundColor: "transparent" }}
+          >
+            <div
+              className={`text-reveal-wrapper 
+            ${dropdown1Display ? "flex" : "hidden"}
+            ${isVisible ? "visible" : ""}`}
+            >
+              <div
+                className={`klivora ${
+                  isRevealing1 ? "text-reveal" : "text-conceal"
+                } text-[42px] tracking-[1px] leading-[29px] dimmer`}
+              >
+                ARCHIVES
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div
+        className="w-[100vw] h-[100vh] fixed top-0 left-0 z-[105]"
+        // className="fixed top-0 left-0 w-[100vw] h-[100vh]"
+        style={{
+          transition:
+            "transform 1.5s cubic-bezier(0.5, 0, 0.1, 1), background-color 1.5s cubic-bezier(0.5, 0, 0.1, 1)",
+          transform: slideOpen ? "translateY(20%)" : "translateY(0%)",
+          backgroundColor: slideOpen ? "white" : "#013559",
+        }}
+      >
+        <div className="absolute left-0 top-0 w-[calc(100vw-((650px+10vh)/1.5)-(50px+5vw))] h-[100vh] z-[106]">
+          <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex items-center">
+            <div
+              className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] flex-col"
+              style={{ color: "white", fontWeight: "700" }}
+            >
+              <div className="absolute sandemore text-[calc(50px+8vw)]">
+                Lifestyle
+              </div>
+
+              <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
+                <p>BEHANDLET EGETRAE</p>
+                <p className="ml-[100px]">MUNDVANDSDRIVENDE KAFFERISTNING</p>
+                <p>MINIMALISTISK INERIOR</p>
+              </div>
+            </div>
+
+            <div
+              onClick={() => handleProjectClick(0)}
+              onMouseEnter={() => setBorderRadius("30px")}
+              onMouseLeave={() => setBorderRadius("50%")}
+              className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
+            >
+              <div
+                className="w-[100%] flex items-center justify-center cursor-pointer"
+                style={{
+                  border: "1px solid white",
+                  borderRadius: borderRadius,
+                  height: borderRadius === "50%" ? "calc(70px + 5vw)" : "50px",
+                  transition:
+                    "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                }}
+              >
+                <img
+                  className="w-[45%] select-none"
+                  src="/assets/icons/arrow1.png"
+                  alt="arrow"
+                />
+              </div>
+            </div>
           </div>
         </div>
+
         <div
-          className={`inverted-text-black absolute mt-[calc(35px+10vw)] text-[calc(8px+0.75vw)] ${
-            isSubVisible ? "visible" : "hidden"
-          }`}
+          className="absolute select-none right-[calc(50px+5vw)] top-[50%] aspect-[1/1.5] h-[calc(650px+10vh)] z-[105]"
+          style={{ transform: "translateY(-50%)" }}
         >
-          <div className="wave-container">
-            {subTitle.map((letter, index) => (
-              <span
-                key={index}
-                className={`wave-letter ${
-                  isRevealing2[0] === 1
-                    ? isRevealing2[1]
-                      ? "wave-reveal2"
-                      : "wave-conceal2"
-                    : isRevealing2[1]
-                    ? "wave-reveal-flip2"
-                    : "wave-conceal-flip2"
-                }`}
-                style={{
-                  opacity: letter === "_" ? 0 : 1,
-                }}
-              >
-                {letter}
-              </span>
-            ))}
-          </div>
+          <Hero />
         </div>
       </div>
+
+      {/* {!slideOpen && (
+        <div
+          className="absolute top-[100vh] left-0 w-[100vw] h-[100vh] z-[106]"
+          style={{ backgroundColor: "red" }}
+        ></div>
+      )} */}
     </div>
   );
 };
 
 export default Archives;
-
-
