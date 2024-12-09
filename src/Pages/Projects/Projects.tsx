@@ -189,7 +189,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
             transform:
               selectedProject === null
                 ? "translateY(0)"
-                : "translateY(calc(-20vh))",
+                : "translateY(calc(-30vh))",
           }}
         >
           <div

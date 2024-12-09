@@ -273,6 +273,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     if (canSelectPage) {
       selectedPage();
       if (dropdown) {
+        setSelectedProject(null);
         clickedDropdownPage("projects");
       } else {
         if (currentPage !== "projects") {
