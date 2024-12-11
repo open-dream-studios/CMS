@@ -166,14 +166,14 @@ const Archives: React.FC<ArchivesPageProps> = ({
           backgroundColor: slideOpen ? "white" : "#013559",
         }}
       >
-        <div className="absolute left-0 top-0 w-[calc(100vw-((650px+10vh)/1.5)-(50px+5vw))] h-[100vh] z-[106]">
-          <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex items-center">
+        <div style={{backgroundColor: "pink"}} className="absolute left-0 top-0 w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]">
+          <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex lg:items-center mt-[] lg:mt-0">
             <div
-              className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] flex-col"
-              style={{ color: "white", fontWeight: "700" }}
+              className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
+              style={{ backgroundColor: "green", color: "white", fontWeight: "700" }}
             >
-              <div className="absolute sandemore text-[calc(50px+8vw)]">
-                Lifestyle
+              <div className="absolute kayonest text-[calc(20px+10vw)]">
+                Lifestyle 
               </div>
 
               <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
@@ -210,7 +210,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
         </div>
 
         <div
-          className="absolute select-none right-[calc(50px+5vw)] top-[50%] aspect-[1/1.5] h-[calc(650px+10vh)] z-[105]"
+          className="absolute select-none right-[calc(20px+1vw)] md:right-[calc(20px+2vw)] lg:right-[calc(10px+7vw)] w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] top-[50%] aspect-[1/1.4] z-[105]"
           style={{ transform: "translateY(-50%)" }}
         >
           <Hero />

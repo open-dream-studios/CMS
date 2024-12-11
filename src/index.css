@@ -146,3 +146,43 @@ code {
 .mollie {
   font-family: 'Mollie', sans-serif;
 }
+
+
+
+
+/* ARCHIVES FONTS */
+/* Kayonest */
+@font-face {
+  font-family: 'kayonest';
+  src: url('/public/fonts/kayonest/Kayonest.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.kayonest {
+  font-family: 'Kayonest', sans-serif;
+}
+
+/* Quorina */
+@font-face {
+  font-family: 'quorina';
+  src: url('/public/fonts/quorina/Quorina.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.quorina {
+  font-family: 'Quorina', sans-serif;
+}
+
+/* seraphinem */
+@font-face {
+  font-family: 'seraphinem';
+  src: url('/public/fonts/seraphinem/seraphinem.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.seraphinem {
+  font-family: 'Seraphinem', sans-serif;
+}

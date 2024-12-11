@@ -124,6 +124,8 @@ const App = () => {
     }
   }, [location, projectsList]);
 
+  
+
   // useEffect(() => {
   //   const path = location.pathname.replace("/", "") || "home";
   //   if (
