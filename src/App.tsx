@@ -11,8 +11,6 @@ import "./App.css";
 import ProjectsPage from "./Pages/Projects/ProjectsPage/ProjectsPage";
 import appData from "./app-details.json";
 import useProjectColorsState from "./store/useProjectColorsStore";
-import useProjectColorsNextState from "./store/useProjectColorsNextStore";
-import useProjectColorsPrevState from "./store/useProjectColorsPrevStore";
 import useCurrentPageState from "./store/useCurrentPageStore";
 import useCurrentNavColorState from "./store/useCurrentNavColorStore";
 
@@ -70,8 +68,6 @@ const SlideUpProjectPage: React.FC<SlideUpProjectPageProps> = ({
   zIdx,
 }) => {
   const { projectColors, setProjectColors } = useProjectColorsState();
-  const { projectColorsNext, setProjectColorsNext } =
-    useProjectColorsNextState();
 
   return (
     <motion.div
@@ -85,7 +81,7 @@ const SlideUpProjectPage: React.FC<SlideUpProjectPageProps> = ({
         left: 0,
         width: "100%",
         height: "100%",
-        background: projectColorsNext[0],
+        background: projectColors[2][0],
         // background: full ? "white" : "transparent",
         // zIndex: isVisible ? zIdx : 0, // Ensure the incoming page overlays the current one
         zIndex: 100,
@@ -101,10 +97,6 @@ const App = () => {
   const location = useLocation();
 
   const { projectColors, setProjectColors } = useProjectColorsState();
-  const { projectColorsNext, setProjectColorsNext } =
-    useProjectColorsNextState();
-  const { projectColorsPrev, setProjectColorsPrev } =
-    useProjectColorsPrevState();
   const { currentPage, setCurrentPage } = useCurrentPageState();
 
   const projects = appData.pages.projects;
@@ -124,7 +116,7 @@ const App = () => {
     }
   }, [location, projectsList]);
 
-  
+
 
   // useEffect(() => {
   //   const path = location.pathname.replace("/", "") || "home";
@@ -277,7 +269,7 @@ const App = () => {
                 {sittingProject && (
                   <div
                     className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
-                    style={{ backgroundColor: projectColors[0] }}
+                    style={{ backgroundColor: projectColors[1][0] }}
                   ></div>
                 )}
 
@@ -368,7 +360,7 @@ const App = () => {
             <>
               <div
                 className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
-                style={{ backgroundColor: projectColorsPrev[0] }}
+                style={{ backgroundColor: projectColors[0][0] }}
               ></div>
 
               <Projects
@@ -396,7 +388,7 @@ const App = () => {
                     currentPage.split("/").length === 2) ||
                   currentPage === "projects"
                     ? "white"
-                    : projectColorsNext[0]
+                    : projectColors[2][0]
                 }
               >
                 <ProjectsPage

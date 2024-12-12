@@ -4,11 +4,10 @@ import appData from "../../app-details.json";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";
 import useProjectColorsState from "../../store/useProjectColorsStore";
-import useProjectColorsNextState from "../../store/useProjectColorsNextStore";
-import useProjectColorsPrevState from "../../store/useProjectColorsPrevStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import { useLocation } from "react-router-dom";
 import ProjectCover from "./ProjectCover";
+import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -26,11 +25,8 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const projects = appData.pages.projects;
   const projectsList = projects.map((item) => item.link);
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
+  const { selectedProjectName, setSelectedProjectName } = useSelectedProjectNameState();
   const { projectColors, setProjectColors } = useProjectColorsState();
-  const { projectColorsNext, setProjectColorsNext } =
-    useProjectColorsNextState();
-  const { projectColorsPrev, setProjectColorsPrev } =
-    useProjectColorsPrevState();
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [coversVisible, setCoversVisible] = useState(false);
@@ -125,23 +121,28 @@ const Projects: React.FC<ProjectsPageProps> = ({
                       setCanSelectProject(false);
                       const currentProj = selectedProject;
                       setSelectedProject(index);
+                      setSelectedProjectName([null, currentProj, index]);
+                      console.log("projecst", [null, currentProj, index])
                       navigate("projects/" + projects[index].link);
-
-                      setProjectColorsNext([
+                      const projectColorsCopy = projectColors
+                      projectColorsCopy[2] = [
                         item.background_color,
                         item.text_color,
-                      ]);
-                      setProjectColorsPrev([
+                      ]
+                      projectColorsCopy[0] = [
                         projects[currentProj ? currentProj : 0]
                           .background_color,
                         projects[currentProj ? currentProj : 0].text_color,
-                      ]);
+                      ]
+                      setProjectColors(projectColorsCopy)
                       setTimeout(() => {
-                        setProjectColors([
+                        projectColorsCopy[1] = [
                           item.background_color,
                           item.text_color,
-                        ]);
+                        ]
+                        setProjectColors(projectColorsCopy)
                         setCanSelectProject(true);
+                        setSelectedProjectName([null, index, null]);
                       }, 1000);
                     }
                   }}

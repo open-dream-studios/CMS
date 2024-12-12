@@ -1,38 +1,38 @@
 import React from "react";
 import { PageProps } from "../../App";
 import useProjectColorsState from "../../store/useProjectColorsStore";
-import useProjectColorsNextState from "../../store/useProjectColorsNextStore";
-import useProjectColorsPrevState from "../../store/useProjectColorsPrevStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import appData from "../../app-details.json";
-import BoardDisplay from "../../Components/BoardDisplay/BoardDisplay";
+import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 const About: React.FC<PageProps> = ({ navigate }) => {
   const projects = appData.pages.projects;
   const { projectColors, setProjectColors } = useProjectColorsState();
-  const { projectColorsNext, setProjectColorsNext } =
-    useProjectColorsNextState();
-  const { projectColorsPrev, setProjectColorsPrev } =
-    useProjectColorsPrevState();
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
+  const { selectedProjectName, setSelectedProjectName } = useSelectedProjectNameState();
 
   function setUpdatedProject(newProject: number) {
     const currentProj = selectedProject;
     setSelectedProject(newProject);
+    setSelectedProjectName([null, newProject, null]);
     navigate("projects/" + projects[newProject].link);
 
-    setProjectColorsNext([
-      projects[newProject].background_color,
-      projects[newProject].text_color,
-    ]);
-    setProjectColorsPrev([
+    let projectColorsCopy = projectColors;
+    projectColorsCopy[0] = [
       projects[currentProj ? currentProj : 0].background_color,
       projects[currentProj ? currentProj : 0].text_color,
-    ]);
+    ];
+    projectColorsCopy[2] = [
+      projects[newProject].background_color,
+      projects[newProject].text_color,
+    ];
+
+    setProjectColors(projectColorsCopy);
     setTimeout(() => {
-      setProjectColors([
+      projectColorsCopy[1] = [
         projects[newProject].background_color,
         projects[newProject].text_color,
-      ]);
+      ];
+      setProjectColors(projectColorsCopy);
     }, 1000);
   }
 

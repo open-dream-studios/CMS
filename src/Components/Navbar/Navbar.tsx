@@ -6,6 +6,7 @@ import useCurrentPageState from "../../store/useCurrentPageStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import appData from "../../app-details.json";
 import useCurrentNavColorState from "../../store/useCurrentNavColorStore";
+import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 
 interface PageProps {
   navigate: (page: Page) => void;
@@ -36,6 +37,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
 
   const { currentPage, setCurrentPage } = useCurrentPageState();
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
+  const { selectedProjectName, setSelectedProjectName } = useSelectedProjectNameState();
 
   function showText() {
     setTimeout(() => {
@@ -271,11 +273,14 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       selectedPage();
       if (dropdown) {
         setSelectedProject(null);
+        setSelectedProjectName([null, null, null]);
+        
         clickedDropdownPage("projects");
       } else {
         if (currentPage !== "projects") {
           setTimeout(() => {
             setSelectedProject(null);
+            setSelectedProjectName([null, null, null]);
           }, 1000);
         }
       }
