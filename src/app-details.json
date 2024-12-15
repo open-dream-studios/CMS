@@ -96,11 +96,25 @@
         "images": {
           "covers": ["home2.jpeg", "home1.jpeg", "home3.jpeg"],
           "project_images": [
-            "home1.jpeg",
-            "home2.jpeg",
-            "home3.jpeg",
-            "home3.jpeg",
-            "home3.jpeg"
+            ["projects/project1/p1-cover.jpeg", true],
+            ["projects/project1/p1-1.png", true],
+            ["projects/project1/p1-2.png", true],
+            ["projects/project1/p1-3.png", true],
+            ["projects/project1/p1-4.png", true],
+            ["projects/project1/p1-5.png", true],
+            ["projects/project1/p1-6.png", true],
+            ["projects/project1/p1-7.png", true],
+            ["projects/project1/p1-8.png", true],
+            ["projects/project1/p1-9.png", true],
+            ["projects/project1/p1-10.png", true],
+            ["projects/project1/p1-11.png", true],
+            ["projects/project1/p1-12.png", true],
+            ["projects/project1/p1-13.png", true],
+            ["projects/project1/p1-14.png", true],
+            ["projects/project1/p1-15.png", false],
+            ["projects/project1/p1-16.png", false],
+            ["projects/project1/p1-17.png", false],
+            ["projects/project1/p1-18.png", false]
           ]
         }
       },
@@ -112,11 +126,25 @@
         "images": {
           "covers": ["home1.jpeg", "home2.jpeg", "home3.jpeg"],
           "project_images": [
-            "home1.jpeg",
-            "home2.jpeg",
-            "home3.jpeg",
-            "home3.jpeg",
-            "home3.jpeg"
+            ["projects/project1/p1-cover.jpeg", true],
+            ["projects/project1/p1-3.png", true],
+            ["projects/project1/p1-2.png", true],
+            ["projects/project1/p1-3.png", true],
+            ["projects/project1/p1-4.png", true],
+            ["projects/project1/p1-5.png", true],
+            ["projects/project1/p1-6.png", true],
+            ["projects/project1/p1-7.png", true],
+            ["projects/project1/p1-8.png", true],
+            ["projects/project1/p1-9.png", true],
+            ["projects/project1/p1-10.png", true],
+            ["projects/project1/p1-11.png", true],
+            ["projects/project1/p1-12.png", true],
+            ["projects/project1/p1-13.png", true],
+            ["projects/project1/p1-14.png", true],
+            ["projects/project1/p1-15.png", false],
+            ["projects/project1/p1-16.png", false],
+            ["projects/project1/p1-17.png", false],
+            ["projects/project1/p1-18.png", false]
           ]
         }
       },

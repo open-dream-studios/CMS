@@ -82,7 +82,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
   ]);
 
   return (
-    <div className="min-h-[100vh] w-[100vw] flex">
+    <div className="min-h-[100vh] w-[100vw] flex fixed">
       <div style={{backgroundColor: "transparent"}} className="py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]">
         <div
           className="w-[300px] sm:w-[270px] md:w-[330px] lg:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
@@ -122,7 +122,6 @@ const Projects: React.FC<ProjectsPageProps> = ({
                       const currentProj = selectedProject;
                       setSelectedProject(index);
                       setSelectedProjectName([null, currentProj, index]);
-                      console.log("projecst", [null, currentProj, index])
                       navigate("projects/" + projects[index].link);
                       const projectColorsCopy = projectColors
                       projectColorsCopy[2] = [
