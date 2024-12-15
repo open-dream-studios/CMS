@@ -8,6 +8,7 @@ import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import { useLocation } from "react-router-dom";
 import ProjectCover from "./ProjectCover";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
+import useCanSelectProjectState from "../../store/useCanSelectProjectState";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -25,8 +26,10 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const projects = appData.pages.projects;
   const projectsList = projects.map((item) => item.link);
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
-  const { selectedProjectName, setSelectedProjectName } = useSelectedProjectNameState();
+  const { selectedProjectName, setSelectedProjectName } =
+    useSelectedProjectNameState();
   const { projectColors, setProjectColors } = useProjectColorsState();
+  const { canSelectProject, setCanSelectProject } = useCanSelectProjectState();
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [coversVisible, setCoversVisible] = useState(false);
@@ -34,7 +37,6 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [titlesVisible, setTitlesVisible] = useState(currentPage);
   const [animateWave, setAnimateWave] = useState(false);
   const [animateWaveTrigger, setAnimateWaveTrigger] = useState(false);
-  const [canSelectProject, setCanSelectProject] = useState(true);
 
   const location = useLocation();
   useEffect(() => {
@@ -73,21 +75,41 @@ const Projects: React.FC<ProjectsPageProps> = ({
         setTitlesVisible(true);
       }
     }
-  }, [
-    animate,
-    currentPage,
-    page,
-    projectsList,
-    selectedProject,
-  ]);
+  }, [animate, currentPage, page, projectsList, selectedProject]);
+
+  function handleProjectClick(index: number, item: any) {
+    if (canSelectProject) {
+      setCanSelectProject(false);
+      const currentProj = selectedProject;
+      setSelectedProject(index);
+      setSelectedProjectName([null, currentProj, index]);
+      navigate("projects/" + projects[index].link);
+      const projectColorsCopy = projectColors;
+      projectColorsCopy[2] = [item.background_color, item.text_color];
+      projectColorsCopy[0] = [
+        projects[currentProj ? currentProj : 0].background_color,
+        projects[currentProj ? currentProj : 0].text_color,
+      ];
+      setProjectColors(projectColorsCopy);
+      setTimeout(() => {
+        projectColorsCopy[1] = [item.background_color, item.text_color];
+        setProjectColors(projectColorsCopy);
+        setCanSelectProject(true);
+        setSelectedProjectName([null, index, null]);
+      }, 1000);
+    }
+  };
 
   return (
-    <div className="min-h-[100vh] w-[100vw] flex fixed">
-      <div style={{backgroundColor: "transparent"}} className="py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]">
+    <div className="fixed min-h-[100vh] w-[100vw] flex">
+      <div
+        style={{ backgroundColor: "red" }}
+        className=" py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]"
+      >
         <div
           className="w-[300px] sm:w-[270px] md:w-[330px] lg:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
           style={{
-            backgroundColor: "transparent",
+            backgroundColor: "green",
           }}
         >
           <div
@@ -116,35 +138,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
                       setHoveredIndex(null);
                     }
                   }}
-                  onClick={() => {
-                    if (canSelectProject) {
-                      setCanSelectProject(false);
-                      const currentProj = selectedProject;
-                      setSelectedProject(index);
-                      setSelectedProjectName([null, currentProj, index]);
-                      navigate("projects/" + projects[index].link);
-                      const projectColorsCopy = projectColors
-                      projectColorsCopy[2] = [
-                        item.background_color,
-                        item.text_color,
-                      ]
-                      projectColorsCopy[0] = [
-                        projects[currentProj ? currentProj : 0]
-                          .background_color,
-                        projects[currentProj ? currentProj : 0].text_color,
-                      ]
-                      setProjectColors(projectColorsCopy)
-                      setTimeout(() => {
-                        projectColorsCopy[1] = [
-                          item.background_color,
-                          item.text_color,
-                        ]
-                        setProjectColors(projectColorsCopy)
-                        setCanSelectProject(true);
-                        setSelectedProjectName([null, index, null]);
-                      }, 1000);
-                    }
-                  }}
+                  onClick={() => {handleProjectClick(index, item)}}
                 >
                   <div className={` ${titlesVisible ? "visible" : "hidden"}`}>
                     <div className="project-container">

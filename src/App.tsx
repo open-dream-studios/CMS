@@ -93,6 +93,8 @@ const SlideUpProjectPage: React.FC<SlideUpProjectPageProps> = ({
 const App = () => {
   // const [currentPage, setCurrentPage] = useState<Page>("home");
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
+  const [incomingPageDecision, setIncomingPageDecision] =
+    useState<IncomingPage>(null);
   const navigateTo = useNavigate();
   const location = useLocation();
 
@@ -115,8 +117,6 @@ const App = () => {
       setCurrentPage(path as Page);
     }
   }, [location, projectsList]);
-
-
 
   // useEffect(() => {
   //   const path = location.pathname.replace("/", "") || "home";
@@ -154,6 +154,7 @@ const App = () => {
       setSittingProject(false);
     }
     setIncomingPage(page); // Set the incoming page to trigger animation
+    setIncomingPageDecision(page);
     setTimeout(() => {
       setCurrentPage(page); // Once animation is done, switch to the new page
       setIncomingPage(null); // Reset incoming page
@@ -163,6 +164,9 @@ const App = () => {
       setTimeout(() => {
         setDisableTransition(false);
       }, 50);
+      setTimeout(() => {
+        setIncomingPageDecision(null);
+      }, 100);
       if (
         page.startsWith("projects/") &&
         projectsList.includes(page.split("/")[1]) &&
@@ -335,7 +339,7 @@ const App = () => {
         </motion.div>
 
         {/* Animate the incoming page */}
-        {incomingPage === "home" && (
+        {incomingPageDecision === "home" && (
           <SlideUpPage zIdx={702} isVisible full={true} nextColor={"white"}>
             <Home
               layoutOrder={layoutOrder}
@@ -344,7 +348,7 @@ const App = () => {
             />
           </SlideUpPage>
         )}
-        {incomingPage === "projects" && (
+        {incomingPageDecision === "projects" && (
           <SlideUpPage zIdx={702} isVisible full={true} nextColor={"white"}>
             <Projects
               navigate={navigate}
@@ -354,9 +358,9 @@ const App = () => {
             />
           </SlideUpPage>
         )}
-        {incomingPage?.startsWith("projects/") &&
-          projectsList.includes(incomingPage.split("/")[1]) &&
-          incomingPage.split("/").length === 2 && (
+        {incomingPageDecision?.startsWith("projects/") &&
+          projectsList.includes(incomingPageDecision.split("/")[1]) &&
+          incomingPageDecision.split("/").length === 2 && (
             <>
               <div
                 className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
@@ -365,7 +369,7 @@ const App = () => {
 
               <Projects
                 navigate={navigate}
-                page={incomingPage}
+                page={incomingPageDecision}
                 currentPage={false}
                 animate={false}
               />
@@ -393,18 +397,18 @@ const App = () => {
               >
                 <ProjectsPage
                   navigate={navigate}
-                  page={incomingPage}
+                  page={incomingPageDecision}
                   slideUpComponent={true}
                 />
               </SlideUpPage>
             </>
           )}
-        {incomingPage === "about" && (
+        {incomingPageDecision === "about" && (
           <SlideUpPage isVisible zIdx={702} full={true} nextColor={"white"}>
             <About navigate={navigate} />
           </SlideUpPage>
         )}
-        {incomingPage === "archives" && (
+        {incomingPageDecision === "archives" && (
           <SlideUpPage isVisible zIdx={702} full={true} nextColor={"white"}>
             <Archives navigate={navigate} slideUpComponent={true} />
           </SlideUpPage>

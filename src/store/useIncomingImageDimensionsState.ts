@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export interface ImageDimension {
+interface ImageDimension {
   width: number;
   height: number;
   src: string;
