@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { IncomingPage, Page, PageProps } from "../../App";
 import appData from "../../app-details.json";
 import { AnimatePresence, motion } from "framer-motion";
@@ -37,6 +37,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [titlesVisible, setTitlesVisible] = useState(currentPage);
   const [animateWave, setAnimateWave] = useState(false);
   const [animateWaveTrigger, setAnimateWaveTrigger] = useState(false);
+  const [isSmall, setIsSmall] = useState<boolean>(false);
 
   const location = useLocation();
   useEffect(() => {
@@ -105,7 +106,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
       <div className="top-0 left-0 h-[100%] w-[100%]">
         <div
           style={{ backgroundColor: "transparent" }}
-          className=" py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]"
+          className={`${selectedProjectName[1] !== null && "sm:flex hidden"} py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]`}
         >
           <div
             className="w-[300px] sm:w-[270px] md:w-[330px] lg:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
@@ -140,6 +141,9 @@ const Projects: React.FC<ProjectsPageProps> = ({
                       }
                     }}
                     onClick={() => {
+                      setTimeout(() => {
+                        setIsSmall(true);
+                      }, 1000);
                       handleProjectClick(index, item);
                     }}
                   >

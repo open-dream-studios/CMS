@@ -411,7 +411,7 @@ const App = () => {
                   left: 0,
                   width: "100%",
                   height: "100%",
-                  zIndex: 100,
+                  zIndex: 105,
                   pointerEvents: "none",
                 }}
               >
@@ -461,7 +461,7 @@ const App = () => {
               <div>
                 {sittingProject && (
                   <div
-                    className="w-[0] sm:w-[calc(2vw+220px)] md:w-[calc(2vw+250px)]
+                    className="w-[0] sm:w-[calc(2vw+225px)] md:w-[calc(2vw+255px)]
                     h-[100vh] fixed left-0 top-0 "
                     style={{
                       backgroundColor: projectColors[1][0],
