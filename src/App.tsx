@@ -300,6 +300,20 @@ const App = () => {
     }
   }, [location]);
 
+  useEffect(() => {
+    if (location.pathname === "/home") {
+      setTimeout(()=>{
+        document.body.style.overflow = "hidden";
+      },1000)
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [location]);
+
   return (
     <>
       <div style={{ position: "relative", width: "100%", height: "100vh" }}>
@@ -426,7 +440,7 @@ const App = () => {
           }
           // transition={{ duration: 1, ease: [0.95, 0, 0.4, 1] }}
           style={{
-            position: "absolute",
+            position: "fixed",
             top: 0,
             left: 0,
             width: "100%",
