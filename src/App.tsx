@@ -231,17 +231,19 @@ const App = () => {
     return array;
   });
 
-  useEffect(()=>{
-    const path = location.pathname
+  useEffect(() => {
+    const path = location.pathname;
     if (
       selectedProjectName[1] === null &&
       path.startsWith("/projects/") &&
       projectsList.includes(path.split("/")[2]) &&
       path.split("/").length === 3
     ) {
-      const insertProject = projectsList.findIndex((link) => link === path.split("/")[2]);
-      setSelectedProject(insertProject)
-      setSelectedProjectName([null, insertProject, null])
+      const insertProject = projectsList.findIndex(
+        (link) => link === path.split("/")[2]
+      );
+      setSelectedProject(insertProject);
+      setSelectedProjectName([null, insertProject, null]);
       let projectColorsCopy = projectColors;
       projectColorsCopy[1] = [
         projects[insertProject].background_color,
@@ -249,24 +251,23 @@ const App = () => {
       ];
       setProjectColors(projectColorsCopy);
 
-
       const loadImageDimensions = async () => {
         const dimensions = await Promise.all(
-          appData.pages.projects[
-            insertProject
-          ].images.project_images.map((item) => {
-            const imgSrc = `${appData.baseURL}${item[0]}`;
-            return new Promise<ImageDimension>((resolve) => {
-              const img = new Image();
-              img.onload = () =>
-                resolve({
-                  width: img.naturalWidth,
-                  height: img.naturalHeight,
-                  src: imgSrc,
-                });
-              img.src = imgSrc;
-            });
-          })
+          appData.pages.projects[insertProject].images.project_images.map(
+            (item) => {
+              const imgSrc = `${appData.baseURL}${item[0]}`;
+              return new Promise<ImageDimension>((resolve) => {
+                const img = new Image();
+                img.onload = () =>
+                  resolve({
+                    width: img.naturalWidth,
+                    height: img.naturalHeight,
+                    src: imgSrc,
+                  });
+                img.src = imgSrc;
+              });
+            }
+          )
         );
         setIncomingImageDimensions(dimensions);
 
@@ -277,8 +278,10 @@ const App = () => {
             const dynamicBaseWidth = isHorizontal ? 70 : 45;
             const dynamicWidth = dynamicBaseWidth + Math.random() * 25;
             const dynamicMarginLeft = Math.random() * (100 - dynamicWidth);
-            const currentSeparation = 
-              index === 2 ? -25 + Math.random() * 50 : -25 + Math.random() * 100
+            const currentSeparation =
+              index === 2
+                ? -25 + Math.random() * 50
+                : -25 + Math.random() * 100;
             if (index !== 0) {
               newSpeeds.push(Math.random() * 0.1 + 0.05);
             }
@@ -294,9 +297,8 @@ const App = () => {
         }
       };
       loadImageDimensions();
-
     }
-  },[location])
+  }, [location]);
 
   return (
     <>
@@ -355,36 +357,13 @@ const App = () => {
           {currentPage?.startsWith("projects/") &&
             projectsList.includes(currentPage.split("/")[1]) &&
             currentPage.split("/").length === 2 && (
-              <>
+              <div>
                 {sittingProject && (
                   <div
                     className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
                     style={{ backgroundColor: projectColors[1][0] }}
                   ></div>
                 )}
-
-                <Projects
-                  navigate={navigate}
-                  page={currentPage}
-                  currentPage={true}
-                  animate={
-                    incomingPage
-                      ? incomingPage.startsWith("projects/") &&
-                        projectsList.includes(incomingPage.split("/")[1]) &&
-                        incomingPage.split("/").length === 2 &&
-                        currentPage !== "projects" &&
-                        !(
-                          currentPage.startsWith("projects/") &&
-                          projectsList.includes(currentPage.split("/")[1]) &&
-                          currentPage.split("/").length === 2
-                        )
-                      : !(
-                          cachedCurrent.startsWith("projects/") &&
-                          projectsList.includes(cachedCurrent.split("/")[1]) &&
-                          cachedCurrent.split("/").length === 2
-                        ) && cachedCurrent !== "projects"
-                  }
-                />
 
                 <motion.div
                   initial={{ y: 0 }}
@@ -420,7 +399,66 @@ const App = () => {
                     slideUpComponent={false}
                   />
                 </motion.div>
-              </>
+              </div>
+            )}
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 0 }}
+          animate={
+            incomingPage &&
+            !(
+              incomingPage.startsWith("projects/") &&
+              projectsList.includes(incomingPage.split("/")[1]) &&
+              incomingPage.split("/").length === 2 &&
+              (currentPage === "projects" ||
+                (currentPage.startsWith("projects/") &&
+                  projectsList.includes(currentPage.split("/")[1]) &&
+                  currentPage.split("/").length === 2))
+            )
+              ? { y: "-15%" }
+              : { y: 0 }
+          }
+          transition={
+            disableTransition
+              ? { duration: 0 } // Disable transition
+              : { duration: 1, ease: [0.95, 0, 0.4, 1] } // Enable animation
+          }
+          // transition={{ duration: 1, ease: [0.95, 0, 0.4, 1] }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: selectedProjectName[1] !== null ? 102 : 101,
+          }}
+        >
+          {currentPage?.startsWith("projects/") &&
+            projectsList.includes(currentPage.split("/")[1]) &&
+            currentPage.split("/").length === 2 && (
+              <Projects
+                navigate={navigate}
+                page={currentPage}
+                currentPage={true}
+                animate={
+                  incomingPage
+                    ? incomingPage.startsWith("projects/") &&
+                      projectsList.includes(incomingPage.split("/")[1]) &&
+                      incomingPage.split("/").length === 2 &&
+                      currentPage !== "projects" &&
+                      !(
+                        currentPage.startsWith("projects/") &&
+                        projectsList.includes(currentPage.split("/")[1]) &&
+                        currentPage.split("/").length === 2
+                      )
+                    : !(
+                        cachedCurrent.startsWith("projects/") &&
+                        projectsList.includes(cachedCurrent.split("/")[1]) &&
+                        cachedCurrent.split("/").length === 2
+                      ) && cachedCurrent !== "projects"
+                }
+              />
             )}
         </motion.div>
 

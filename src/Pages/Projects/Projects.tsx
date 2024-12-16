@@ -101,16 +101,16 @@ const Projects: React.FC<ProjectsPageProps> = ({
   }
 
   return (
-    <div className="absolute h-[100vh] w-[100vw] top-0 left-0">
-      <div className="fixed top-0 left-0 h-[100%] w-[100%]">
+    <div className="fixed h-[100vh] w-[100vw] top-0 left-0">
+      <div className="top-0 left-0 h-[100%] w-[100%]">
         <div
-          style={{ backgroundColor: "red" }}
+          style={{ backgroundColor: "transparent" }}
           className=" py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]"
         >
           <div
             className="w-[300px] sm:w-[270px] md:w-[330px] lg:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
             style={{
-              backgroundColor: "green",
+              backgroundColor: "transparent",
             }}
           >
             <div
@@ -181,7 +181,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
 
         {coversVisible && (
           <div
-            className="w-[calc(98vw-310px)] sm:w-[calc(98vw-280px)] md:w-[calc(98vw-340px)] lg:w-[calc(98vw-410px)] min-h-[100vh] sm:flex hidden pr-[calc(3px+3vw)] pl-[30px] pt-[100px]"
+            className="absolute right-0 top-0 w-[calc(98vw-310px)] sm:w-[calc(98vw-280px)] md:w-[calc(98vw-340px)] lg:w-[calc(98vw-410px)] min-h-[100vh] sm:flex hidden pr-[calc(3px+3vw)] pl-[30px] pt-[100px]"
             style={{
               backgroundColor: "transparent",
               transition: "transform 2s ease-in-out",
