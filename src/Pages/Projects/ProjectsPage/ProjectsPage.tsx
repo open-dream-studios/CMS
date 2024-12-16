@@ -44,7 +44,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const projectPageRef = useRef<HTMLDivElement>(null);
   const [incomingProject, setIncomingProject] = useState<number | null>(null);
   const navigatingCurrently = useRef<boolean>(false);
-
+  const [canScroll, setCanScroll] = useState(true)
   useEffect(() => {
     if (slideUpComponent) {
       setIncomingProject(selectedProjectName[2]);
@@ -107,8 +107,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
 
     const debouncedHandleScroll = debounce(() => {
       if (
+        projectPageRef.current &&
         scrollRef.current + window.innerHeight >=
-        projectPageRef.current!.clientHeight - 5
+        projectPageRef.current.clientHeight - 5
       ) {
         if (canSelectProject && !navigatingCurrently.current) {
           const nextProject =
@@ -117,9 +118,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
               ? 0
               : selectedProjectName[1] + 1;
           navigatingCurrently.current = true;
-          console.log(nextProject);
           handleProjectClick(nextProject, appData.pages.projects[nextProject]);
-          console.log("Condition met in debounced handler");
         }
       }
     }, 10);
@@ -163,6 +162,30 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       // scrollRef.current = 0;
     }
   }, [selectedProjectName, slideUpComponent]);
+
+
+
+
+  useEffect(() => {
+  const preventScroll = (e: Event) => e.preventDefault();
+  if (!canScroll) {
+    window.addEventListener("wheel", preventScroll, { passive: false });
+    window.addEventListener("touchmove", preventScroll, { passive: false });
+    window.addEventListener("scroll", preventScroll, { passive: false });
+  } else {
+    window.removeEventListener("wheel", preventScroll);
+    window.removeEventListener("touchmove", preventScroll);
+    window.removeEventListener("scroll", preventScroll);
+  }
+
+  return () => {
+    window.removeEventListener("wheel", preventScroll);
+    window.removeEventListener("touchmove", preventScroll);
+    window.removeEventListener("scroll", preventScroll);
+  };
+}, [canScroll]);
+
+
 
   useEffect(() => {
     const loadImageDimensions = async () => {
@@ -225,7 +248,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   function handleProjectClick(index: number, item: any) {
     if (canSelectProject) {
       setCanSelectProject(false);
-      const currentProj = selectedProject;
+      setCanScroll(false)
+      const currentProj = selectedProjectName[1];
       const projects = appData.pages.projects;
       setSelectedProject(index);
       setSelectedProjectName([null, currentProj, index]);
@@ -243,7 +267,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         setCanSelectProject(true);
         setSelectedProjectName([null, index, null]);
         navigatingCurrently.current = false;
+        window.scrollTo(0, 0);
+        scrollRef.current = 0;
       }, 1000);
+      setTimeout(() => {
+        setCanScroll(true)
+      }, 1500);
     }
   }
 
