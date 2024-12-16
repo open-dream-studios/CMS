@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import appData from "../../app-details.json";
 import "./Home.css";
-import { Page } from "../../App";
+import { FileOrFolder, Page } from "../../App2";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
+import useGoogleDriveStore from "../../store/useGoogleDriveStore";
+import CloudinaryScreen from "../../Cloudinary";
 
 export interface HomePageProps {
   navigate: (page: Page) => void;
@@ -16,7 +18,25 @@ const Home: React.FC<HomePageProps> = ({
   layoutOrder,
   slideUpComponent,
 }) => {
-  const covers = appData.pages.home.covers;
+  const { googleDrive, setGoogleDrive } = useGoogleDriveStore();
+  const [covers, setCovers] = useState<FileOrFolder[] | null>(null);
+
+  useEffect(() => {
+    if (googleDrive && googleDrive.children) {
+      const matchingPage = googleDrive.children.filter(
+        (item) => item.name === "home"
+      );
+      if (
+        matchingPage.length === 1 &&
+        matchingPage[0].children !== undefined &&
+        matchingPage[0].children.length > 0
+      ) {
+        setCovers(matchingPage[0].children);
+      }
+    }
+  }, [googleDrive]);
+
+  // const covers = appData.pages.home.covers
   const coverLayouts = [
     [
       { x: 10, y: 9, w: 24, h: 1.4, z: 104, top: true },
@@ -170,43 +190,49 @@ const Home: React.FC<HomePageProps> = ({
     );
   };
 
-  useEffect(() => {
-    const pageLoadTime = performance.now();
+  // useEffect(() => {
+  //   const pageLoadTime = performance.now();
 
-    if (!slideUpComponent) {
-      preloadImages(covers[0].images).then((results) => {
-        const successful = results
-          .filter((result: any) => result.success)
-          .map((res: any) => res.url);
-        const failed = results
-          .filter((result: any) => !result.success)
-          .map((res: any) => res.url);
+  //   if (
+  //     !slideUpComponent &&
+  //     covers !== null &&
+  //     covers[0].children &&
+  //     covers[0].children.length > 0
+  //   ) {
+  //     const firstCoverImages = covers[0].children.map((item) => item.name);
+  //     preloadImages(firstCoverImages).then((results) => {
+  //       const successful = results
+  //         .filter((result: any) => result.success)
+  //         .map((res: any) => res.url);
+  //       const failed = results
+  //         .filter((result: any) => !result.success)
+  //         .map((res: any) => res.url);
 
-        const logResults = () => {
-          // console.log("has been 300ms");
-          if (failed.length === 0) {
-            // console.log("All images preloaded successfully:", successful);
-          } else {
-            // console.warn("Some images failed to preload:", failed);
-            // console.log("Successfully preloaded images:", successful);
-          }
-          setFirstPageLoad(true);
+  //       const logResults = () => {
+  //         // console.log("has been 300ms");
+  //         if (failed.length === 0) {
+  //           // console.log("All images preloaded successfully:", successful);
+  //         } else {
+  //           // console.warn("Some images failed to preload:", failed);
+  //           // console.log("Successfully preloaded images:", successful);
+  //         }
+  //         setFirstPageLoad(true);
 
-          for (let i = 1; i < covers.length; i++) {
-            preloadImages(covers[i].images);
-          }
-        };
+  //         // for (let i = 1; i < covers.length; i++) {
+  //         //   preloadImages(covers[i].images);
+  //         // }
+  //       };
 
-        const elapsedTime = performance.now() - pageLoadTime;
-        if (elapsedTime >= 300) {
-          logResults();
-        } else {
-          const delay = 300 - elapsedTime;
-          setTimeout(logResults, delay);
-        }
-      });
-    }
-  }, []);
+  //       const elapsedTime = performance.now() - pageLoadTime;
+  //       if (elapsedTime >= 300) {
+  //         logResults();
+  //       } else {
+  //         const delay = 300 - elapsedTime;
+  //         setTimeout(logResults, delay);
+  //       }
+  //     });
+  //   }
+  // }, []);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -216,11 +242,13 @@ const Home: React.FC<HomePageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!slideUpComponent && currentCoverRef) {
-      const text = covers[currentCoverRef.current].title
+    if (!slideUpComponent && currentCoverRef && covers) {
+      const text = covers[currentCoverRef.current].name
+        .split("__::__")[0]
         .replace(" ", "_")
         .split("");
-      const text2 = covers[currentCoverRef.current].subTitle
+      const text2 = covers[currentCoverRef.current].name
+        .split("__::__")[1]
         .replace(" ", "_")
         .split("");
       setCoverTitle(text);
@@ -232,7 +260,7 @@ const Home: React.FC<HomePageProps> = ({
   }, []);
 
   function changeCover(direction: number) {
-    if (isTransitioning || !currentCoverRef) return;
+    if (isTransitioning || !currentCoverRef || !covers) return;
     const incomingProject =
       direction === 1
         ? currentCoverRef.current === covers.length - 1
@@ -242,8 +270,14 @@ const Home: React.FC<HomePageProps> = ({
         ? covers.length - 1
         : currentCoverRef.current - 1;
 
-    const text = covers[incomingProject].title.replace(" ", "_").split("");
-    const text2 = covers[incomingProject].subTitle.replace(" ", "_").split("");
+    const text = covers[incomingProject].name
+      .split("__::__")[0]
+      .replace(" ", "_")
+      .split("");
+    const text2 = covers[incomingProject].name
+      .split("__::__")[1]
+      .replace(" ", "_")
+      .split("");
 
     // Subtitle
     setIsRevealing2([direction, false]);
@@ -406,6 +440,10 @@ const Home: React.FC<HomePageProps> = ({
   const generateRandomDelay = () => Math.random() * 0.4;
 
   return (
+    <CloudinaryScreen />
+  )
+
+  return (
     <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
       <div
         className="cursor-pointer relative w-[100vw] h-[100%] flex items-center justify-center"
@@ -449,15 +487,17 @@ const Home: React.FC<HomePageProps> = ({
                         left: `${item.x}vw`,
                         top: item.top ? `${item.y}vh` : "none",
                         bottom: item.top ? "none" : `${item.y}vh`,
+                        backgroundColor: "red"
                       }}
                     >
                       <img
                         alt=""
                         className="image w-[100%] h-[100%]"
                         style={{ objectFit: "cover" }}
-                        src={`${appData.baseURL}${
-                          covers[currentCoverRef.current].images[index]
-                        }`}
+                        // src={!covers ? "" : `${appData.baseURL}${
+                        //   covers[currentCoverRef.current].children
+                        // }`}
+                        src="https://drive.google.com/uc?export=view&id=11sKZfNRft3GwqMiJb_JzTNmqi2o6YruV"
                       />
                     </div>
                   </motion.div>
@@ -511,9 +551,10 @@ const Home: React.FC<HomePageProps> = ({
                           alt=""
                           className="image w-[100%] h-[100%]"
                           style={{ objectFit: "cover" }}
-                          src={`${appData.baseURL}${
-                            covers[currentCoverRef.current].images[index]
-                          }`}
+                          // src={`${appData.baseURL}${
+                          //   covers[currentCoverRef.current].images[index]
+                          // }`}
+                          src="https://drive.google.com/uc?export=view&id=11sKZfNRft3GwqMiJb_JzTNmqi2o6YruV"
                         />
                       </div>
                     </motion.div>

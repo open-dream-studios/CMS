@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import appData from "../../app-details.json";
 import "./Archives.css";
-import { Page } from "../../App";
+import { Page } from "../../App2";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 
