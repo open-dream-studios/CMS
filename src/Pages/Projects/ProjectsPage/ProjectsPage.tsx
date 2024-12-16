@@ -8,6 +8,7 @@ import useIncomingImageDimensionsState from "../../../store/useIncomingImageDime
 import useIncomingImageStylesStore from "../../../store/useIncomingImageStylesStore";
 import useIncomingImageSpeedState from "../../../store/useIncomingImageSpeedState";
 import useCanSelectProjectState from "../../../store/useCanSelectProjectState";
+import { debounce } from "lodash";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -15,7 +16,7 @@ export interface ProjectsPageProps {
   slideUpComponent: boolean;
 }
 
-export interface ImageDimension {
+interface ImageDimension {
   width: number;
   height: number;
   src: string;
@@ -40,15 +41,27 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const [imageDimensions, setImageDimensions] = useState<ImageDimension[]>([]);
   const scrollRef = useRef(0);
   const parallaxRefs = useRef<HTMLImageElement[]>([]);
-  const projectPageRef = useRef<HTMLDivElement>(null)
+  const projectPageRef = useRef<HTMLDivElement>(null);
   const [incomingProject, setIncomingProject] = useState<number | null>(null);
-  const navigatingCurrently = useRef<boolean>(false) 
+  const navigatingCurrently = useRef<boolean>(false);
 
   useEffect(() => {
     if (slideUpComponent) {
       setIncomingProject(selectedProjectName[2]);
     }
   }, []);
+
+  useEffect(() => {
+    if (
+      imageDimensions.length === 0 &&
+      imageStyles.length === 0 &&
+      incomingImageDimensions.length !== 0 &&
+      incomingImageStyles.length !== 0
+    ) {
+      setImageDimensions(incomingImageDimensions);
+      setImageStyles(incomingImageStyles);
+    }
+  }, [incomingImageDimensions, incomingImageStyles]);
 
   useEffect(() => {
     if (!slideUpComponent) {
@@ -68,7 +81,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
           if (img) {
             const speed = incomingSpeed[index];
             if (window.innerHeight > img.offsetTop) {
-              img.style.transform = `translateY(-${scrollRef.current * speed}px)`;
+              img.style.transform = `translateY(-${
+                scrollRef.current * speed
+              }px)`;
               img.style.willChange = "transform";
             } else {
               const amount =
@@ -86,23 +101,38 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     };
 
     const handleScroll = () => {
-      if (projectPageRef.current) {
-        console.log(scrollRef.current, window.innerHeight, scrollRef.current + window.innerHeight, projectPageRef.current.clientHeight)
-        if (scrollRef.current + window.innerHeight >= projectPageRef.current.clientHeight - 5) {
-          if (!navigatingCurrently.current) {
-            navigatingCurrently.current = true
-            goToNextProject()
-          }
-        }
-      }
       scrollRef.current = window.scrollY;
       requestAnimationFrame(updateParallax);
     };
 
-    window.addEventListener("scroll", handleScroll);
+    const debouncedHandleScroll = debounce(() => {
+      if (
+        scrollRef.current + window.innerHeight >=
+        projectPageRef.current!.clientHeight - 5
+      ) {
+        if (canSelectProject && !navigatingCurrently.current) {
+          const nextProject =
+            selectedProjectName[1] === null ||
+            selectedProjectName[1] === appData.pages.projects.length - 1
+              ? 0
+              : selectedProjectName[1] + 1;
+          navigatingCurrently.current = true;
+          console.log(nextProject);
+          handleProjectClick(nextProject, appData.pages.projects[nextProject]);
+          console.log("Condition met in debounced handler");
+        }
+      }
+    }, 10);
+
+    const combinedScrollHandler = () => {
+      handleScroll();
+      debouncedHandleScroll();
+    };
+
+    window.addEventListener("scroll", combinedScrollHandler);
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", combinedScrollHandler);
     };
   }, [imageDimensions, slideUpComponent]);
 
@@ -164,8 +194,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
             const dynamicBaseWidth = isHorizontal ? 70 : 45;
             const dynamicWidth = dynamicBaseWidth + Math.random() * 25;
             const dynamicMarginLeft = Math.random() * (100 - dynamicWidth);
-            const currentSeparation = 
-              index === 2 ? -25 + Math.random() * 50 : -25 + Math.random() * 100
+            const currentSeparation =
+              index === 2
+                ? -25 + Math.random() * 50
+                : -25 + Math.random() * 100;
             if (index !== 0) {
               newSpeeds.push(Math.random() * 0.1 + 0.05);
             }
@@ -178,7 +210,6 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
           });
           setImageStyles(styles);
           setIncomingImageStyles(styles);
-          console.log("settingSpeed", newSpeeds);
           setIncomingSpeed(newSpeeds);
         }
       }
@@ -187,36 +218,33 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     loadImageDimensions();
   }, [selectedProjectName[2], slideUpComponent]);
 
-  function goToNextProject() {
-    // console.log("going")
-    // if (canSelectProject && selectedProjectName[1] !== null) {
-    //   setCanSelectProject(false);
-    //   const currentProj = selectedProject;
-    //   const projects = appData.pages.projects
-    //   const nextProj = selectedProjectName[1] === projects.length? 0 : selectedProjectName[1] + 1
-    //   setSelectedProject(nextProj);
-    //   setSelectedProjectName([null, currentProj, nextProj]);
-    //   navigate("projects/" + projects[nextProj].link);
-    //   const item = projects[nextProj]
-    //   const projectColorsCopy = projectColors;
-    //   projectColorsCopy[2] = [item.background_color, item.text_color];
-    //   projectColorsCopy[0] = [
-    //     projects[currentProj ? currentProj : 0].background_color,
-    //     projects[currentProj ? currentProj : 0].text_color,
-    //   ];
-    //   setProjectColors(projectColorsCopy);
-    //   setTimeout(() => {
-    //     projectColorsCopy[1] = [item.background_color, item.text_color];
-    //     setProjectColors(projectColorsCopy);
-    //     setCanSelectProject(true);
-    //     setSelectedProjectName([null, nextProj, null]);
-    //     navigatingCurrently.current = false
-    //   }, 1000);
-    // }
-  }
-
   if (selectedProject === null) {
     return <></>;
+  }
+
+  function handleProjectClick(index: number, item: any) {
+    if (canSelectProject) {
+      setCanSelectProject(false);
+      const currentProj = selectedProject;
+      const projects = appData.pages.projects;
+      setSelectedProject(index);
+      setSelectedProjectName([null, currentProj, index]);
+      navigate("projects/" + projects[index].link);
+      const projectColorsCopy = projectColors;
+      projectColorsCopy[2] = [item.background_color, item.text_color];
+      projectColorsCopy[0] = [
+        projects[currentProj ? currentProj : 0].background_color,
+        projects[currentProj ? currentProj : 0].text_color,
+      ];
+      setProjectColors(projectColorsCopy);
+      setTimeout(() => {
+        projectColorsCopy[1] = [item.background_color, item.text_color];
+        setProjectColors(projectColorsCopy);
+        setCanSelectProject(true);
+        setSelectedProjectName([null, index, null]);
+        navigatingCurrently.current = false;
+      }, 1000);
+    }
   }
 
   return (
@@ -256,23 +284,28 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                   }`
             }
             className="w-[100%] aspect-[1.55/1] max-h-[50vh]"
-            style={{ objectFit: "cover", backgroundColor: "white" }}
+            style={{ objectFit: "cover", backgroundColor: "pink" }}
           />
-          {selectedProjectName[1] !== null && (
-            <div className="w-[100%] flex justify-center py-[4px] klivora text-[7vw]">
-              {slideUpComponent ? (
-                <>
-                  {incomingProject === null ? (
-                    <></>
-                  ) : (
-                    <>{appData.pages.projects[incomingProject].title}</>
-                  )}
-                </>
-              ) : (
-                <>{appData.pages.projects[selectedProjectName[1]].title}</>
-              )}
-            </div>
-          )}
+
+          <div
+            className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]"
+            style={{ backgroundColor: "transparent" }}
+          >
+            {slideUpComponent ? (
+              <>
+                {incomingProject === null ? (
+                  <></>
+                ) : (
+                  <>{appData.pages.projects[incomingProject].title}</>
+                )}
+              </>
+            ) : (
+              <>
+                {selectedProjectName[1] !== null &&
+                  appData.pages.projects[selectedProjectName[1]].title}
+              </>
+            )}
+          </div>
         </div>
         <div className="w-[100%] flex justify-center">
           <div

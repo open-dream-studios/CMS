@@ -13,6 +13,11 @@ import appData from "./app-details.json";
 import useProjectColorsState from "./store/useProjectColorsStore";
 import useCurrentPageState from "./store/useCurrentPageStore";
 import useCurrentNavColorState from "./store/useCurrentNavColorStore";
+import useSelectedProjectNameState from "./store/useSelectedProjectNameStore";
+import useSelectedProjectState from "./store/useSelectedProjectStore";
+import useIncomingImageDimensionsState from "./store/useIncomingImageDimensionsState";
+import useIncomingImageStylesStore from "./store/useIncomingImageStylesStore";
+import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -20,6 +25,12 @@ export interface SlideUpPageProps {
   full: boolean;
   zIdx: number;
   nextColor: string;
+}
+
+interface ImageDimension {
+  width: number;
+  height: number;
+  src: string;
 }
 
 export interface SlideUpProjectPageProps {
@@ -100,6 +111,14 @@ const App = () => {
 
   const { projectColors, setProjectColors } = useProjectColorsState();
   const { currentPage, setCurrentPage } = useCurrentPageState();
+  const { selectedProjectName, setSelectedProjectName } =
+    useSelectedProjectNameState();
+  const { selectedProject, setSelectedProject } = useSelectedProjectState();
+  const { incomingImageDimensions, setIncomingImageDimensions } =
+    useIncomingImageDimensionsState();
+  const { incomingImageStyles, setIncomingImageStyles } =
+    useIncomingImageStylesStore();
+  const { incomingSpeed, setIncomingSpeed } = useIncomingImageSpeedState();
 
   const projects = appData.pages.projects;
   const projectsList = projects.map((item) => item.link);
@@ -211,6 +230,73 @@ const App = () => {
 
     return array;
   });
+
+  useEffect(()=>{
+    const path = location.pathname
+    if (
+      selectedProjectName[1] === null &&
+      path.startsWith("/projects/") &&
+      projectsList.includes(path.split("/")[2]) &&
+      path.split("/").length === 3
+    ) {
+      const insertProject = projectsList.findIndex((link) => link === path.split("/")[2]);
+      setSelectedProject(insertProject)
+      setSelectedProjectName([null, insertProject, null])
+      let projectColorsCopy = projectColors;
+      projectColorsCopy[1] = [
+        projects[insertProject].background_color,
+        projects[insertProject].text_color,
+      ];
+      setProjectColors(projectColorsCopy);
+
+
+      const loadImageDimensions = async () => {
+        const dimensions = await Promise.all(
+          appData.pages.projects[
+            insertProject
+          ].images.project_images.map((item) => {
+            const imgSrc = `${appData.baseURL}${item[0]}`;
+            return new Promise<ImageDimension>((resolve) => {
+              const img = new Image();
+              img.onload = () =>
+                resolve({
+                  width: img.naturalWidth,
+                  height: img.naturalHeight,
+                  src: imgSrc,
+                });
+              img.src = imgSrc;
+            });
+          })
+        );
+        setIncomingImageDimensions(dimensions);
+
+        const newSpeeds = [0];
+        if (dimensions.length > 0) {
+          const styles = dimensions.map((img, index) => {
+            const isHorizontal = img.width > img.height;
+            const dynamicBaseWidth = isHorizontal ? 70 : 45;
+            const dynamicWidth = dynamicBaseWidth + Math.random() * 25;
+            const dynamicMarginLeft = Math.random() * (100 - dynamicWidth);
+            const currentSeparation = 
+              index === 2 ? -25 + Math.random() * 50 : -25 + Math.random() * 100
+            if (index !== 0) {
+              newSpeeds.push(Math.random() * 0.1 + 0.05);
+            }
+
+            return {
+              width: `${dynamicWidth}%`,
+              marginLeft: `${dynamicMarginLeft}%`,
+              marginTop: index === 1 ? "0" : `${currentSeparation}px`,
+            };
+          });
+          setIncomingImageStyles(styles);
+          setIncomingSpeed(newSpeeds);
+        }
+      };
+      loadImageDimensions();
+
+    }
+  },[location])
 
   return (
     <>
