@@ -61,6 +61,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       setImageDimensions(incomingImageDimensions);
       setImageStyles(incomingImageStyles);
     }
+    if (selectedProjectName[1] !== null) {
+      const projectColorsCopy = projectColors
+      projectColorsCopy[1] = [appData.pages.projects[selectedProjectName[1]].background_color, appData.pages.projects[selectedProjectName[1]].text_color]
+      console.log(projectColorsCopy)
+      setProjectColors(projectColorsCopy)
+    }
   }, [incomingImageDimensions, incomingImageStyles]);
 
   useEffect(() => {

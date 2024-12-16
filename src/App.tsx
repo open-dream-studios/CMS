@@ -283,7 +283,11 @@ const App = () => {
                 ? -25 + Math.random() * 50
                 : -25 + Math.random() * 100;
             if (index !== 0) {
-              newSpeeds.push(Math.random() * 0.1 + 0.05);
+              if (index < 4) {
+                newSpeeds.push(Math.random() * 0.13 + 0.05);
+              } else {
+                newSpeeds.push(Math.random() * 0.19 + 0.05);
+              }
             }
 
             return {
@@ -302,9 +306,9 @@ const App = () => {
 
   useEffect(() => {
     if (location.pathname === "/home") {
-      setTimeout(()=>{
+      setTimeout(() => {
         document.body.style.overflow = "hidden";
-      },1000)
+      }, 1000);
     } else {
       document.body.style.overflow = "auto";
     }
@@ -313,6 +317,18 @@ const App = () => {
       document.body.style.overflow = "auto";
     };
   }, [location]);
+
+  useEffect(() => {
+    if (
+      location.pathname.startsWith("/projects/") &&
+      projectsList.includes(location.pathname.split("/")[2]) &&
+      location.pathname.split("/").length === 3
+    ) {
+      setSittingProject(true);
+    } else {
+      setSittingProject(false);
+    }
+  }, []);
 
   return (
     <>
@@ -371,49 +387,40 @@ const App = () => {
           {currentPage?.startsWith("projects/") &&
             projectsList.includes(currentPage.split("/")[1]) &&
             currentPage.split("/").length === 2 && (
-              <div>
-                {sittingProject && (
-                  <div
-                    className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
-                    style={{ backgroundColor: projectColors[1][0] }}
-                  ></div>
-                )}
-
-                <motion.div
-                  initial={{ y: 0 }}
-                  animate={
-                    incomingPage &&
-                    incomingPage.startsWith("projects/") &&
-                    projectsList.includes(incomingPage.split("/")[1]) &&
-                    incomingPage.split("/").length === 2 &&
-                    currentPage.startsWith("projects/") &&
-                    projectsList.includes(currentPage.split("/")[1]) &&
-                    currentPage.split("/").length === 2
-                      ? { y: "-15%" }
-                      : { y: 0 }
-                  }
-                  transition={
-                    disableTransition
-                      ? { duration: 0 }
-                      : { duration: 1, ease: [0.95, 0, 0.4, 1] }
-                  }
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    zIndex: 100,
-                    pointerEvents: "none",
-                  }}
-                >
-                  <ProjectsPage
-                    navigate={navigate}
-                    page={currentPage}
-                    slideUpComponent={false}
-                  />
-                </motion.div>
-              </div>
+              <motion.div
+                initial={{ y: 0 }}
+                animate={
+                  incomingPage &&
+                  incomingPage.startsWith("projects/") &&
+                  projectsList.includes(incomingPage.split("/")[1]) &&
+                  incomingPage.split("/").length === 2 &&
+                  currentPage.startsWith("projects/") &&
+                  projectsList.includes(currentPage.split("/")[1]) &&
+                  currentPage.split("/").length === 2
+                    ? { y: "-15%" }
+                    : { y: 0 }
+                }
+                transition={
+                  disableTransition
+                    ? { duration: 0 }
+                    : { duration: 1, ease: [0.95, 0, 0.4, 1] }
+                }
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  zIndex: 100,
+                  pointerEvents: "none",
+                }}
+              >
+                <ProjectsPage
+                  navigate={navigate}
+                  page={currentPage}
+                  slideUpComponent={false}
+                />
+              </motion.div>
             )}
         </motion.div>
 
@@ -451,28 +458,40 @@ const App = () => {
           {currentPage?.startsWith("projects/") &&
             projectsList.includes(currentPage.split("/")[1]) &&
             currentPage.split("/").length === 2 && (
-              <Projects
-                navigate={navigate}
-                page={currentPage}
-                currentPage={true}
-                animate={
-                  incomingPage
-                    ? incomingPage.startsWith("projects/") &&
-                      projectsList.includes(incomingPage.split("/")[1]) &&
-                      incomingPage.split("/").length === 2 &&
-                      currentPage !== "projects" &&
-                      !(
-                        currentPage.startsWith("projects/") &&
-                        projectsList.includes(currentPage.split("/")[1]) &&
-                        currentPage.split("/").length === 2
-                      )
-                    : !(
-                        cachedCurrent.startsWith("projects/") &&
-                        projectsList.includes(cachedCurrent.split("/")[1]) &&
-                        cachedCurrent.split("/").length === 2
-                      ) && cachedCurrent !== "projects"
-                }
-              />
+              <div>
+                {sittingProject && (
+                  <div
+                    className="w-[0] sm:w-[calc(2vw+220px)] md:w-[calc(2vw+250px)]
+                    h-[100vh] fixed left-0 top-0 "
+                    style={{
+                      backgroundColor: projectColors[1][0],
+                    }}
+                  ></div>
+                )}
+
+                <Projects
+                  navigate={navigate}
+                  page={currentPage}
+                  currentPage={true}
+                  animate={
+                    incomingPage
+                      ? incomingPage.startsWith("projects/") &&
+                        projectsList.includes(incomingPage.split("/")[1]) &&
+                        incomingPage.split("/").length === 2 &&
+                        currentPage !== "projects" &&
+                        !(
+                          currentPage.startsWith("projects/") &&
+                          projectsList.includes(currentPage.split("/")[1]) &&
+                          currentPage.split("/").length === 2
+                        )
+                      : !(
+                          cachedCurrent.startsWith("projects/") &&
+                          projectsList.includes(cachedCurrent.split("/")[1]) &&
+                          cachedCurrent.split("/").length === 2
+                        ) && cachedCurrent !== "projects"
+                  }
+                />
+              </div>
             )}
         </motion.div>
 
