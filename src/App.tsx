@@ -18,8 +18,7 @@ import useSelectedProjectState from "./store/useSelectedProjectStore";
 import useIncomingImageDimensionsState from "./store/useIncomingImageDimensionsState";
 import useIncomingImageStylesStore from "./store/useIncomingImageStylesStore";
 import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
-import axios from "axios";
-import useCloudinaryDataStore from "./store/useCloudinaryDataStore";
+import useProjectAssetsStore from "./store/useProjectAssetsStore";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -122,65 +121,72 @@ const SlideUpProjectPage: React.FC<SlideUpProjectPageProps> = ({
   );
 };
 
-const App = () => {
-  const { cloudinaryData, setCloudinaryData } = useCloudinaryDataStore();
-  const [loading, setLoading] = useState(true);
+export type FileTree = {
+  [key: string]: string | FileTree;
+};
 
-   useEffect(() => {
-    const fetchImages = async () => {
+const App = () => {
+  const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  useEffect(() => {
+    const fetchFullRepoTree = async (
+      owner: string,
+      repo: string,
+      branch = "master"
+    ) => {
+      const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+      const token = process.env.REACT_APP_GIT_PAT;
+
       try {
-        // Fetch Cloudinary images
-        const response = await axios.get("/api/sign-search", {
-          params: { expression: "resource_type:image" },
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
-        const assetsList = response.data.resources;
-
-        // Function to build the tree structure
-        const buildTree = (resources: any[]): TreeNode => {
-          const root: TreeNode = { children: {}, images: [] }; // Initialize root node
-
-          resources.forEach((resource) => {
-            const { asset_folder, public_id, secure_url } = resource;
-            const folders = asset_folder.split("/");
-
-            let current: TreeNode = root; // Start from root node
-
-            folders.forEach((folder: any) => {
-              // If the folder doesn't exist, initialize it
-              if (!current.children[folder]) {
-                current.children[folder] = { children: {}, images: [] };
-              }
-              // Traverse to the next level
-              current = current.children[folder];
-            });
-
-            // Add the image to the images array of the current folder
-            current.images.push({
-              public_id,
-              url: secure_url,
-              type: "image",
-            });
-          });
-
-          return root;
-        };
-
-        // Build the tree and set it in state
-        const tree = buildTree(assetsList);
-        if (Object.keys(tree.children).length > 0 && tree.children["js-portfolio"]) { 
-          const pagesObject = tree.children["js-portfolio"]
-          // console.log("Cloudinary Tree Structure:", JSON.stringify(pagesObject, null, 2));
-          setCloudinaryData(pagesObject);
+        if (!response.ok) {
+          console.error(
+            "Failed to fetch repository tree:",
+            response.statusText
+          );
+          return null;
         }
-        setLoading(false);
+
+        const data = await response.json();
+
+        // Convert the flat tree to a nested structure
+        const tree = data.tree.reduce((acc: any, item: any) => {
+          const parts = item.path.split("/");
+          let current = acc;
+
+          for (const part of parts) {
+            if (!current[part]) {
+              current[part] = item.type === "tree" ? {} : item.url;
+            }
+            current = current[part];
+          }
+          return acc;
+        }, {});
+
+        return tree;
       } catch (error) {
-        console.error("Error fetching images:", error);
-        setLoading(false);
+        console.error("Error fetching repository tree:", error);
+        return null;
       }
     };
 
-    fetchImages();
+    const getRepoTree = async () => {
+      const fullRepo = await fetchFullRepoTree("JosephGoff", "js-portfolio");
+      if (fullRepo && Object.keys(fullRepo).length > 0 && fullRepo["public"]) {
+        if (
+          Object.keys(fullRepo["public"]).length > 0 &&
+          fullRepo["public"]["assets"]
+        ) {
+          setProjectAssets(fullRepo["public"]["assets"]);
+        }
+      }
+    };
+
+    getRepoTree();
   }, []);
 
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);

@@ -9,6 +9,7 @@ import useIncomingImageStylesStore from "../../../store/useIncomingImageStylesSt
 import useIncomingImageSpeedState from "../../../store/useIncomingImageSpeedState";
 import useCanSelectProjectState from "../../../store/useCanSelectProjectState";
 import { debounce } from "lodash";
+import useProjectAssetsStore from "../../../store/useProjectAssetsStore";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -21,6 +22,20 @@ interface ImageDimension {
   height: number;
   src: string;
 }
+
+type ProjectOutputItem = {
+  title: string;
+  bg_color: string;
+  text_color: string;
+  images: string[];
+};
+
+type ProjectInputObject = {
+  [key: string]: {
+    covers?: string[];
+    [key: string]: any;
+  };
+};
 
 const ProjectsPage: React.FC<ProjectsPageProps> = ({
   navigate,
@@ -44,7 +59,61 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const projectPageRef = useRef<HTMLDivElement>(null);
   const [incomingProject, setIncomingProject] = useState<number | null>(null);
   const navigatingCurrently = useRef<boolean>(false);
-  const [canScroll, setCanScroll] = useState(true)
+  const [canScroll, setCanScroll] = useState(true);
+
+  const [projectsList, setProjectsList] = useState<string[]>([]);
+  const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  const coversRef = useRef<ProjectOutputItem[] | null>(null);
+  const [coversReady, setCoversReady] = useState<ProjectOutputItem[] | null>(
+    null
+  );
+
+  const processAndSortObjectForProjectsPage = (
+    input: ProjectInputObject
+  ): ProjectOutputItem[] => {
+    const entries = Object.entries(input);
+    const mappedEntries = entries.map(([key, value]) => {
+      const [number, title, bg_color, text_color] = key.split("--");
+      return {
+        title: title,
+        bg_color,
+        text_color,
+        images:
+          Object.keys(value).length > 1
+            ? Object.keys(value)
+                .filter((item) => item !== "covers")
+                .map(
+                  (item) =>
+                    `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/covers/` +
+                    item
+                )
+            : [],
+        number: parseInt(number, 10),
+      };
+    });
+
+    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
+    return sortedEntries.map(({ number, ...rest }) => rest);
+  };
+
+  useEffect(() => {
+    if (
+      projectAssets !== null &&
+      projectAssets["projects"] &&
+      Object.keys(projectAssets["projects"]).length > 0
+    ) {
+      const coversList = processAndSortObjectForProjectsPage(
+        projectAssets["projects"] as ProjectInputObject
+      );
+      const newProjectsList = coversList.map(item => item.title.replace("_", ""))
+      console.log(newProjectsList)
+      // setProjectsList(newProjectsList)
+      console.log(coversList);
+      // coversRef.current = coversList;
+      // setCoversReady(coversList);
+    }
+  }, [projectAssets]);
+
   useEffect(() => {
     if (slideUpComponent) {
       setIncomingProject(selectedProjectName[2]);
@@ -62,10 +131,13 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       setImageStyles(incomingImageStyles);
     }
     if (selectedProjectName[1] !== null) {
-      const projectColorsCopy = projectColors
-      projectColorsCopy[1] = [appData.pages.projects[selectedProjectName[1]].background_color, appData.pages.projects[selectedProjectName[1]].text_color]
-      console.log(projectColorsCopy)
-      setProjectColors(projectColorsCopy)
+      const projectColorsCopy = projectColors;
+      projectColorsCopy[1] = [
+        appData.pages.projects[selectedProjectName[1]].background_color,
+        appData.pages.projects[selectedProjectName[1]].text_color,
+      ];
+      console.log(projectColorsCopy);
+      setProjectColors(projectColorsCopy);
     }
   }, [incomingImageDimensions, incomingImageStyles]);
 
@@ -115,7 +187,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       if (
         projectPageRef.current &&
         scrollRef.current + window.innerHeight >=
-        projectPageRef.current.clientHeight - 5
+          projectPageRef.current.clientHeight - 5
       ) {
         if (canSelectProject && !navigatingCurrently.current) {
           const nextProject =
@@ -169,29 +241,24 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     }
   }, [selectedProjectName, slideUpComponent]);
 
-
-
-
   useEffect(() => {
-  const preventScroll = (e: Event) => e.preventDefault();
-  if (!canScroll) {
-    window.addEventListener("wheel", preventScroll, { passive: false });
-    window.addEventListener("touchmove", preventScroll, { passive: false });
-    window.addEventListener("scroll", preventScroll, { passive: false });
-  } else {
-    window.removeEventListener("wheel", preventScroll);
-    window.removeEventListener("touchmove", preventScroll);
-    window.removeEventListener("scroll", preventScroll);
-  }
+    const preventScroll = (e: Event) => e.preventDefault();
+    if (!canScroll) {
+      window.addEventListener("wheel", preventScroll, { passive: false });
+      window.addEventListener("touchmove", preventScroll, { passive: false });
+      window.addEventListener("scroll", preventScroll, { passive: false });
+    } else {
+      window.removeEventListener("wheel", preventScroll);
+      window.removeEventListener("touchmove", preventScroll);
+      window.removeEventListener("scroll", preventScroll);
+    }
 
-  return () => {
-    window.removeEventListener("wheel", preventScroll);
-    window.removeEventListener("touchmove", preventScroll);
-    window.removeEventListener("scroll", preventScroll);
-  };
-}, [canScroll]);
-
-
+    return () => {
+      window.removeEventListener("wheel", preventScroll);
+      window.removeEventListener("touchmove", preventScroll);
+      window.removeEventListener("scroll", preventScroll);
+    };
+  }, [canScroll]);
 
   useEffect(() => {
     const loadImageDimensions = async () => {
@@ -254,7 +321,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   function handleProjectClick(index: number, item: any) {
     if (canSelectProject) {
       setCanSelectProject(false);
-      setCanScroll(false)
+      setCanScroll(false);
       const currentProj = selectedProjectName[1];
       const projects = appData.pages.projects;
       setSelectedProject(index);
@@ -277,7 +344,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         scrollRef.current = 0;
       }, 1000);
       setTimeout(() => {
-        setCanScroll(true)
+        setCanScroll(true);
       }, 1500);
     }
   }

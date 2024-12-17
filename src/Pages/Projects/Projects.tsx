@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IncomingPage, Page, PageProps } from "../../App";
+import { IncomingPage, Page } from "../../App";
 import appData from "../../app-details.json";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";
@@ -9,6 +9,7 @@ import { useLocation } from "react-router-dom";
 import ProjectCover from "./ProjectCover";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 import useCanSelectProjectState from "../../store/useCanSelectProjectState";
+import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -17,20 +18,32 @@ export interface ProjectsPageProps {
   animate: boolean;
 }
 
+export type ProjectCoverOutputItem = {
+  title: string;
+  bg_color: string;
+  text_color: string;
+  images: string[];
+};
+
+type ProjectCoverInputObject = {
+  [key: string]: {
+    covers?: string[];
+    [key: string]: any;
+  };
+};
+
 const Projects: React.FC<ProjectsPageProps> = ({
   navigate,
   page,
   currentPage,
   animate,
 }) => {
-  const projects = appData.pages.projects;
-  const projectsList = projects.map((item) => item.link);
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
   const { selectedProjectName, setSelectedProjectName } =
     useSelectedProjectNameState();
   const { projectColors, setProjectColors } = useProjectColorsState();
   const { canSelectProject, setCanSelectProject } = useCanSelectProjectState();
-
+  const location = useLocation();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [coversVisible, setCoversVisible] = useState(false);
   const [titleAnimation, setTitleAnimation] = useState(true);
@@ -38,21 +51,71 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [animateWave, setAnimateWave] = useState(false);
   const [animateWaveTrigger, setAnimateWaveTrigger] = useState(false);
   const [isSmall, setIsSmall] = useState<boolean>(false);
+  
+  const [projectsList, setProjectsList] = useState<string[]>([])
+  const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  const coversRef = useRef<ProjectCoverOutputItem[] | null>(null);
+  const [coversReady, setCoversReady] = useState<
+    ProjectCoverOutputItem[] | null
+  >(null);
 
-  const location = useLocation();
+  const processAndSortObjectForProjects = (
+    input: ProjectCoverInputObject
+  ): ProjectCoverOutputItem[] => {
+    const entries = Object.entries(input);
+    const mappedEntries = entries.map(([key, value]) => {
+      const [number, title, bg_color, text_color] = key.split("--")
+      return {
+        title: title,
+        bg_color,
+        text_color,
+        images:
+          Object.keys(value).length > 0 &&
+          value["covers"] &&
+          Object.keys(value["covers"]).length > 0
+            ? Object.keys(value["covers"]).map(
+                (item) =>
+                  `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/covers/` +
+                  item
+              )
+            : [],
+        number: parseInt(number, 10),
+      };
+    });
+
+    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
+    return sortedEntries.map(({ number, ...rest }) => rest);
+  };
+
   useEffect(() => {
-    const path = location.pathname;
     if (
-      path.startsWith("/projects/") &&
-      projectsList.includes(path.split("/")[2]) &&
-      path.split("/").length === 3
+      projectAssets !== null &&
+      projectAssets["projects"] &&
+      Object.keys(projectAssets["projects"]).length > 0
     ) {
-      const newIndex = projectsList.findIndex(
-        (project) => project === path.split("/")[2]
+      const coversList = processAndSortObjectForProjects(
+        projectAssets["projects"] as ProjectCoverInputObject
       );
-      // setSelectedProject(newIndex);
+      const newProjectsList = coversList.map(item => item.title.replace("_", ""))
+      setProjectsList(newProjectsList)
+      coversRef.current = coversList;
+      setCoversReady(coversList);
     }
-  }, [location]);
+  }, [projectAssets]);
+
+  // useEffect(() => {
+  //   const path = location.pathname;
+  //   if (
+  //     path.startsWith("/projects/") &&
+  //     projectsList.includes(path.split("/")[2]) &&
+  //     path.split("/").length === 3
+  //   ) {
+  //     const newIndex = projectsList.findIndex(
+  //       (project) => project === path.split("/")[2]
+  //     );
+  //     // setSelectedProject(newIndex);
+  //   }
+  // }, [location]);
 
   useEffect(() => {
     if (animate === true) {
@@ -79,17 +142,17 @@ const Projects: React.FC<ProjectsPageProps> = ({
   }, [animate, currentPage, page, projectsList, selectedProject]);
 
   function handleProjectClick(index: number, item: any) {
-    if (canSelectProject) {
+    if (canSelectProject && coversReady !== null) {
       setCanSelectProject(false);
       const currentProj = selectedProject;
       setSelectedProject(index);
       setSelectedProjectName([null, currentProj, index]);
-      navigate("projects/" + projects[index].link);
+      navigate("projects/" + coversReady[index].title.replace("_",""));
       const projectColorsCopy = projectColors;
       projectColorsCopy[2] = [item.background_color, item.text_color];
       projectColorsCopy[0] = [
-        projects[currentProj ? currentProj : 0].background_color,
-        projects[currentProj ? currentProj : 0].text_color,
+        coversReady[currentProj ? currentProj : 0].bg_color,
+        coversReady[currentProj ? currentProj : 0].text_color,
       ];
       setProjectColors(projectColorsCopy);
       setTimeout(() => {
@@ -106,7 +169,9 @@ const Projects: React.FC<ProjectsPageProps> = ({
       <div className="top-0 left-0 h-[100%] w-[100%]">
         <div
           style={{ backgroundColor: "transparent" }}
-          className={`${selectedProjectName[1] !== null && "sm:flex hidden"} py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]`}
+          className={`${
+            selectedProjectName[1] !== null && "sm:flex hidden"
+          } py-[75px] h-[100vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] w-[auto] pl-[calc(10px+2vw)]`}
         >
           <div
             className="w-[300px] sm:w-[270px] md:w-[330px] lg:w-[400px] min-h-[calc(600px*0.9)] md:min-h-[calc(700px*0.9)] lg:min-h-[calc(800px*0.9)] h-[calc((100vh-88px)*0.9)] mt-[calc((100vh-88px)*0.025)] flex items-center"
@@ -124,7 +189,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
               }}
               className="caster cursor-pointer flex flex-col"
             >
-              {projects.map((item, index) => {
+              {coversReady !== null && coversReady.map((item, index) => {
                 return (
                   <div
                     className={`text-[30px] leading-[38px] md:text-[37px] md:leading-[46px] lg:text-[46px] lg:leading-[59px]`}
@@ -172,7 +237,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
                               : "translateY(0)",
                           }}
                         >
-                          {item.title}
+                          {item.title.split("_").map(item => item.charAt(0).toUpperCase() + item.slice(1)).join(" ")}
                         </div>
                       </div>
                     </div>
@@ -218,7 +283,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
                       ease: "easeInOut",
                     }}
                   >
-                    <ProjectCover projectIndex={hoveredIndex} />
+                    <ProjectCover projectIndex={hoveredIndex} coversReady={coversReady}/>
                   </motion.div>
                 )}
               </AnimatePresence>

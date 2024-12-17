@@ -4,8 +4,8 @@ import "./Home.css";
 import { Page } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import useCloudinaryDataStore from "../../store/useCloudinaryDataStore";
 import { debounce } from "lodash";
+import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 
 export interface HomePageProps {
   navigate: (page: Page) => void;
@@ -13,7 +13,11 @@ export interface HomePageProps {
   slideUpComponent: boolean;
 }
 
-type cover = {
+type CoverInputObject = {
+  [key: string]: object;
+};
+
+type CoverOutputItem = {
   title: string;
   subTitle: string;
   images: string[];
@@ -24,32 +28,42 @@ const Home: React.FC<HomePageProps> = ({
   layoutOrder,
   slideUpComponent,
 }) => {
-  const { cloudinaryData, setCloudinaryData } = useCloudinaryDataStore();
-  const coversRef = useRef<cover[] | null>(null);
-  const [coversReady, setCoversReady] = useState<cover[] | null>(null);
+  const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  const coversRef = useRef<CoverOutputItem[] | null>(null);
+  const [coversReady, setCoversReady] = useState<CoverOutputItem[] | null>(null);
+
+  const processAndSortObject = (input: CoverInputObject): CoverOutputItem[] => {
+    const entries = Object.entries(input);
+    const mappedEntries = entries.map(([key, value]) => {
+      const [number, title, subTitle] = key.split("--");
+      return {
+        title,
+        subTitle,
+        images: Object.keys(value).map(
+          (item) =>
+            `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/home/${key}/` +
+            item
+        ),
+        number: parseInt(number, 10), // Parse the number to use for sorting
+      };
+    });
+
+    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
+    return sortedEntries.map(({ number, ...rest }) => rest);
+  };
 
   useEffect(() => {
-    if (cloudinaryData !== null) {
-      const matchingPage = cloudinaryData.children["home"].children;
-      if (matchingPage && Object.keys(matchingPage).length > 0) {
-        const coverKeys = Object.keys(matchingPage);
-        const coversList = [];
-        for (let i = 0; i < coverKeys.length; i++) {
-          coversList.push({
-            title: coverKeys[i].split("_::_")[0],
-            subTitle: coverKeys[i].split("_::_")[1],
-            images: matchingPage[coverKeys[i]].images.map((image) => image.url),
-          });
-        }
-        // console.log(coversList);
-        coversRef.current = coversList;
-        readyToTransition.current = true;
-        setCoversReady(coversList)
-      }
+    if (
+      projectAssets !== null &&
+      projectAssets["home"] &&
+      Object.keys(projectAssets["home"]).length > 0
+    ) {
+      const coversList = processAndSortObject(projectAssets["home"] as CoverInputObject);
+      coversRef.current = coversList;
+      readyToTransition.current = true;
+      setCoversReady(coversList);
     }
-  }, [cloudinaryData]);
-
-  // const covers = appData.pages.home.covers
+  }, [projectAssets]);
 
   const coverLayouts = [
     [
@@ -272,7 +286,8 @@ const Home: React.FC<HomePageProps> = ({
   }, [coversRef, currentCoverRef, slideUpComponent, coversReady]);
 
   const changeCover = (direction: number) => {
-    if (isTransitioning || !currentCoverRef || coversRef.current === null) return;
+    if (isTransitioning || !currentCoverRef || coversRef.current === null)
+      return;
     const incomingProject =
       direction === 1
         ? currentCoverRef.current === coversRef.current.length - 1
@@ -497,7 +512,7 @@ const Home: React.FC<HomePageProps> = ({
                         left: `${item.x}vw`,
                         top: item.top ? `${item.y}vh` : "none",
                         bottom: item.top ? "none" : `${item.y}vh`,
-                        backgroundColor: "red",
+                        backgroundColor: "#cccccc",
                       }}
                     >
                       <img
@@ -507,7 +522,9 @@ const Home: React.FC<HomePageProps> = ({
                         src={
                           coversRef.current === null
                             ? ""
-                            : coversRef.current[currentCoverRef.current].images[index]
+                            : coversRef.current[currentCoverRef.current].images[
+                                index
+                              ]
                         }
                       />
                     </div>
@@ -565,7 +582,8 @@ const Home: React.FC<HomePageProps> = ({
                           src={
                             coversRef.current === null
                               ? ""
-                              : coversRef.current[currentCoverRef.current].images[index]
+                              : coversRef.current[currentCoverRef.current]
+                                  .images[index]
                           }
                         />
                       </div>

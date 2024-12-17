@@ -2,8 +2,9 @@ import React from "react";
 import useProjectsLayoutOrderState from "../../store/useProjectsLayoutOrderState";
 import appData from "../../app-details.json";
 import useProjectCoversState from "../../store/useProjectCoversState";
+import { ProjectCoverOutputItem } from "./Projects";
 
-const ProjectCover = ({ projectIndex }: { projectIndex: number }) => {
+const ProjectCover = ({ projectIndex, coversReady }: { projectIndex: number, coversReady: ProjectCoverOutputItem[] | null }) => {
   const { projectsLayoutOrder } = useProjectsLayoutOrderState();
   const { projectCovers } = useProjectCoversState();
 
@@ -30,7 +31,7 @@ const ProjectCover = ({ projectIndex }: { projectIndex: number }) => {
               alt=""
               className="image w-[100%] h-[100%]"
               style={{ objectFit: "cover" }}
-              src={`${appData.baseURL}${appData.pages.projects[projectIndex].images?.covers[index]}`}
+              src={coversReady !== null ? coversReady[projectIndex].images[index] : ""}
             />
           </div>
         );
