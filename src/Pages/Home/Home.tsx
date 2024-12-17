@@ -36,8 +36,8 @@ const Home: React.FC<HomePageProps> = ({
         const coversList = [];
         for (let i = 0; i < coverKeys.length; i++) {
           coversList.push({
-            title: coverKeys[i].split("__::__")[0],
-            subTitle: coverKeys[i].split("__::__")[1],
+            title: coverKeys[i].split("_::_")[0],
+            subTitle: coverKeys[i].split("_::_")[1],
             images: matchingPage[coverKeys[i]].images.map((image) => image.url),
           });
         }
