@@ -1,5 +1,5 @@
 import React from "react";
-import { PageProps } from "../../App2";
+import { PageProps } from "../../App";
 import useProjectColorsState from "../../store/useProjectColorsStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import appData from "../../app-details.json";

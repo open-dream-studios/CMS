@@ -1,30 +1,26 @@
-// api/sign-search.js
-import cloudinary from 'cloudinary';
+const cloudinary = require('cloudinary').v2;
 
+// Configure Cloudinary using your credentials
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.REACT_APP_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.REACT_APP_CLOUDINARY_API_KEY,
+  api_secret: process.env.REACT_APP_CLOUDINARY_API_SECRET,
 });
 
-export default function handler(req, res) {
-  if (req.method === 'GET') {
-    const timestamp = Math.round(new Date().getTime() / 1000);
-    const expression = req.query.expression || '';
+module.exports = async (req, res) => {
+  try {
+    const { expression } = req.query;
 
-    // Generate signature for Cloudinary Search API
-    const signature = cloudinary.utils.api_sign_request(
-      { expression, timestamp },
-      process.env.CLOUDINARY_API_SECRET
-    );
+    // Search resources using Cloudinary API
+    const result = await cloudinary.search
+      .expression(expression || 'resource_type:image')
+      .sort_by('created_at', 'desc')
+      .max_results(30)
+      .execute();
 
-    res.status(200).json({
-      signature,
-      timestamp,
-      expression,
-      apiKey: process.env.CLOUDINARY_API_KEY,
-    });
-  } else {
-    res.status(405).json({ message: 'Method not allowed' });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error fetching Cloudinary images:', error);
+    res.status(500).json({ error: 'Failed to fetch images' });
   }
-}
+};

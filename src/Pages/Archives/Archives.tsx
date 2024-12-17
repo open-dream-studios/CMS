@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Page } from "../../App2";
+import { Page } from "../../App";
 import Slider from "../../Components/Slider/Slider";
 // import ArchivesDisplay from "../../Components/ArchivesDisplay/ArchivesDisplay";
 import "./Archives.css";

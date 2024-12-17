@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IncomingPage, Page } from "../../../App2";
+import { IncomingPage, Page } from "../../../App";
 import useProjectColorsState from "../../../store/useProjectColorsStore";
 import useSelectedProjectState from "../../../store/useSelectedProjectStore";
 import appData from "../../../app-details.json";

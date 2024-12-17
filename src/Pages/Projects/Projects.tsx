@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IncomingPage, Page, PageProps } from "../../App2";
+import { IncomingPage, Page, PageProps } from "../../App";
 import appData from "../../app-details.json";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";

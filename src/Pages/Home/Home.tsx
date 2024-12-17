@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import appData from "../../app-details.json";
 import "./Home.css";
-import { FileOrFolder, Page } from "../../App2";
+import { Page } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import useGoogleDriveStore from "../../store/useGoogleDriveStore";
-import CloudinaryScreen from "../../Cloudinary";
+import useCloudinaryDataStore from "../../store/useCloudinaryDataStore";
+import { debounce } from "lodash";
 
 export interface HomePageProps {
   navigate: (page: Page) => void;
@@ -13,30 +13,44 @@ export interface HomePageProps {
   slideUpComponent: boolean;
 }
 
+type cover = {
+  title: string;
+  subTitle: string;
+  images: string[];
+};
+
 const Home: React.FC<HomePageProps> = ({
   navigate,
   layoutOrder,
   slideUpComponent,
 }) => {
-  const { googleDrive, setGoogleDrive } = useGoogleDriveStore();
-  const [covers, setCovers] = useState<FileOrFolder[] | null>(null);
+  const { cloudinaryData, setCloudinaryData } = useCloudinaryDataStore();
+  const coversRef = useRef<cover[] | null>(null);
+  const [coversReady, setCoversReady] = useState<cover[] | null>(null);
 
   useEffect(() => {
-    if (googleDrive && googleDrive.children) {
-      const matchingPage = googleDrive.children.filter(
-        (item) => item.name === "home"
-      );
-      if (
-        matchingPage.length === 1 &&
-        matchingPage[0].children !== undefined &&
-        matchingPage[0].children.length > 0
-      ) {
-        setCovers(matchingPage[0].children);
+    if (cloudinaryData !== null) {
+      const matchingPage = cloudinaryData.children["home"].children;
+      if (matchingPage && Object.keys(matchingPage).length > 0) {
+        const coverKeys = Object.keys(matchingPage);
+        const coversList = [];
+        for (let i = 0; i < coverKeys.length; i++) {
+          coversList.push({
+            title: coverKeys[i].split("__::__")[0],
+            subTitle: coverKeys[i].split("__::__")[1],
+            images: matchingPage[coverKeys[i]].images.map((image) => image.url),
+          });
+        }
+        // console.log(coversList);
+        coversRef.current = coversList;
+        readyToTransition.current = true;
+        setCoversReady(coversList)
       }
     }
-  }, [googleDrive]);
+  }, [cloudinaryData]);
 
   // const covers = appData.pages.home.covers
+
   const coverLayouts = [
     [
       { x: 10, y: 9, w: 24, h: 1.4, z: 104, top: true },
@@ -123,17 +137,16 @@ const Home: React.FC<HomePageProps> = ({
   const [isSubVisible, setSubIsVisible] = useState(false);
   const [isRevealing2, setIsRevealing2] = useState([1, true]);
 
-  const readyToTransition = useRef(true);
+  const readyToTransition = useRef(false);
   const animatingRef = useRef([0, 0]);
   const [firstPageLoad, setFirstPageLoad] = useState(false);
 
   const readyToRetrigger = useRef(false);
 
   useEffect(() => {
-    const handleScroll = (event: any) => {
+    const handleScroll = debounce((event: any) => {
       event.stopPropagation();
       const deltaY = event.deltaY;
-
       if (readyToTransition) {
         if (deltaY > 20) {
           if (readyToTransition.current) {
@@ -169,7 +182,7 @@ const Home: React.FC<HomePageProps> = ({
           }
         }
       }
-    };
+    }, 5);
     window.addEventListener("wheel", handleScroll);
 
     return () => {
@@ -190,66 +203,65 @@ const Home: React.FC<HomePageProps> = ({
     );
   };
 
-  // useEffect(() => {
-  //   const pageLoadTime = performance.now();
+  useEffect(() => {
+    const pageLoadTime = performance.now();
 
-  //   if (
-  //     !slideUpComponent &&
-  //     covers !== null &&
-  //     covers[0].children &&
-  //     covers[0].children.length > 0
-  //   ) {
-  //     const firstCoverImages = covers[0].children.map((item) => item.name);
-  //     preloadImages(firstCoverImages).then((results) => {
-  //       const successful = results
-  //         .filter((result: any) => result.success)
-  //         .map((res: any) => res.url);
-  //       const failed = results
-  //         .filter((result: any) => !result.success)
-  //         .map((res: any) => res.url);
+    if (!slideUpComponent && coversRef.current !== null) {
+      const firstCoverImages = coversRef.current[0].images;
+      preloadImages(firstCoverImages).then((results) => {
+        const successful = results
+          .filter((result: any) => result.success)
+          .map((res: any) => res.url);
+        const failed = results
+          .filter((result: any) => !result.success)
+          .map((res: any) => res.url);
 
-  //       const logResults = () => {
-  //         // console.log("has been 300ms");
-  //         if (failed.length === 0) {
-  //           // console.log("All images preloaded successfully:", successful);
-  //         } else {
-  //           // console.warn("Some images failed to preload:", failed);
-  //           // console.log("Successfully preloaded images:", successful);
-  //         }
-  //         setFirstPageLoad(true);
+        const logResults = () => {
+          // console.log("has been 300ms");
+          if (failed.length === 0) {
+            // console.log("All images preloaded successfully:", successful);
+          } else {
+            // console.warn("Some images failed to preload:", failed);
+            // console.log("Successfully preloaded images:", successful);
+          }
+          setFirstPageLoad(true);
 
-  //         // for (let i = 1; i < covers.length; i++) {
-  //         //   preloadImages(covers[i].images);
-  //         // }
-  //       };
+          if (coversRef.current !== null) {
+            for (let i = 1; i < coversRef.current.length; i++) {
+              preloadImages(coversRef.current[i].images);
+            }
+          }
+        };
 
-  //       const elapsedTime = performance.now() - pageLoadTime;
-  //       if (elapsedTime >= 300) {
-  //         logResults();
-  //       } else {
-  //         const delay = 300 - elapsedTime;
-  //         setTimeout(logResults, delay);
-  //       }
-  //     });
-  //   }
-  // }, []);
+        const elapsedTime = performance.now() - pageLoadTime;
+        if (elapsedTime >= 300) {
+          logResults();
+        } else {
+          const delay = 300 - elapsedTime;
+          setTimeout(logResults, delay);
+        }
+      });
+    }
+  }, [coversRef, slideUpComponent, coversReady]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [coversReady]);
 
   useEffect(() => {
-    if (!slideUpComponent && currentCoverRef && covers) {
-      const text = covers[currentCoverRef.current].name
-        .split("__::__")[0]
+    if (!slideUpComponent && currentCoverRef && coversRef.current !== null) {
+      const text = coversRef.current[currentCoverRef.current].title
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("_")
         .replace(" ", "_")
         .split("");
-      const text2 = covers[currentCoverRef.current].name
-        .split("__::__")[1]
+      const text2 = coversRef.current[currentCoverRef.current].subTitle
         .replace(" ", "_")
+        .toUpperCase()
         .split("");
       setCoverTitle(text);
       setSubTitle(text2);
@@ -257,26 +269,28 @@ const Home: React.FC<HomePageProps> = ({
         setSubIsVisible(true);
       }, 200);
     }
-  }, []);
+  }, [coversRef, currentCoverRef, slideUpComponent, coversReady]);
 
-  function changeCover(direction: number) {
-    if (isTransitioning || !currentCoverRef || !covers) return;
+  const changeCover = (direction: number) => {
+    if (isTransitioning || !currentCoverRef || coversRef.current === null) return;
     const incomingProject =
       direction === 1
-        ? currentCoverRef.current === covers.length - 1
+        ? currentCoverRef.current === coversRef.current.length - 1
           ? 0
           : currentCoverRef.current + 1
         : currentCoverRef.current === 0
-        ? covers.length - 1
+        ? coversRef.current.length - 1
         : currentCoverRef.current - 1;
 
-    const text = covers[incomingProject].name
-      .split("__::__")[0]
+    const text = coversRef.current[incomingProject].title
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join("_")
       .replace(" ", "_")
       .split("");
-    const text2 = covers[incomingProject].name
-      .split("__::__")[1]
+    const text2 = coversRef.current[incomingProject].subTitle
       .replace(" ", "_")
+      .toUpperCase()
       .split("");
 
     // Subtitle
@@ -291,10 +305,10 @@ const Home: React.FC<HomePageProps> = ({
     setTimeout(() => {
       setIsRevealing1([direction, false]);
       setTimeout(() => {
-        if (currentCoverRef) {
+        if (currentCoverRef && coversRef.current !== null) {
           if (direction === 1) {
             const nextCover =
-              currentCoverRef.current === covers.length - 1
+              currentCoverRef.current === coversRef.current.length - 1
                 ? 0
                 : currentCoverRef.current + 1;
             currentCoverRef.current = nextCover;
@@ -303,7 +317,7 @@ const Home: React.FC<HomePageProps> = ({
           } else {
             const nextCover =
               currentCoverRef.current === 0
-                ? covers.length - 1
+                ? coversRef.current.length - 1
                 : currentCoverRef.current - 1;
             currentCoverRef.current = nextCover;
             setCurrentCover(nextCover);
@@ -342,9 +356,9 @@ const Home: React.FC<HomePageProps> = ({
     setExitingCover(currentCoverRef.current);
 
     setTimeout(() => setIsTransitioning(false), 800);
-  }
+  };
 
-  const handleNextCover = (event: any) => {
+  const handleNextCover = debounce((event: any) => {
     event.stopPropagation();
     if (readyToTransition && readyToTransition.current) {
       changeCover(1);
@@ -372,7 +386,7 @@ const Home: React.FC<HomePageProps> = ({
         }
       }, 1910);
     }
-  };
+  }, 50);
 
   const handlePrevCover = (event: any) => {
     event.stopPropagation();
@@ -440,10 +454,6 @@ const Home: React.FC<HomePageProps> = ({
   const generateRandomDelay = () => Math.random() * 0.4;
 
   return (
-    <CloudinaryScreen />
-  )
-
-  return (
     <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
       <div
         className="cursor-pointer relative w-[100vw] h-[100%] flex items-center justify-center"
@@ -487,17 +497,18 @@ const Home: React.FC<HomePageProps> = ({
                         left: `${item.x}vw`,
                         top: item.top ? `${item.y}vh` : "none",
                         bottom: item.top ? "none" : `${item.y}vh`,
-                        backgroundColor: "red"
+                        backgroundColor: "red",
                       }}
                     >
                       <img
                         alt=""
                         className="image w-[100%] h-[100%]"
                         style={{ objectFit: "cover" }}
-                        // src={!covers ? "" : `${appData.baseURL}${
-                        //   covers[currentCoverRef.current].children
-                        // }`}
-                        src="https://drive.google.com/uc?export=view&id=11sKZfNRft3GwqMiJb_JzTNmqi2o6YruV"
+                        src={
+                          coversRef.current === null
+                            ? ""
+                            : coversRef.current[currentCoverRef.current].images[index]
+                        }
                       />
                     </div>
                   </motion.div>
@@ -551,10 +562,11 @@ const Home: React.FC<HomePageProps> = ({
                           alt=""
                           className="image w-[100%] h-[100%]"
                           style={{ objectFit: "cover" }}
-                          // src={`${appData.baseURL}${
-                          //   covers[currentCoverRef.current].images[index]
-                          // }`}
-                          src="https://drive.google.com/uc?export=view&id=11sKZfNRft3GwqMiJb_JzTNmqi2o6YruV"
+                          src={
+                            coversRef.current === null
+                              ? ""
+                              : coversRef.current[currentCoverRef.current].images[index]
+                          }
                         />
                       </div>
                     </motion.div>
