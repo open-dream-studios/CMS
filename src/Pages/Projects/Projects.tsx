@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IncomingPage, Page } from "../../App";
-import appData from "../../app-details.json";
+import { IncomingPage, Page, ProjectOutputItem } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";
 import useProjectColorsState from "../../store/useProjectColorsStore";
@@ -17,20 +16,6 @@ export interface ProjectsPageProps {
   currentPage: boolean;
   animate: boolean;
 }
-
-export type ProjectCoverOutputItem = {
-  title: string;
-  bg_color: string;
-  text_color: string;
-  images: string[];
-};
-
-type ProjectCoverInputObject = {
-  [key: string]: {
-    covers?: string[];
-    [key: string]: any;
-  };
-};
 
 const Projects: React.FC<ProjectsPageProps> = ({
   navigate,
@@ -54,68 +39,25 @@ const Projects: React.FC<ProjectsPageProps> = ({
   
   const [projectsList, setProjectsList] = useState<string[]>([])
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
-  const coversRef = useRef<ProjectCoverOutputItem[] | null>(null);
+  const coversRef = useRef<ProjectOutputItem[] | null>(null);
   const [coversReady, setCoversReady] = useState<
-    ProjectCoverOutputItem[] | null
+    ProjectOutputItem[] | null
   >(null);
 
-  const processAndSortObjectForProjects = (
-    input: ProjectCoverInputObject
-  ): ProjectCoverOutputItem[] => {
-    const entries = Object.entries(input);
-    const mappedEntries = entries.map(([key, value]) => {
-      const [number, title, bg_color, text_color] = key.split("--")
-      return {
-        title: title,
-        bg_color,
-        text_color,
-        images:
-          Object.keys(value).length > 0 &&
-          value["covers"] &&
-          Object.keys(value["covers"]).length > 0
-            ? Object.keys(value["covers"]).map(
-                (item) =>
-                  `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/covers/` +
-                  item
-              )
-            : [],
-        number: parseInt(number, 10),
-      };
-    });
-
-    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-    return sortedEntries.map(({ number, ...rest }) => rest);
-  };
-
   useEffect(() => {
-    if (
-      projectAssets !== null &&
-      projectAssets["projects"] &&
-      Object.keys(projectAssets["projects"]).length > 0
-    ) {
-      const coversList = processAndSortObjectForProjects(
-        projectAssets["projects"] as ProjectCoverInputObject
-      );
+   if (
+    projectAssets !== null &&
+    projectAssets["projects"] &&
+    Array.isArray(projectAssets["projects"]) &&
+    projectAssets["projects"].length > 0
+  ) { 
+      const coversList = projectAssets["projects"] as ProjectOutputItem[]
       const newProjectsList = coversList.map(item => item.title.replace("_", ""))
       setProjectsList(newProjectsList)
       coversRef.current = coversList;
       setCoversReady(coversList);
     }
   }, [projectAssets]);
-
-  // useEffect(() => {
-  //   const path = location.pathname;
-  //   if (
-  //     path.startsWith("/projects/") &&
-  //     projectsList.includes(path.split("/")[2]) &&
-  //     path.split("/").length === 3
-  //   ) {
-  //     const newIndex = projectsList.findIndex(
-  //       (project) => project === path.split("/")[2]
-  //     );
-  //     // setSelectedProject(newIndex);
-  //   }
-  // }, [location]);
 
   useEffect(() => {
     if (animate === true) {
@@ -224,6 +166,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
                             titlesVisible && animate ? "project-reveal" : ""
                           }`}
                           style={{
+                            whiteSpace: "nowrap",
                             animationDelay: animateWave
                               ? `${Math.pow(index, 0.75) * 0.045}s`
                               : "none",

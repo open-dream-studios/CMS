@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import appData from "../app-details.json";
 
 type StateType = {
   projectsLayoutOrder: number[];
@@ -32,7 +31,7 @@ const useProjectsLayoutOrderState = create<StateType>(() => {
     return array;
   };
 
-  const coversLength = appData.pages.projects.length; 
+  const coversLength = 100
   const layoutsAvailable = 12;
 
   return {

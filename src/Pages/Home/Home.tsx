@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import appData from "../../app-details.json";
 import "./Home.css";
-import { Page } from "../../App";
+import { CoverOutputItem, Page } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { debounce } from "lodash";
@@ -13,15 +12,6 @@ export interface HomePageProps {
   slideUpComponent: boolean;
 }
 
-type CoverInputObject = {
-  [key: string]: object;
-};
-
-type CoverOutputItem = {
-  title: string;
-  subTitle: string;
-  images: string[];
-};
 
 const Home: React.FC<HomePageProps> = ({
   navigate,
@@ -29,39 +19,20 @@ const Home: React.FC<HomePageProps> = ({
   slideUpComponent,
 }) => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+
   const coversRef = useRef<CoverOutputItem[] | null>(null);
   const [coversReady, setCoversReady] = useState<CoverOutputItem[] | null>(null);
 
-  const processAndSortObject = (input: CoverInputObject): CoverOutputItem[] => {
-    const entries = Object.entries(input);
-    const mappedEntries = entries.map(([key, value]) => {
-      const [number, title, subTitle] = key.split("--");
-      return {
-        title,
-        subTitle,
-        images: Object.keys(value).map(
-          (item) =>
-            `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/home/${key}/` +
-            item
-        ),
-        number: parseInt(number, 10), // Parse the number to use for sorting
-      };
-    });
-
-    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-    return sortedEntries.map(({ number, ...rest }) => rest);
-  };
-
   useEffect(() => {
-    if (
-      projectAssets !== null &&
-      projectAssets["home"] &&
-      Object.keys(projectAssets["home"]).length > 0
-    ) {
-      const coversList = processAndSortObject(projectAssets["home"] as CoverInputObject);
-      coversRef.current = coversList;
+   if (
+    projectAssets !== null &&
+    projectAssets["home"] &&
+    Array.isArray(projectAssets["home"]) &&
+    projectAssets["home"].length > 0
+  ) {
+      coversRef.current = projectAssets["home"] as CoverOutputItem[]
       readyToTransition.current = true;
-      setCoversReady(coversList);
+      setCoversReady(projectAssets["home"] as CoverOutputItem[]);
     }
   }, [projectAssets]);
 
@@ -209,7 +180,7 @@ const Home: React.FC<HomePageProps> = ({
       urls.map((url) => {
         return new Promise((resolve) => {
           const img = new Image();
-          img.src = appData.baseURL + url;
+          img.src = url;
           img.onload = () => resolve({ url, success: true });
           img.onerror = () => resolve({ url, success: false });
         });

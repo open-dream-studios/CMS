@@ -9,7 +9,6 @@ import Navbar from "./Components/Navbar/Navbar";
 import Archives from "./Pages/Archives/Archives";
 import "./App.css";
 import ProjectsPage from "./Pages/Projects/ProjectsPage/ProjectsPage";
-import appData from "./app-details.json";
 import useProjectColorsState from "./store/useProjectColorsStore";
 import useCurrentPageState from "./store/useCurrentPageStore";
 import useCurrentNavColorState from "./store/useCurrentNavColorStore";
@@ -122,11 +121,38 @@ const SlideUpProjectPage: React.FC<SlideUpProjectPageProps> = ({
 };
 
 export type FileTree = {
-  [key: string]: string | FileTree;
+  [key: string]: string | FileTree | FileTree[] | string[];
+};
+
+export type CoverInputObject = {
+  [key: string]: { [key: string]: string };
+};
+
+export type CoverOutputItem = {
+  title: string;
+  subTitle: string;
+  images: string[];
+};
+
+export type ProjectOutputItem = {
+  title: string;
+  bg_color: string;
+  text_color: string;
+  images: string[];
+  covers: string[];
+};
+
+export type ProjectInputObject = {
+  [key: string]: {
+    covers?: { [key: string]: string };
+    [key: string]: any;
+  };
 };
 
 const App = () => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  const [projectsList, setProjectsList] = useState<string[]>([])
+
   useEffect(() => {
     const fetchFullRepoTree = async (
       owner: string,
@@ -181,13 +207,109 @@ const App = () => {
           Object.keys(fullRepo["public"]).length > 0 &&
           fullRepo["public"]["assets"]
         ) {
-          setProjectAssets(fullRepo["public"]["assets"]);
+          const fullProject = fullRepo["public"]["assets"];
+          if (
+            fullProject["home"] &&
+            Object.keys(fullProject["home"]).length > 0
+          ) {
+            const coversList = processAndSortHomeCoversObject(
+              fullProject["home"] as CoverInputObject
+            );
+            fullProject["home"] = coversList;
+          }
+
+          if (
+            fullProject["projects"] &&
+            Object.keys(fullProject["projects"]).length > 0
+          ) {
+            const projectCoversList = processAndSortProjectsObject(
+              fullProject["projects"] as ProjectInputObject
+            );
+            fullProject["projects"] = projectCoversList;
+            setProjectsList(projectCoversList.map(item => item.title.replace("_","")))
+          }
+          console.log("FULL", fullProject);
+          setProjectAssets(fullProject);
         }
       }
     };
 
     getRepoTree();
   }, []);
+
+  const processAndSortProjectsObject = (
+    input: ProjectInputObject
+  ): ProjectOutputItem[] => {
+    const entries = Object.entries(input);
+    const mappedEntries = entries.map(([key, value]) => {
+      const [number, title, bg_color, text_color] = key.split("--");
+      return {
+        title: title,
+        bg_color,
+        text_color,
+        covers:
+          Object.keys(value).length > 0 &&
+          value["covers"] &&
+          Object.keys(value["covers"]).length > 0
+            ? Object.keys(value["covers"]).map(
+                (item) =>
+                  `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/covers/` +
+                  item
+              )
+            : [],
+        images:
+          Object.keys(value).length > 1
+            ? [
+                `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/` +
+                  Object.keys(value).filter(
+                    (item) => item.split(".")[0] === "cover"
+                  ),
+                ...Object.keys(value)
+                  .filter(
+                    (item) =>
+                      item !== "covers" && item.split(".")[0] !== "cover"
+                  ) // Filter out "cover" and non-numeric keys
+                  .sort((a, b) => {
+                    const aNum = a.split(".")[0]; // Extract numeric part of the filename
+                    const bNum = b.split(".")[0];
+                    return parseInt(aNum, 10) - parseInt(bNum, 10); // Sort numerically
+                  })
+                  .map(
+                    (item) =>
+                      `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/` +
+                      item
+                  ),
+              ]
+            : [],
+        number: parseInt(number, 10),
+      };
+    });
+
+    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
+    return sortedEntries.map(({ number, ...rest }) => rest);
+  };
+
+  const processAndSortHomeCoversObject = (
+    input: CoverInputObject
+  ): CoverOutputItem[] => {
+    const entries = Object.entries(input);
+    const mappedEntries = entries.map(([key, value]) => {
+      const [number, title, subTitle] = key.split("--");
+      return {
+        title,
+        subTitle,
+        images: Object.keys(value).map(
+          (item) =>
+            `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/home/${key}/` +
+            item
+        ),
+        number: parseInt(number, 10), // Parse the number to use for sorting
+      };
+    });
+
+    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
+    return sortedEntries.map(({ number, ...rest }) => rest);
+  };
 
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
   const [incomingPageDecision, setIncomingPageDecision] =
@@ -205,9 +327,6 @@ const App = () => {
   const { incomingImageStyles, setIncomingImageStyles } =
     useIncomingImageStylesStore();
   const { incomingSpeed, setIncomingSpeed } = useIncomingImageSpeedState();
-
-  const projects = appData.pages.projects;
-  const projectsList = projects.map((item) => item.link);
 
   useEffect(() => {
     const path = location.pathname.replace("/", "") || "home";
@@ -287,20 +406,18 @@ const App = () => {
 
   // HOME PAGE COVER LAYOUT ORDER (num covers, 2 layouts available so far)
   const numberOfLayoutsCreated = 7;
+  const numberOfCovers = 2;
   // Generate an array where each number is unique to the two next to it
   const [layoutOrder, setLayoutOrder] = useState(() => {
     let previous = -1; // Start with a value that can't match the first random number
-    const array = Array.from(
-      { length: appData.pages.home.covers.length },
-      (_, index) => {
-        let next;
-        do {
-          next = Math.floor(Math.random() * numberOfLayoutsCreated);
-        } while (next === previous);
-        previous = next;
-        return next;
-      }
-    );
+    const array = Array.from({ length: numberOfCovers }, (_, index) => {
+      let next;
+      do {
+        next = Math.floor(Math.random() * numberOfLayoutsCreated);
+      } while (next === previous);
+      previous = next;
+      return next;
+    });
 
     // Ensure the first and last elements are different
     if (array.length > 1 && array[0] === array[array.length - 1]) {
@@ -319,76 +436,88 @@ const App = () => {
 
   useEffect(() => {
     const path = location.pathname;
+    console.log(
+      projectsList.length > 0 &&
+      selectedProjectName[1] === null,
+      path.startsWith("/projects/"),
+      projectsList.includes(path.split("/")[2]),
+      path.split("/").length === 3, 
+      projectAssets !== null)
     if (
+      projectsList.length > 0 &&
       selectedProjectName[1] === null &&
       path.startsWith("/projects/") &&
       projectsList.includes(path.split("/")[2]) &&
-      path.split("/").length === 3
+      path.split("/").length === 3 && 
+      projectAssets !== null && 
+      projectAssets["projects"] 
     ) {
+      console.log("in app")
+      const projects = projectAssets["projects"] as any[]
       const insertProject = projectsList.findIndex(
         (link) => link === path.split("/")[2]
       );
       setSelectedProject(insertProject);
       setSelectedProjectName([null, insertProject, null]);
-      let projectColorsCopy = projectColors;
-      projectColorsCopy[1] = [
-        projects[insertProject].background_color,
-        projects[insertProject].text_color,
-      ];
-      setProjectColors(projectColorsCopy);
+      // let projectColorsCopy = projectColors;
+      // projectColorsCopy[1] = [
+      //   projects[insertProject].background_color,
+      //   projects[insertProject].text_color,
+      // ];
+      // setProjectColors(projectColorsCopy);
 
-      const loadImageDimensions = async () => {
-        const dimensions = await Promise.all(
-          appData.pages.projects[insertProject].images.project_images.map(
-            (item) => {
-              const imgSrc = `${appData.baseURL}${item[0]}`;
-              return new Promise<ImageDimension>((resolve) => {
-                const img = new Image();
-                img.onload = () =>
-                  resolve({
-                    width: img.naturalWidth,
-                    height: img.naturalHeight,
-                    src: imgSrc,
-                  });
-                img.src = imgSrc;
-              });
-            }
-          )
-        );
-        setIncomingImageDimensions(dimensions);
+      // const loadImageDimensions = async () => {
+      //   const dimensions = await Promise.all(
+      //     projects[insertProject].images.project_images.map(
+      //       (item: any) => {
+      //         const imgSrc = item
+      //         return new Promise<ImageDimension>((resolve) => {
+      //           const img = new Image();
+      //           img.onload = () =>
+      //             resolve({
+      //               width: img.naturalWidth,
+      //               height: img.naturalHeight,
+      //               src: imgSrc,
+      //             });
+      //           img.src = imgSrc;
+      //         });
+      //       }
+      //     )
+      //   );
+      //   setIncomingImageDimensions(dimensions);
 
-        const newSpeeds = [0];
-        if (dimensions.length > 0) {
-          const styles = dimensions.map((img, index) => {
-            const isHorizontal = img.width > img.height;
-            const dynamicBaseWidth = isHorizontal ? 70 : 45;
-            const dynamicWidth = dynamicBaseWidth + Math.random() * 25;
-            const dynamicMarginLeft = Math.random() * (100 - dynamicWidth);
-            const currentSeparation =
-              index === 2
-                ? -25 + Math.random() * 50
-                : -25 + Math.random() * 100;
-            if (index !== 0) {
-              if (index < 4) {
-                newSpeeds.push(Math.random() * 0.13 + 0.05);
-              } else {
-                newSpeeds.push(Math.random() * 0.19 + 0.05);
-              }
-            }
+      //   const newSpeeds = [0];
+      //   if (dimensions.length > 0) {
+      //     const styles = dimensions.map((img, index) => {
+      //       const isHorizontal = img.width > img.height;
+      //       const dynamicBaseWidth = isHorizontal ? 70 : 45;
+      //       const dynamicWidth = dynamicBaseWidth + Math.random() * 25;
+      //       const dynamicMarginLeft = Math.random() * (100 - dynamicWidth);
+      //       const currentSeparation =
+      //         index === 2
+      //           ? -25 + Math.random() * 50
+      //           : -25 + Math.random() * 100;
+      //       if (index !== 0) {
+      //         if (index < 4) {
+      //           newSpeeds.push(Math.random() * 0.13 + 0.05);
+      //         } else {
+      //           newSpeeds.push(Math.random() * 0.19 + 0.05);
+      //         }
+      //       }
 
-            return {
-              width: `${dynamicWidth}%`,
-              marginLeft: `${dynamicMarginLeft}%`,
-              marginTop: index === 1 ? "0" : `${currentSeparation}px`,
-            };
-          });
-          setIncomingImageStyles(styles);
-          setIncomingSpeed(newSpeeds);
-        }
-      };
-      loadImageDimensions();
+      //       return {
+      //         width: `${dynamicWidth}%`,
+      //         marginLeft: `${dynamicMarginLeft}%`,
+      //         marginTop: index === 1 ? "0" : `${currentSeparation}px`,
+      //       };
+      //     });
+      //     setIncomingImageStyles(styles);
+      //     setIncomingSpeed(newSpeeds);
+      //   }
+      // };
+      // loadImageDimensions();
     }
-  }, [location]);
+  }, [location, projectAssets, projectsList]);
 
   useEffect(() => {
     if (location.pathname === "/home") {

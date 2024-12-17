@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IncomingPage, Page } from "../../../App";
+import { IncomingPage, Page, ProjectOutputItem } from "../../../App";
 import useProjectColorsState from "../../../store/useProjectColorsStore";
 import useSelectedProjectState from "../../../store/useSelectedProjectStore";
-import appData from "../../../app-details.json";
 import useSelectedProjectNameState from "../../../store/useSelectedProjectNameStore";
 import useIncomingImageDimensionsState from "../../../store/useIncomingImageDimensionsState";
 import useIncomingImageStylesStore from "../../../store/useIncomingImageStylesStore";
@@ -22,20 +21,6 @@ interface ImageDimension {
   height: number;
   src: string;
 }
-
-type ProjectOutputItem = {
-  title: string;
-  bg_color: string;
-  text_color: string;
-  images: string[];
-};
-
-type ProjectInputObject = {
-  [key: string]: {
-    covers?: string[];
-    [key: string]: any;
-  };
-};
 
 const ProjectsPage: React.FC<ProjectsPageProps> = ({
   navigate,
@@ -64,53 +49,18 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const [projectsList, setProjectsList] = useState<string[]>([]);
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const coversRef = useRef<ProjectOutputItem[] | null>(null);
-  const [coversReady, setCoversReady] = useState<ProjectOutputItem[] | null>(
-    null
-  );
-
-  const processAndSortObjectForProjectsPage = (
-    input: ProjectInputObject
-  ): ProjectOutputItem[] => {
-    const entries = Object.entries(input);
-    const mappedEntries = entries.map(([key, value]) => {
-      const [number, title, bg_color, text_color] = key.split("--");
-      return {
-        title: title,
-        bg_color,
-        text_color,
-        images:
-          Object.keys(value).length > 1
-            ? Object.keys(value)
-                .filter((item) => item !== "covers")
-                .map(
-                  (item) =>
-                    `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/covers/` +
-                    item
-                )
-            : [],
-        number: parseInt(number, 10),
-      };
-    });
-
-    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-    return sortedEntries.map(({ number, ...rest }) => rest);
-  };
 
   useEffect(() => {
-    if (
-      projectAssets !== null &&
-      projectAssets["projects"] &&
-      Object.keys(projectAssets["projects"]).length > 0
-    ) {
-      const coversList = processAndSortObjectForProjectsPage(
-        projectAssets["projects"] as ProjectInputObject
-      );
+  if (
+    projectAssets !== null &&
+    projectAssets["projects"] &&
+    Array.isArray(projectAssets["projects"]) &&
+    projectAssets["projects"].length > 0
+  ) { 
+      const coversList = projectAssets["projects"] as ProjectOutputItem[]
       const newProjectsList = coversList.map(item => item.title.replace("_", ""))
-      console.log(newProjectsList)
-      // setProjectsList(newProjectsList)
-      console.log(coversList);
-      // coversRef.current = coversList;
-      // setCoversReady(coversList);
+      setProjectsList(newProjectsList)
+      coversRef.current = coversList
     }
   }, [projectAssets]);
 
@@ -121,32 +71,27 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (
-      imageDimensions.length === 0 &&
-      imageStyles.length === 0 &&
-      incomingImageDimensions.length !== 0 &&
-      incomingImageStyles.length !== 0
-    ) {
-      setImageDimensions(incomingImageDimensions);
-      setImageStyles(incomingImageStyles);
-    }
-    if (selectedProjectName[1] !== null) {
-      const projectColorsCopy = projectColors;
-      projectColorsCopy[1] = [
-        appData.pages.projects[selectedProjectName[1]].background_color,
-        appData.pages.projects[selectedProjectName[1]].text_color,
-      ];
-      console.log(projectColorsCopy);
-      setProjectColors(projectColorsCopy);
-    }
-  }, [incomingImageDimensions, incomingImageStyles]);
+    if (coversRef.current !== null) {
+      if (
+        imageDimensions.length === 0 &&
+        imageStyles.length === 0 &&
+        incomingImageDimensions.length !== 0 &&
+        incomingImageStyles.length !== 0
+      ) {
+        setImageDimensions(incomingImageDimensions);
+        setImageStyles(incomingImageStyles);
+      }
 
-  useEffect(() => {
-    if (!slideUpComponent) {
-      // window.scrollTo(0, 0);
-      // scrollRef.current = 0;
+      if (selectedProjectName[1] !== null) {
+        const projectColorsCopy = projectColors;
+        projectColorsCopy[1] = [
+          coversRef.current[selectedProjectName[1]].bg_color,
+          coversRef.current[selectedProjectName[1]].text_color,
+        ];
+        setProjectColors(projectColorsCopy);
+      }
     }
-  }, [selectedProjectName[1]]);
+  }, [incomingImageDimensions, incomingImageStyles, coversRef.current]);
 
   useEffect(() => {
     const updateParallax = () => {
@@ -154,6 +99,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         if (
           !slideUpComponent &&
           index !== 1 &&
+          img !== null &&
           window.innerHeight + scrollRef.current >= img.offsetTop
         ) {
           if (img) {
@@ -171,7 +117,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
             }
           }
         } else {
-          if (img.style.transform !== "none") {
+          if (img !== null && img.style.transform !== "none") {
             img.style.transform = "none";
           }
         }
@@ -185,6 +131,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
 
     const debouncedHandleScroll = debounce(() => {
       if (
+        coversRef.current !== null &&
         projectPageRef.current &&
         scrollRef.current + window.innerHeight >=
           projectPageRef.current.clientHeight - 5
@@ -192,11 +139,11 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         if (canSelectProject && !navigatingCurrently.current) {
           const nextProject =
             selectedProjectName[1] === null ||
-            selectedProjectName[1] === appData.pages.projects.length - 1
+            selectedProjectName[1] === coversRef.current.length - 1
               ? 0
               : selectedProjectName[1] + 1;
           navigatingCurrently.current = true;
-          handleProjectClick(nextProject, appData.pages.projects[nextProject]);
+          handleProjectClick(nextProject, coversRef.current[nextProject]);
         }
       }
     }, 10);
@@ -235,13 +182,6 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   }, [selectedProjectName[1], slideUpComponent]);
 
   useEffect(() => {
-    if (!slideUpComponent && selectedProjectName[2] === null) {
-      // window.scrollTo(0, 0);
-      // scrollRef.current = 0;
-    }
-  }, [selectedProjectName, slideUpComponent]);
-
-  useEffect(() => {
     const preventScroll = (e: Event) => e.preventDefault();
     if (!canScroll) {
       window.addEventListener("wheel", preventScroll, { passive: false });
@@ -260,77 +200,117 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     };
   }, [canScroll]);
 
-  useEffect(() => {
-    const loadImageDimensions = async () => {
+  const loadImageDimensions = async () => {
+    if (coversRef.current !== null) {
+      let dimensions: ImageDimension[] = [];
+
       if (slideUpComponent && selectedProjectName[2] !== null) {
-        const dimensions = await Promise.all(
-          appData.pages.projects[
-            selectedProjectName[2]
-          ].images.project_images.map((item) => {
-            const imgSrc = `${appData.baseURL}${item[0]}`;
+        console.log(
+          coversRef.current,
+          selectedProjectName[2],
+          coversRef.current[selectedProjectName[2]],
+          coversRef.current[selectedProjectName[2]].images
+        );
+        dimensions = await Promise.all(
+          coversRef.current[selectedProjectName[2]].images.map((item) => {
             return new Promise<ImageDimension>((resolve) => {
               const img = new Image();
               img.onload = () =>
                 resolve({
                   width: img.naturalWidth,
                   height: img.naturalHeight,
-                  src: imgSrc,
+                  src: item,
                 });
-              img.src = imgSrc;
+              img.src = item;
             });
           })
         );
         setImageDimensions(dimensions);
         setIncomingImageDimensions(dimensions);
-
-        const newSpeeds = [0];
-        if (dimensions.length > 0) {
-          const styles = dimensions.map((img, index) => {
-            const isHorizontal = img.width > img.height;
-            const dynamicBaseWidth = isHorizontal ? 70 : 45;
-            const dynamicWidth = dynamicBaseWidth + Math.random() * 25;
-            const dynamicMarginLeft = Math.random() * (100 - dynamicWidth);
-            const currentSeparation =
-              index === 2
-                ? -25 + Math.random() * 50
-                : -25 + Math.random() * 100;
-            if (index !== 0) {
-              newSpeeds.push(Math.random() * 0.1 + 0.05);
-            }
-
-            return {
-              width: `${dynamicWidth}%`,
-              marginLeft: `${dynamicMarginLeft}%`,
-              marginTop: index === 1 ? "0" : `${currentSeparation}px`,
-            };
-          });
-          setImageStyles(styles);
-          setIncomingImageStyles(styles);
-          setIncomingSpeed(newSpeeds);
-        }
       }
-    };
+      if (
+        selectedProjectName[1] !== null &&
+        incomingImageDimensions.length === 0 &&
+        imageDimensions.length === 0
+      ) {
+        dimensions = await Promise.all(
+          coversRef.current[selectedProjectName[1]].images.map((item) => {
+            return new Promise<ImageDimension>((resolve) => {
+              const img = new Image();
+              img.onload = () =>
+                resolve({
+                  width: img.naturalWidth,
+                  height: img.naturalHeight,
+                  src: item,
+                });
+              img.src = item;
+            });
+          })
+        );
+        setImageDimensions(dimensions);
+        setIncomingImageDimensions(dimensions);
+      }
 
-    loadImageDimensions();
-  }, [selectedProjectName[2], slideUpComponent]);
+      const newSpeeds = [0];
+      if (dimensions.length > 0) {
+        const styles = dimensions.map((img, index) => {
+          const isHorizontal = img.width > img.height;
+          const dynamicBaseWidth = isHorizontal ? 70 : 45;
+          const dynamicWidth = dynamicBaseWidth + Math.random() * 25;
+          const dynamicMarginLeft = Math.random() * (100 - dynamicWidth);
+          const currentSeparation =
+            index === 2 ? -25 + Math.random() * 50 : -25 + Math.random() * 100;
+          if (index !== 0) {
+            newSpeeds.push(Math.random() * 0.1 + 0.05);
+          }
+
+          return {
+            width: `${dynamicWidth}%`,
+            marginLeft: `${dynamicMarginLeft}%`,
+            marginTop: index === 1 ? "0" : `${currentSeparation}px`,
+          };
+        });
+        setImageStyles(styles);
+        setIncomingImageStyles(styles);
+        setIncomingSpeed(newSpeeds);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (slideUpComponent) {
+      loadImageDimensions();
+    }
+  }, [slideUpComponent]);
+
+  useEffect(() => {
+    if (
+      incomingImageDimensions.length === 0 &&
+      imageDimensions.length === 0 &&
+      coversRef.current !== null &&
+      selectedProjectName[1] !== null
+    ) {
+      loadImageDimensions();
+    }
+  }, [coversRef.current, selectedProjectName]);
 
   if (selectedProject === null) {
     return <></>;
   }
 
   function handleProjectClick(index: number, item: any) {
-    if (canSelectProject) {
+    if (canSelectProject && coversRef.current !== null) {
       setCanSelectProject(false);
       setCanScroll(false);
       const currentProj = selectedProjectName[1];
-      const projects = appData.pages.projects;
+      const projects = coversRef.current;
       setSelectedProject(index);
       setSelectedProjectName([null, currentProj, index]);
-      navigate("projects/" + projects[index].link);
+      navigate("projects/" + projects[index].title.replace("_", ""));
       const projectColorsCopy = projectColors;
       projectColorsCopy[2] = [item.background_color, item.text_color];
       projectColorsCopy[0] = [
-        projects[currentProj ? currentProj : 0].background_color,
+        projects[currentProj ? currentProj : 0].bg_color,
         projects[currentProj ? currentProj : 0].text_color,
       ];
       setProjectColors(projectColorsCopy);
@@ -369,21 +349,15 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
           opacity: 1,
         }}
       >
-        <div className="w-[100%]">
+        <div className="w-[100%] pl-[5px]">
           <img
             alt=""
             src={
-              selectedProjectName[1] === null
-                ? ""
-                : slideUpComponent && selectedProjectName[2] !== null
-                ? `${appData.baseURL}${
-                    appData.pages.projects[selectedProjectName[2]].images
-                      .project_images[0][0]
-                  }`
-                : `${appData.baseURL}${
-                    appData.pages.projects[selectedProjectName[1]].images
-                      .project_images[0][0]
-                  }`
+              selectedProjectName[1] !== null && coversRef.current !== null
+                ? slideUpComponent && selectedProjectName[2] !== null
+                  ? coversRef.current[selectedProjectName[2]].images[0]
+                  : coversRef.current[selectedProjectName[1]].images[0]
+                : ""
             }
             className="w-[100%] aspect-[1.55/1] max-h-[50vh]"
             style={{ objectFit: "cover", backgroundColor: "pink" }}
@@ -395,16 +369,27 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
           >
             {slideUpComponent ? (
               <>
-                {incomingProject === null ? (
-                  <></>
+                {incomingProject !== null && coversRef.current !== null ? (
+                  <>
+                    {coversRef.current[incomingProject].title
+                      .split("_")
+                      .map(
+                        (item) => item.charAt(0).toUpperCase() + item.slice(1)
+                      )
+                      .join(" ")}
+                  </>
                 ) : (
-                  <>{appData.pages.projects[incomingProject].title}</>
+                  <></>
                 )}
               </>
             ) : (
               <>
                 {selectedProjectName[1] !== null &&
-                  appData.pages.projects[selectedProjectName[1]].title}
+                  coversRef.current !== null &&
+                  coversRef.current[selectedProjectName[1]].title
+                    .split("_")
+                    .map((item) => item.charAt(0).toUpperCase() + item.slice(1))
+                    .join(" ")}
               </>
             )}
           </div>
