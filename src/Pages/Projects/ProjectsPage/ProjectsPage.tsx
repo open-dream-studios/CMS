@@ -9,6 +9,9 @@ import useIncomingImageSpeedState from "../../../store/useIncomingImageSpeedStat
 import useCanSelectProjectState from "../../../store/useCanSelectProjectState";
 import { debounce } from "lodash";
 import useProjectAssetsStore from "../../../store/useProjectAssetsStore";
+import usePreloadedImagesStore from "../../../store/usePreloadedImagesStore";
+import { AnimatePresence, motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -37,6 +40,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const { incomingImageStyles, setIncomingImageStyles } =
     useIncomingImageStylesStore();
   const { canSelectProject, setCanSelectProject } = useCanSelectProjectState();
+  const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
 
   const [imageDimensions, setImageDimensions] = useState<ImageDimension[]>([]);
   const scrollRef = useRef(0);
@@ -49,18 +53,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const [projectsList, setProjectsList] = useState<string[]>([]);
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const coversRef = useRef<ProjectOutputItem[] | null>(null);
+  const [firstPageLoad, setFirstPageLoad] = useState(false);
 
   useEffect(() => {
-  if (
-    projectAssets !== null &&
-    projectAssets["projects"] &&
-    Array.isArray(projectAssets["projects"]) &&
-    projectAssets["projects"].length > 0
-  ) { 
-      const coversList = projectAssets["projects"] as ProjectOutputItem[]
-      const newProjectsList = coversList.map(item => item.title.replace("_", ""))
-      setProjectsList(newProjectsList)
-      coversRef.current = coversList
+    if (
+      projectAssets !== null &&
+      projectAssets["projects"] &&
+      Array.isArray(projectAssets["projects"]) &&
+      projectAssets["projects"].length > 0
+    ) {
+      const coversList = projectAssets["projects"] as ProjectOutputItem[];
+      const newProjectsList = coversList.map((item) =>
+        item.title.replace("_", "")
+      );
+      setProjectsList(newProjectsList);
+      coversRef.current = coversList;
     }
   }, [projectAssets]);
 
@@ -241,6 +248,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
             });
           })
         );
+        console.log(dimensions)
         setImageDimensions(dimensions);
         setIncomingImageDimensions(dimensions);
       }
@@ -288,9 +296,47 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     }
   }, [coversRef.current, selectedProjectName]);
 
-  if (selectedProject === null) {
-    return <></>;
-  }
+  useEffect(() => {
+    if (!slideUpComponent && coversRef.current !== null) {
+      let timeoutId: NodeJS.Timeout;
+      let intervalId: NodeJS.Timeout;
+      const maxWaitTime = 60000;
+      const checkInterval = 50;
+
+      const startChecking = () => {
+        const startTime = Date.now();
+
+        intervalId = setInterval(() => {
+          if (preloadedImages[2] === true) {
+            clearInterval(intervalId);
+            setFirstPageLoad(true);
+          } else if (Date.now() - startTime >= maxWaitTime) {
+            clearInterval(intervalId);
+          }
+        }, checkInterval);
+      };
+
+      timeoutId = setTimeout(startChecking, 50);
+
+      return () => {
+        clearTimeout(timeoutId);
+        clearInterval(intervalId);
+      };
+    }
+  }, []);
+
+  const location = useLocation();
+  const disableTransitionRef = useRef(false);
+  const disableTransition = () => {
+    disableTransitionRef.current = true;
+    setTimeout(() => {
+      disableTransitionRef.current = false;
+    }, 100); // Slight delay to allow React state to settle.
+  };
+
+  useEffect(() => {
+    disableTransition(); // Call on location change.
+  }, [location]);
 
   function handleProjectClick(index: number, item: any) {
     if (canSelectProject && coversRef.current !== null) {
@@ -323,6 +369,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     }
   }
 
+  if (selectedProject === null) {
+    return <></>;
+  }
+
   return (
     <div
       className={`right-0 top-0 w-[100vw] min-h-[100vh] flex px-[calc(30px+3vw)] pt-[100px]`}
@@ -343,76 +393,183 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
           opacity: 1,
         }}
       >
-        <div className="w-[100%] pl-[5px]">
-          <img
-            alt=""
-            src={
-              selectedProjectName[1] !== null && coversRef.current !== null
-                ? slideUpComponent && selectedProjectName[2] !== null
-                  ? coversRef.current[selectedProjectName[2]].images[0]
-                  : coversRef.current[selectedProjectName[1]].images[0]
-                : ""
-            }
-            className="w-[100%] aspect-[1.55/1] max-h-[50vh]"
-            style={{ objectFit: "cover"}}
-          />
-
-          <div
-            className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]"
-            style={{ backgroundColor: "transparent" }}
-          >
-            {slideUpComponent ? (
+        {preloadedImages[2] && slideUpComponent && (
+          <AnimatePresence>
+            <motion.div
+              key={`current-${selectedProjectName[1] || ""}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.5, ease: "easeInOut" }}
+            >
               <>
-                {incomingProject !== null && coversRef.current !== null ? (
+                <div className="w-[100%] pl-[5px]">
+                  <img
+                    alt=""
+                    // src={
+                    //   selectedProjectName[1] !== null &&
+                    //   coversRef.current !== null
+                    //     ? slideUpComponent && selectedProjectName[2] !== null
+                    //       ? coversRef.current[selectedProjectName[2]].images[0]
+                    //       : coversRef.current[selectedProjectName[1]].images[0]
+                    //     : ""
+                    // }
+                  src={imageDimensions && imageDimensions.length > 0? imageDimensions[0].src : ""}
+
+                    className="w-[100%] aspect-[1.55/1] max-h-[50vh]"
+                    style={{ objectFit: "cover" }}
+                  />
+
+                  <div
+                    className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]"
+                    style={{ backgroundColor: "transparent" }}
+                  >
+                    {slideUpComponent ? (
+                      <>
+                        {incomingProject !== null &&
+                        coversRef.current !== null ? (
+                          <>
+                            {coversRef.current[incomingProject].title
+                              .split("_")
+                              .map(
+                                (item) =>
+                                  item.charAt(0).toUpperCase() + item.slice(1)
+                              )
+                              .join(" ")}
+                          </>
+                        ) : (
+                          <></>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {selectedProjectName[1] !== null &&
+                          coversRef.current !== null &&
+                          coversRef.current[selectedProjectName[1]].title
+                            .split("_")
+                            .map(
+                              (item) =>
+                                item.charAt(0).toUpperCase() + item.slice(1)
+                            )
+                            .join(" ")}
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="w-[100%] flex justify-center">
+                  <div
+                    className="w-[100%] flex flex-col h-[auto] mb-[65px]"
+                    style={{
+                      backgroundColor: "transparent",
+                      maxWidth: "900px",
+                    }}
+                  >
+                    {imageDimensions.map((img, index) => {
+                      return (
+                        <div key={index}>
+                          {index !== 0 && (
+                            <img
+                              ref={(el) => (parallaxRefs.current[index] = el!)}
+                              alt=""
+                              src={img.src}
+                              style={{
+                                objectFit: "cover",
+                                zIndex: 105 + index,
+                                ...imageStyles[index],
+                              }}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            </motion.div>
+          </AnimatePresence>
+        )}
+
+        {!slideUpComponent && (
+          <>
+            <div className="w-[100%] pl-[5px]">
+              <img
+                alt=""
+                src={imageDimensions && imageDimensions.length > 0? imageDimensions[0].src : ""}
+                // src={
+                //   selectedProjectName[1] !== null && coversRef.current !== null
+                //     ? slideUpComponent && selectedProjectName[2] !== null
+                //       ? coversRef.current[selectedProjectName[2]].images[0]
+                //       : coversRef.current[selectedProjectName[1]].images[0]
+                //     : ""
+                // }
+                className="w-[100%] aspect-[1.55/1] max-h-[50vh]"
+                style={{ objectFit: "cover" }}
+              />
+
+              <div
+                className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]"
+                style={{ backgroundColor: "transparent" }}
+              >
+                {slideUpComponent ? (
                   <>
-                    {coversRef.current[incomingProject].title
-                      .split("_")
-                      .map(
-                        (item) => item.charAt(0).toUpperCase() + item.slice(1)
-                      )
-                      .join(" ")}
+                    {incomingProject !== null && coversRef.current !== null ? (
+                      <>
+                        {coversRef.current[incomingProject].title
+                          .split("_")
+                          .map(
+                            (item) =>
+                              item.charAt(0).toUpperCase() + item.slice(1)
+                          )
+                          .join(" ")}
+                      </>
+                    ) : (
+                      <></>
+                    )}
                   </>
                 ) : (
-                  <></>
+                  <>
+                    {selectedProjectName[1] !== null &&
+                      coversRef.current !== null &&
+                      coversRef.current[selectedProjectName[1]].title
+                        .split("_")
+                        .map(
+                          (item) => item.charAt(0).toUpperCase() + item.slice(1)
+                        )
+                        .join(" ")}
+                  </>
                 )}
-              </>
-            ) : (
-              <>
-                {selectedProjectName[1] !== null &&
-                  coversRef.current !== null &&
-                  coversRef.current[selectedProjectName[1]].title
-                    .split("_")
-                    .map((item) => item.charAt(0).toUpperCase() + item.slice(1))
-                    .join(" ")}
-              </>
-            )}
-          </div>
-        </div>
-        <div className="w-[100%] flex justify-center">
-          <div
-            className="w-[100%] flex flex-col h-[auto] mb-[65px]"
-            style={{ backgroundColor: "transparent", maxWidth: "900px" }}
-          >
-            {imageDimensions.map((img, index) => {
-              return (
-                <div key={index}>
-                  {index !== 0 && (
-                    <img
-                      ref={(el) => (parallaxRefs.current[index] = el!)}
-                      alt=""
-                      src={img.src}
-                      style={{
-                        objectFit: "cover",
-                        zIndex: 105 + index,
-                        ...imageStyles[index],
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+              </div>
+            </div>
+            <div className="w-[100%] flex justify-center">
+              <div
+                className="w-[100%] flex flex-col h-[auto] mb-[65px]"
+                style={{
+                  backgroundColor: "transparent",
+                  maxWidth: "900px",
+                }}
+              >
+                {imageDimensions.map((img, index) => {
+                  return (
+                    <div key={index}>
+                      {index !== 0 && (
+                        <img
+                          ref={(el) => (parallaxRefs.current[index] = el!)}
+                          alt=""
+                          src={img.src}
+                          style={{
+                            objectFit: "cover",
+                            zIndex: 105 + index,
+                            ...imageStyles[index],
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

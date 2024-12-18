@@ -14,13 +14,7 @@ const Hero = () => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Preload Images
   useEffect(() => {
-    images.forEach((src) => {
-      const img = new (window as any).Image() as HTMLImageElement;
-      img.src = src;
-    });
-
     // Image slider logic
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);

@@ -18,6 +18,7 @@ import useIncomingImageDimensionsState from "./store/useIncomingImageDimensionsS
 import useIncomingImageStylesStore from "./store/useIncomingImageStylesStore";
 import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "./store/useProjectAssetsStore";
+import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -58,11 +59,17 @@ export interface PageProps {
 }
 
 // Preload images function
-const preloadImages = (imagePaths: string[]) => {
-  imagePaths.forEach((path) => {
-    const img = new Image();
-    img.src = path;
-  });
+const preloadImages = (urls: string[]) => {
+  return Promise.all(
+    urls.map((url) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = url;
+        img.onload = () => resolve({ url, success: true });
+        img.onerror = () => resolve({ url, success: false });
+      });
+    })
+  );
 };
 
 const SlideUpPage: React.FC<SlideUpPageProps> = ({
@@ -151,7 +158,8 @@ export type ProjectInputObject = {
 
 const App = () => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
-  const [projectsList, setProjectsList] = useState<string[]>([])
+  const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
+  const [projectsList, setProjectsList] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchFullRepoTree = async (
@@ -168,7 +176,6 @@ const App = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-
         if (!response.ok) {
           console.error(
             "Failed to fetch repository tree:",
@@ -176,10 +183,7 @@ const App = () => {
           );
           return null;
         }
-
         const data = await response.json();
-
-        // Convert the flat tree to a nested structure
         const tree = data.tree.reduce((acc: any, item: any) => {
           const parts = item.path.split("/");
           let current = acc;
@@ -202,12 +206,19 @@ const App = () => {
 
     const getRepoTree = async () => {
       const fullRepo = await fetchFullRepoTree("JosephGoff", "js-portfolio");
+      const path = location.pathname;
+      let homeImages = [];
+      let projectCoverImages = [];
+      let projectImages = [];
+      let projectsArray: string[] = []
+
       if (fullRepo && Object.keys(fullRepo).length > 0 && fullRepo["public"]) {
         if (
           Object.keys(fullRepo["public"]).length > 0 &&
           fullRepo["public"]["assets"]
         ) {
           const fullProject = fullRepo["public"]["assets"];
+
           if (
             fullProject["home"] &&
             Object.keys(fullProject["home"]).length > 0
@@ -216,8 +227,13 @@ const App = () => {
               fullProject["home"] as CoverInputObject
             );
             fullProject["home"] = coversList;
+            for (let i = 0; i < coversList.length; i++) {
+              for (let j = 0; j < coversList[i].images.length; j++) {
+                homeImages.push(coversList[i].images[j]);
+              }
+            }
           }
-          
+
           if (
             fullProject["projects"] &&
             Object.keys(fullProject["projects"]).length > 0
@@ -226,9 +242,19 @@ const App = () => {
               fullProject["projects"] as ProjectInputObject
             );
             fullProject["projects"] = projectCoversList;
-            const projectsArray = projectCoversList.map(item => item.title.replace("_",""))
-            setProjectsList(projectsArray)
-            const path = location.pathname;
+            for (let i = 0; i < projectCoversList.length; i++) {
+              for (let j = 0; j < projectCoversList[i].covers.length; j++) {
+                projectCoverImages.push(projectCoversList[i].covers[j]);
+              }
+              for (let j = 0; j < projectCoversList[i].images.length; j++) {
+                projectImages.push(projectCoversList[i].images[j]);
+              }
+            }
+
+            projectsArray = projectCoversList.map((item) =>
+              item.title.replace("_", "")
+            );
+            setProjectsList(projectsArray);
             if (
               projectsArray.length > 0 &&
               selectedProjectName[1] === null &&
@@ -236,7 +262,7 @@ const App = () => {
               projectsArray.includes(path.split("/")[2]) &&
               path.split("/").length === 3
             ) {
-              const projects = fullProject["projects"] as any[]
+              const projects = fullProject["projects"] as any[];
               const insertProject = projectsArray.findIndex(
                 (link) => link === path.split("/")[2]
               );
@@ -247,10 +273,74 @@ const App = () => {
                 projects[insertProject].bg_color,
                 projects[insertProject].text_color,
               ];
-              setProjectColors(projectColorsCopy)
+              setProjectColors(projectColorsCopy);
             }
           }
+
           setProjectAssets(fullProject);
+
+          // Preload images according to page
+          const allImages = [homeImages, projectCoverImages, projectImages];
+          let priority = 0;
+          if (path === "/projects") {
+            priority = 1;
+          }
+          if (
+            path.startsWith("/projects/") &&
+            projectsArray.includes(path.split("/")[2]) &&
+            path.split("/").length === 3
+          ) {
+            priority = 2;
+          }
+
+          // Preload priority
+          preloadImages(allImages[priority]).then((results) => {
+            const successful = results
+              .filter((result: any) => result.success)
+              .map((res: any) => res.url);
+            const failed = results
+              .filter((result: any) => !result.success)
+              .map((res: any) => res.url);
+
+            const logResults = () => {
+              if (failed.length === 0) {
+                // console.log("All images preloaded successfully:", successful);
+              } else {
+                // console.warn("Some images failed to preload:", failed);
+                // console.log("Successfully preloaded images:", successful);
+              }
+            };
+            logResults();
+            const preloadedImagesCopy = preloadedImages;
+            preloadedImagesCopy[priority] = true;
+            setPreloadedImages(preloadedImagesCopy);
+          });
+
+          // Preload all other images in project
+          for (let i = 0; i < allImages.length; i++) {
+            if (i === priority) continue;
+            preloadImages(allImages[i]).then((results) => {
+              const successful = results
+                .filter((result: any) => result.success)
+                .map((res: any) => res.url);
+              const failed = results
+                .filter((result: any) => !result.success)
+                .map((res: any) => res.url);
+
+              const logResults = () => {
+                if (failed.length === 0) {
+                  // console.log("All images preloaded successfully:", successful);
+                } else {
+                  // console.warn("Some images failed to preload:", failed);
+                  // console.log("Successfully preloaded images:", successful);
+                }
+              };
+              logResults();
+              const preloadedImagesCopy = preloadedImages;
+              preloadedImagesCopy[i] = true;
+              setPreloadedImages(preloadedImagesCopy);
+            });
+          }
         }
       }
     };
@@ -348,7 +438,7 @@ const App = () => {
   const { incomingImageStyles, setIncomingImageStyles } =
     useIncomingImageStylesStore();
   const { incomingSpeed, setIncomingSpeed } = useIncomingImageSpeedState();
-  const [pageLoaded, setPageLoaded] = useState<boolean>(false)
+  const [pageLoaded, setPageLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     const path = location.pathname.replace("/", "") || "home";
@@ -379,7 +469,7 @@ const App = () => {
   const [cachedCurrent, setCachedCurrent] = useState<Page>("home");
   const [sittingProject, setSittingProject] = useState(false);
   const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState();
-  const [canSelectPage, setCanSelectPage] = useState<boolean>(true)
+  const [canSelectPage, setCanSelectPage] = useState<boolean>(true);
 
   const navigate = (page: Page) => {
     if (page === currentPage || !canSelectPage) return;
@@ -399,7 +489,7 @@ const App = () => {
     ) {
       setSittingProject(false);
     }
-    setCanSelectPage(false)
+    setCanSelectPage(false);
     setIncomingPage(page); // Set the incoming page to trigger animation
     setIncomingPageDecision(page);
     setTimeout(() => {
@@ -424,7 +514,7 @@ const App = () => {
         setSittingProject(false);
       }
       setCachedCurrent(newVal);
-      setCanSelectPage(true)
+      setCanSelectPage(true);
     }, 1000); // Match this timeout to the animation duration
   };
 
@@ -473,7 +563,7 @@ const App = () => {
   }, [location]);
 
   useEffect(() => {
-    const path = location.pathname
+    const path = location.pathname;
     if (
       path.startsWith("/projects/") &&
       projectsList.includes(path.split("/")[2]) &&

@@ -91,7 +91,6 @@ const Projects: React.FC<ProjectsPageProps> = ({
       const currentProj = selectedProject;
       const projectColorsCopy = projectColors;
       projectColorsCopy[2] = [item.bg_color, item.text_color];
-      console.log(selectedProjectName, projectColors);
       if (selectedProjectName[1] !== null) {
         projectColorsCopy[0] = [
           coversReady[currentProj ? currentProj : 0].bg_color,

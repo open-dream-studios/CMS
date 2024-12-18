@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { debounce } from "lodash";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
+import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 
 export interface HomePageProps {
   navigate: (page: Page) => void;
@@ -19,7 +20,7 @@ const Home: React.FC<HomePageProps> = ({
   slideUpComponent,
 }) => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
-
+  const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
   const coversRef = useRef<CoverOutputItem[] | null>(null);
   const [coversReady, setCoversReady] = useState<CoverOutputItem[] | null>(null);
 
@@ -175,59 +176,34 @@ const Home: React.FC<HomePageProps> = ({
     };
   }, []);
 
-  const preloadImages = (urls: string[]) => {
-    return Promise.all(
-      urls.map((url) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.src = url;
-          img.onload = () => resolve({ url, success: true });
-          img.onerror = () => resolve({ url, success: false });
-        });
-      })
-    );
-  };
-
   useEffect(() => {
-    const pageLoadTime = performance.now();
-
     if (!slideUpComponent && coversRef.current !== null) {
-      const firstCoverImages = coversRef.current[0].images;
-      preloadImages(firstCoverImages).then((results) => {
-        const successful = results
-          .filter((result: any) => result.success)
-          .map((res: any) => res.url);
-        const failed = results
-          .filter((result: any) => !result.success)
-          .map((res: any) => res.url);
+      let timeoutId: NodeJS.Timeout;
+      let intervalId: NodeJS.Timeout;
+      const maxWaitTime = 60000; 
+      const checkInterval = 50; 
 
-        const logResults = () => {
-          // console.log("has been 300ms");
-          if (failed.length === 0) {
-            // console.log("All images preloaded successfully:", successful);
-          } else {
-            // console.warn("Some images failed to preload:", failed);
-            // console.log("Successfully preloaded images:", successful);
+      const startChecking = () => {
+        const startTime = Date.now();
+
+        intervalId = setInterval(() => {
+          if (preloadedImages[0] === true) {
+            clearInterval(intervalId);
+            setFirstPageLoad(true);
+          } else if (Date.now() - startTime >= maxWaitTime) {
+            clearInterval(intervalId);
           }
-          setFirstPageLoad(true);
+        }, checkInterval);
+      };
 
-          if (coversRef.current !== null) {
-            for (let i = 1; i < coversRef.current.length; i++) {
-              preloadImages(coversRef.current[i].images);
-            }
-          }
-        };
+      timeoutId = setTimeout(startChecking, 260);
 
-        const elapsedTime = performance.now() - pageLoadTime;
-        if (elapsedTime >= 300) {
-          logResults();
-        } else {
-          const delay = 300 - elapsedTime;
-          setTimeout(logResults, delay);
-        }
-      });
+      return () => {
+        clearTimeout(timeoutId);
+        clearInterval(intervalId);
+      };
     }
-  }, [coversRef, slideUpComponent, coversReady]);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -437,7 +413,7 @@ const Home: React.FC<HomePageProps> = ({
     previousRoute.current = `${window.location.origin}${location.pathname}`;
   }, [location]);
 
-  const generateRandomDelay = () => Math.random() * 0.4;
+  const generateRandomDelay = () => Math.random() * 0.3;
 
   return (
     <div className="fixed w-[100vw] h-[100vh] py-[calc(20px+10vh)] md:py-0">
