@@ -190,6 +190,7 @@ const Home: React.FC<HomePageProps> = ({
           if (preloadedImages[0] === true) {
             clearInterval(intervalId);
             setFirstPageLoad(true);
+
           } else if (Date.now() - startTime >= maxWaitTime) {
             clearInterval(intervalId);
           }
@@ -203,7 +204,7 @@ const Home: React.FC<HomePageProps> = ({
         clearInterval(intervalId);
       };
     }
-  }, []);
+  }, [coversRef.current, slideUpComponent]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
