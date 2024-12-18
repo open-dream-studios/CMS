@@ -355,7 +355,7 @@ const App = () => {
     const mappedEntries = entries.map(([key, value]) => {
       const [number, title, bg_color, text_color] = key.split("--");
       return {
-        title: title,
+        title,
         bg_color,
         text_color,
         covers:
