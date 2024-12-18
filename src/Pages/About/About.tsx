@@ -2,10 +2,8 @@ import React from "react";
 import { PageProps } from "../../App";
 import useProjectColorsState from "../../store/useProjectColorsStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
-import appData from "../../app-details.json";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 const About: React.FC<PageProps> = ({ navigate }) => {
-  const projects = appData.pages.projects;
   const { projectColors, setProjectColors } = useProjectColorsState();
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
   const { selectedProjectName, setSelectedProjectName } = useSelectedProjectNameState();
@@ -14,26 +12,26 @@ const About: React.FC<PageProps> = ({ navigate }) => {
     const currentProj = selectedProject;
     setSelectedProject(newProject);
     setSelectedProjectName([null, newProject, null]);
-    navigate("projects/" + projects[newProject].link);
+    // navigate("projects/" + projects[newProject].link);
 
-    let projectColorsCopy = projectColors;
-    projectColorsCopy[0] = [
-      projects[currentProj ? currentProj : 0].background_color,
-      projects[currentProj ? currentProj : 0].text_color,
-    ];
-    projectColorsCopy[2] = [
-      projects[newProject].background_color,
-      projects[newProject].text_color,
-    ];
+    // let projectColorsCopy = projectColors;
+    // projectColorsCopy[0] = [
+    //   projects[currentProj ? currentProj : 0].bg_color,
+    //   projects[currentProj ? currentProj : 0].text_color,
+    // ];
+    // projectColorsCopy[2] = [
+    //   projects[newProject].bg_color,
+    //   projects[newProject].text_color,
+    // ];
 
-    setProjectColors(projectColorsCopy);
-    setTimeout(() => {
-      projectColorsCopy[1] = [
-        projects[newProject].background_color,
-        projects[newProject].text_color,
-      ];
-      setProjectColors(projectColorsCopy);
-    }, 1000);
+    // setProjectColors(projectColorsCopy);
+    // setTimeout(() => {
+    //   projectColorsCopy[1] = [
+    //     projects[newProject].bg_color,
+    //     projects[newProject].text_color,
+    //   ];
+    //   setProjectColors(projectColorsCopy);
+    // }, 1000);
   }
 
   return (

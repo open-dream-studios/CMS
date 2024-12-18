@@ -228,7 +228,7 @@ const App = () => {
             fullProject["projects"] = projectCoversList;
             setProjectsList(projectCoversList.map(item => item.title.replace("_","")))
           }
-          console.log("FULL", fullProject);
+          console.log(fullProject)
           setProjectAssets(fullProject);
         }
       }
@@ -330,7 +330,6 @@ const App = () => {
 
   useEffect(() => {
     const path = location.pathname.replace("/", "") || "home";
-    // console.log(path)
     if (
       path !== currentPage && // Prevent redundant updates
       (["home", "about", "projects", "archives"].includes(path) ||
@@ -436,13 +435,13 @@ const App = () => {
 
   useEffect(() => {
     const path = location.pathname;
-    console.log(
-      projectsList.length > 0 &&
+    console.log(   projectsList.length > 0,
       selectedProjectName[1] === null,
       path.startsWith("/projects/"),
       projectsList.includes(path.split("/")[2]),
-      path.split("/").length === 3, 
-      projectAssets !== null)
+      path.split("/").length === 3,
+      projectAssets !== null && 
+      projectAssets["projects"] )
     if (
       projectsList.length > 0 &&
       selectedProjectName[1] === null &&
@@ -452,18 +451,17 @@ const App = () => {
       projectAssets !== null && 
       projectAssets["projects"] 
     ) {
-      console.log("in app")
       const projects = projectAssets["projects"] as any[]
       const insertProject = projectsList.findIndex(
         (link) => link === path.split("/")[2]
       );
       setSelectedProject(insertProject);
       setSelectedProjectName([null, insertProject, null]);
-      // let projectColorsCopy = projectColors;
-      // projectColorsCopy[1] = [
-      //   projects[insertProject].background_color,
-      //   projects[insertProject].text_color,
-      // ];
+      let projectColorsCopy = projectColors;
+      projectColorsCopy[1] = [
+        projects[insertProject].bg_color,
+        projects[insertProject].text_color,
+      ];
       // setProjectColors(projectColorsCopy);
 
       // const loadImageDimensions = async () => {
@@ -517,7 +515,7 @@ const App = () => {
       // };
       // loadImageDimensions();
     }
-  }, [location, projectAssets, projectsList]);
+  }, [location, projectAssets, projectsList, selectedProjectName]);
 
   useEffect(() => {
     if (location.pathname === "/home") {
@@ -534,16 +532,18 @@ const App = () => {
   }, [location]);
 
   useEffect(() => {
+    const path = location.pathname
     if (
-      location.pathname.startsWith("/projects/") &&
-      projectsList.includes(location.pathname.split("/")[2]) &&
-      location.pathname.split("/").length === 3
+      path.startsWith("/projects/") &&
+      projectsList.includes(path.split("/")[2]) &&
+      path.split("/").length === 3
     ) {
+      console.log("setting true")
       setSittingProject(true);
     } else {
       setSittingProject(false);
     }
-  }, []);
+  }, [projectsList]);
 
   return (
     <>

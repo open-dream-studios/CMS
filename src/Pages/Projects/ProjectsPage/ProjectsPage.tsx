@@ -82,14 +82,14 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         setImageStyles(incomingImageStyles);
       }
 
-      if (selectedProjectName[1] !== null) {
-        const projectColorsCopy = projectColors;
-        projectColorsCopy[1] = [
-          coversRef.current[selectedProjectName[1]].bg_color,
-          coversRef.current[selectedProjectName[1]].text_color,
-        ];
-        setProjectColors(projectColorsCopy);
-      }
+      // if (selectedProjectName[1] !== null) {
+      //   const projectColorsCopy = projectColors;
+      //   projectColorsCopy[1] = [
+      //     coversRef.current[selectedProjectName[1]].bg_color,
+      //     coversRef.current[selectedProjectName[1]].text_color,
+      //   ];
+      //   setProjectColors(projectColorsCopy);
+      // }
     }
   }, [incomingImageDimensions, incomingImageStyles, coversRef.current]);
 
@@ -205,12 +205,6 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       let dimensions: ImageDimension[] = [];
 
       if (slideUpComponent && selectedProjectName[2] !== null) {
-        console.log(
-          coversRef.current,
-          selectedProjectName[2],
-          coversRef.current[selectedProjectName[2]],
-          coversRef.current[selectedProjectName[2]].images
-        );
         dimensions = await Promise.all(
           coversRef.current[selectedProjectName[2]].images.map((item) => {
             return new Promise<ImageDimension>((resolve) => {
@@ -308,15 +302,15 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       setSelectedProjectName([null, currentProj, index]);
       navigate("projects/" + projects[index].title.replace("_", ""));
       const projectColorsCopy = projectColors;
-      projectColorsCopy[2] = [item.background_color, item.text_color];
+      projectColorsCopy[2] = [item.bg_color, item.text_color];
       projectColorsCopy[0] = [
         projects[currentProj ? currentProj : 0].bg_color,
         projects[currentProj ? currentProj : 0].text_color,
       ];
-      setProjectColors(projectColorsCopy);
+      // setProjectColors(projectColorsCopy);
       setTimeout(() => {
-        projectColorsCopy[1] = [item.background_color, item.text_color];
-        setProjectColors(projectColorsCopy);
+        projectColorsCopy[1] = [item.bg_color, item.text_color];
+        // setProjectColors(projectColorsCopy);
         setCanSelectProject(true);
         setSelectedProjectName([null, index, null]);
         navigatingCurrently.current = false;

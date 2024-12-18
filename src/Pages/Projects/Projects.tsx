@@ -91,15 +91,17 @@ const Projects: React.FC<ProjectsPageProps> = ({
       setSelectedProjectName([null, currentProj, index]);
       navigate("projects/" + coversReady[index].title.replace("_",""));
       const projectColorsCopy = projectColors;
-      projectColorsCopy[2] = [item.background_color, item.text_color];
+      projectColorsCopy[2] = [item.bg_color, item.text_color];
       projectColorsCopy[0] = [
         coversReady[currentProj ? currentProj : 0].bg_color,
         coversReady[currentProj ? currentProj : 0].text_color,
       ];
-      setProjectColors(projectColorsCopy);
+      console.log("initial", projectColorsCopy)
+      // setProjectColors(projectColorsCopy);
       setTimeout(() => {
-        projectColorsCopy[1] = [item.background_color, item.text_color];
-        setProjectColors(projectColorsCopy);
+        projectColorsCopy[1] = [item.bg_color, item.text_color];
+        console.log("after", projectColorsCopy)
+        // setProjectColors(projectColorsCopy);
         setCanSelectProject(true);
         setSelectedProjectName([null, index, null]);
       }, 1000);
