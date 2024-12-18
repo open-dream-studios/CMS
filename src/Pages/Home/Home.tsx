@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import "./Home.css";
 import { CoverOutputItem, Page } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
 import { debounce } from "lodash";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
@@ -13,7 +12,6 @@ export interface HomePageProps {
   slideUpComponent: boolean;
 }
 
-
 const Home: React.FC<HomePageProps> = ({
   navigate,
   layoutOrder,
@@ -22,16 +20,18 @@ const Home: React.FC<HomePageProps> = ({
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
   const coversRef = useRef<CoverOutputItem[] | null>(null);
-  const [coversReady, setCoversReady] = useState<CoverOutputItem[] | null>(null);
+  const [coversReady, setCoversReady] = useState<CoverOutputItem[] | null>(
+    null
+  );
 
   useEffect(() => {
-   if (
-    projectAssets !== null &&
-    projectAssets["home"] &&
-    Array.isArray(projectAssets["home"]) &&
-    projectAssets["home"].length > 0
-  ) {
-      coversRef.current = projectAssets["home"] as CoverOutputItem[]
+    if (
+      projectAssets !== null &&
+      projectAssets["home"] &&
+      Array.isArray(projectAssets["home"]) &&
+      projectAssets["home"].length > 0
+    ) {
+      coversRef.current = projectAssets["home"] as CoverOutputItem[];
       readyToTransition.current = true;
       setCoversReady(projectAssets["home"] as CoverOutputItem[]);
     }
@@ -178,33 +178,24 @@ const Home: React.FC<HomePageProps> = ({
 
   useEffect(() => {
     if (!slideUpComponent && coversRef.current !== null) {
-      let timeoutId: NodeJS.Timeout;
-      let intervalId: NodeJS.Timeout;
-      const maxWaitTime = 60000; 
-      const checkInterval = 50; 
-
-      const startChecking = () => {
+      setTimeout(() => {
+        const maxWaitTime = 60000; // Max wait time for preload
         const startTime = Date.now();
 
-        intervalId = setInterval(() => {
+        const checkPreload = () => {
           if (preloadedImages[0] === true) {
-            clearInterval(intervalId);
-            setFirstPageLoad(true);
-
+            setFirstPageLoad(true); // Images are preloaded
           } else if (Date.now() - startTime >= maxWaitTime) {
-            clearInterval(intervalId);
+            setFirstPageLoad(true); // Fallback after timeout
+          } else {
+            requestAnimationFrame(checkPreload); // Check continuously
           }
-        }, checkInterval);
-      };
+        };
 
-      timeoutId = setTimeout(startChecking, 260);
-
-      return () => {
-        clearTimeout(timeoutId);
-        clearInterval(intervalId);
-      };
+        checkPreload();
+      }, 260);
     }
-  }, [coversRef.current, slideUpComponent]);
+  }, [coversRef.current, slideUpComponent, preloadedImages]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -393,27 +384,6 @@ const Home: React.FC<HomePageProps> = ({
     }
   }
 
-  const disableTransitionRef = useRef(true);
-  const disableTransition = () => {
-    disableTransitionRef.current = true;
-    setTimeout(() => {
-      disableTransitionRef.current = false;
-    }, 0);
-  };
-
-  const location = useLocation();
-  const previousRoute = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (
-      previousRoute.current &&
-      previousRoute.current.startsWith(window.location.origin)
-    ) {
-      disableTransition();
-    }
-    previousRoute.current = `${window.location.origin}${location.pathname}`;
-  }, [location]);
-
   const generateRandomDelay = () => Math.random() * 0.3;
 
   return (
@@ -485,30 +455,14 @@ const Home: React.FC<HomePageProps> = ({
                   {exitingCover === null && (
                     <motion.div
                       key={`current-${currentCoverRef.current}`}
-                      initial={
-                        disableTransitionRef.current
-                          ? { opacity: 1 }
-                          : { opacity: 0 }
-                      }
-                      animate={
-                        disableTransitionRef.current
-                          ? { opacity: 1 }
-                          : { opacity: 1 }
-                      }
-                      exit={
-                        disableTransitionRef.current
-                          ? { opacity: 1 }
-                          : { opacity: 0 }
-                      }
-                      transition={
-                        disableTransitionRef.current
-                          ? { duration: 0 }
-                          : {
-                              duration: 0.7,
-                              ease: "easeInOut",
-                              delay: generateRandomDelay(),
-                            }
-                      }
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{
+                        duration: 0.7,
+                        ease: "easeInOut",
+                        delay: generateRandomDelay(),
+                      }}
                       style={{
                         zIndex: item.z,
                       }}
