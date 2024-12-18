@@ -345,7 +345,7 @@ const App = () => {
       }
     };
 
-    getRepoTree();
+    getRepoTree(); 
   }, []);
 
   const processAndSortProjectsObject = (
