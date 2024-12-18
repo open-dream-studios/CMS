@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Page } from "../../App";
+import { Page, ProjectOutputItem } from "../../App";
 import "./Navbar.css";
 import { useLocation } from "react-router-dom";
 import useCurrentPageState from "../../store/useCurrentPageStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
-import appData from "../../app-details.json";
 import useCurrentNavColorState from "../../store/useCurrentNavColorStore";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
+import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 
 interface PageProps {
   navigate: (page: Page) => void;
@@ -38,6 +38,24 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const { currentPage, setCurrentPage } = useCurrentPageState();
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
   const { selectedProjectName, setSelectedProjectName } = useSelectedProjectNameState();
+
+  const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  const [projectsList, setProjectsList] = useState<string[]>([])
+
+    useEffect(() => {
+    if (
+      projectAssets !== null &&
+      projectAssets["projects"] &&
+      Array.isArray(projectAssets["projects"]) &&
+      projectAssets["projects"].length > 0
+    ) {
+      const coversList = projectAssets["projects"] as ProjectOutputItem[];
+      const newProjectsList = coversList.map((item) =>
+        item.title.replace("_", "")
+      );
+      setProjectsList(newProjectsList);
+    }
+  }, [projectAssets]);
 
   function showText() {
     setTimeout(() => {
@@ -148,8 +166,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   };
 
   const [pageTrue, setPageTrue] = useState(0);
-  const projects = appData.pages.projects;
-  const projectsList = projects.map((item) => item.link);
 
   useEffect(() => {
     if (
@@ -197,7 +213,6 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       infosRef.current &&
       archivesRef.current
     ) {
-      // console.log(item, current, indexRef.current)
       // if (item === 1 && current !== 1) {
       //   indexRef.current.classList.add("nav-item2");
       //   infosRef.current.classList.remove("nav-item2");

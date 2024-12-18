@@ -99,10 +99,9 @@ const ArchivesDisplay = () => {
 
       // const scrollFinished = () => {
         if (window.scrollY < window.innerHeight) {
-          console.log("scrollY", window.scrollY);
+          // console.log("scrollY", window.scrollY);
           if (beginUpdateRef && !beginUpdateRef.current) {
             if (window.scrollY < 0.8 * window.innerHeight) {
-              console.log("was below");
               beginUpdateRef.current = true;
               customScroll(0, true);
               setTimeout(() => {
@@ -112,7 +111,6 @@ const ArchivesDisplay = () => {
                 }
               }, 1200);
             } else {
-              console.log("was above");
               beginUpdateRef.current = true;
               customScroll(window.innerHeight, true);
               setTimeout(() => {

@@ -307,10 +307,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         projects[currentProj ? currentProj : 0].bg_color,
         projects[currentProj ? currentProj : 0].text_color,
       ];
-      // setProjectColors(projectColorsCopy);
+      setProjectColors(projectColorsCopy);
       setTimeout(() => {
         projectColorsCopy[1] = [item.bg_color, item.text_color];
-        // setProjectColors(projectColorsCopy);
+        setProjectColors(projectColorsCopy);
         setCanSelectProject(true);
         setSelectedProjectName([null, index, null]);
         navigatingCurrently.current = false;
@@ -354,7 +354,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                 : ""
             }
             className="w-[100%] aspect-[1.55/1] max-h-[50vh]"
-            style={{ objectFit: "cover", backgroundColor: "pink" }}
+            style={{ objectFit: "cover"}}
           />
 
           <div

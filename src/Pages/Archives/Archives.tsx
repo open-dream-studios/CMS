@@ -72,7 +72,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
   };
 
   const handleProjectClick = (item: number) => {
-    console.log(item);
+    // console.log(item);
   };
 
   return (

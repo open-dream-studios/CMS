@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -217,7 +217,7 @@ const App = () => {
             );
             fullProject["home"] = coversList;
           }
-
+          
           if (
             fullProject["projects"] &&
             Object.keys(fullProject["projects"]).length > 0
@@ -226,9 +226,30 @@ const App = () => {
               fullProject["projects"] as ProjectInputObject
             );
             fullProject["projects"] = projectCoversList;
-            setProjectsList(projectCoversList.map(item => item.title.replace("_","")))
+            const projectsArray = projectCoversList.map(item => item.title.replace("_",""))
+            setProjectsList(projectsArray)
+            const path = location.pathname;
+            if (
+              projectsArray.length > 0 &&
+              selectedProjectName[1] === null &&
+              path.startsWith("/projects/") &&
+              projectsArray.includes(path.split("/")[2]) &&
+              path.split("/").length === 3
+            ) {
+              const projects = fullProject["projects"] as any[]
+              const insertProject = projectsArray.findIndex(
+                (link) => link === path.split("/")[2]
+              );
+              setSelectedProject(insertProject);
+              setSelectedProjectName([null, insertProject, null]);
+              let projectColorsCopy = projectColors;
+              projectColorsCopy[1] = [
+                projects[insertProject].bg_color,
+                projects[insertProject].text_color,
+              ];
+              setProjectColors(projectColorsCopy)
+            }
           }
-          console.log(fullProject)
           setProjectAssets(fullProject);
         }
       }
@@ -327,6 +348,7 @@ const App = () => {
   const { incomingImageStyles, setIncomingImageStyles } =
     useIncomingImageStylesStore();
   const { incomingSpeed, setIncomingSpeed } = useIncomingImageSpeedState();
+  const [pageLoaded, setPageLoaded] = useState<boolean>(false)
 
   useEffect(() => {
     const path = location.pathname.replace("/", "") || "home";
@@ -357,9 +379,10 @@ const App = () => {
   const [cachedCurrent, setCachedCurrent] = useState<Page>("home");
   const [sittingProject, setSittingProject] = useState(false);
   const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState();
+  const [canSelectPage, setCanSelectPage] = useState<boolean>(true)
 
   const navigate = (page: Page) => {
-    if (page === currentPage) return;
+    if (page === currentPage || !canSelectPage) return;
 
     if (page.startsWith("archives")) {
       setTimeout(() => {
@@ -376,6 +399,7 @@ const App = () => {
     ) {
       setSittingProject(false);
     }
+    setCanSelectPage(false)
     setIncomingPage(page); // Set the incoming page to trigger animation
     setIncomingPageDecision(page);
     setTimeout(() => {
@@ -400,6 +424,7 @@ const App = () => {
         setSittingProject(false);
       }
       setCachedCurrent(newVal);
+      setCanSelectPage(true)
     }, 1000); // Match this timeout to the animation duration
   };
 
@@ -434,90 +459,6 @@ const App = () => {
   });
 
   useEffect(() => {
-    const path = location.pathname;
-    console.log(   projectsList.length > 0,
-      selectedProjectName[1] === null,
-      path.startsWith("/projects/"),
-      projectsList.includes(path.split("/")[2]),
-      path.split("/").length === 3,
-      projectAssets !== null && 
-      projectAssets["projects"] )
-    if (
-      projectsList.length > 0 &&
-      selectedProjectName[1] === null &&
-      path.startsWith("/projects/") &&
-      projectsList.includes(path.split("/")[2]) &&
-      path.split("/").length === 3 && 
-      projectAssets !== null && 
-      projectAssets["projects"] 
-    ) {
-      const projects = projectAssets["projects"] as any[]
-      const insertProject = projectsList.findIndex(
-        (link) => link === path.split("/")[2]
-      );
-      setSelectedProject(insertProject);
-      setSelectedProjectName([null, insertProject, null]);
-      let projectColorsCopy = projectColors;
-      projectColorsCopy[1] = [
-        projects[insertProject].bg_color,
-        projects[insertProject].text_color,
-      ];
-      // setProjectColors(projectColorsCopy);
-
-      // const loadImageDimensions = async () => {
-      //   const dimensions = await Promise.all(
-      //     projects[insertProject].images.project_images.map(
-      //       (item: any) => {
-      //         const imgSrc = item
-      //         return new Promise<ImageDimension>((resolve) => {
-      //           const img = new Image();
-      //           img.onload = () =>
-      //             resolve({
-      //               width: img.naturalWidth,
-      //               height: img.naturalHeight,
-      //               src: imgSrc,
-      //             });
-      //           img.src = imgSrc;
-      //         });
-      //       }
-      //     )
-      //   );
-      //   setIncomingImageDimensions(dimensions);
-
-      //   const newSpeeds = [0];
-      //   if (dimensions.length > 0) {
-      //     const styles = dimensions.map((img, index) => {
-      //       const isHorizontal = img.width > img.height;
-      //       const dynamicBaseWidth = isHorizontal ? 70 : 45;
-      //       const dynamicWidth = dynamicBaseWidth + Math.random() * 25;
-      //       const dynamicMarginLeft = Math.random() * (100 - dynamicWidth);
-      //       const currentSeparation =
-      //         index === 2
-      //           ? -25 + Math.random() * 50
-      //           : -25 + Math.random() * 100;
-      //       if (index !== 0) {
-      //         if (index < 4) {
-      //           newSpeeds.push(Math.random() * 0.13 + 0.05);
-      //         } else {
-      //           newSpeeds.push(Math.random() * 0.19 + 0.05);
-      //         }
-      //       }
-
-      //       return {
-      //         width: `${dynamicWidth}%`,
-      //         marginLeft: `${dynamicMarginLeft}%`,
-      //         marginTop: index === 1 ? "0" : `${currentSeparation}px`,
-      //       };
-      //     });
-      //     setIncomingImageStyles(styles);
-      //     setIncomingSpeed(newSpeeds);
-      //   }
-      // };
-      // loadImageDimensions();
-    }
-  }, [location, projectAssets, projectsList, selectedProjectName]);
-
-  useEffect(() => {
     if (location.pathname === "/home") {
       setTimeout(() => {
         document.body.style.overflow = "hidden";
@@ -538,7 +479,6 @@ const App = () => {
       projectsList.includes(path.split("/")[2]) &&
       path.split("/").length === 3
     ) {
-      console.log("setting true")
       setSittingProject(true);
     } else {
       setSittingProject(false);

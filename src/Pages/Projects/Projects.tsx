@@ -36,24 +36,26 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [animateWave, setAnimateWave] = useState(false);
   const [animateWaveTrigger, setAnimateWaveTrigger] = useState(false);
   const [isSmall, setIsSmall] = useState<boolean>(false);
-  
-  const [projectsList, setProjectsList] = useState<string[]>([])
+
+  const [projectsList, setProjectsList] = useState<string[]>([]);
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const coversRef = useRef<ProjectOutputItem[] | null>(null);
-  const [coversReady, setCoversReady] = useState<
-    ProjectOutputItem[] | null
-  >(null);
+  const [coversReady, setCoversReady] = useState<ProjectOutputItem[] | null>(
+    null
+  );
 
   useEffect(() => {
-   if (
-    projectAssets !== null &&
-    projectAssets["projects"] &&
-    Array.isArray(projectAssets["projects"]) &&
-    projectAssets["projects"].length > 0
-  ) { 
-      const coversList = projectAssets["projects"] as ProjectOutputItem[]
-      const newProjectsList = coversList.map(item => item.title.replace("_", ""))
-      setProjectsList(newProjectsList)
+    if (
+      projectAssets !== null &&
+      projectAssets["projects"] &&
+      Array.isArray(projectAssets["projects"]) &&
+      projectAssets["projects"].length > 0
+    ) {
+      const coversList = projectAssets["projects"] as ProjectOutputItem[];
+      const newProjectsList = coversList.map((item) =>
+        item.title.replace("_", "")
+      );
+      setProjectsList(newProjectsList);
       coversRef.current = coversList;
       setCoversReady(coversList);
     }
@@ -87,21 +89,25 @@ const Projects: React.FC<ProjectsPageProps> = ({
     if (canSelectProject && coversReady !== null) {
       setCanSelectProject(false);
       const currentProj = selectedProject;
-      setSelectedProject(index);
-      setSelectedProjectName([null, currentProj, index]);
-      navigate("projects/" + coversReady[index].title.replace("_",""));
       const projectColorsCopy = projectColors;
       projectColorsCopy[2] = [item.bg_color, item.text_color];
-      projectColorsCopy[0] = [
-        coversReady[currentProj ? currentProj : 0].bg_color,
-        coversReady[currentProj ? currentProj : 0].text_color,
-      ];
-      console.log("initial", projectColorsCopy)
-      // setProjectColors(projectColorsCopy);
+      console.log(selectedProjectName, projectColors);
+      if (selectedProjectName[1] !== null) {
+        projectColorsCopy[0] = [
+          coversReady[currentProj ? currentProj : 0].bg_color,
+          coversReady[currentProj ? currentProj : 0].text_color,
+        ];
+      } else {
+        projectColorsCopy[0] = ["white", "white"];
+      }
+      setSelectedProject(index);
+      setSelectedProjectName([null, currentProj, index]);
+      navigate("projects/" + coversReady[index].title.replace("_", ""));
+
+      setProjectColors(projectColorsCopy);
       setTimeout(() => {
         projectColorsCopy[1] = [item.bg_color, item.text_color];
-        console.log("after", projectColorsCopy)
-        // setProjectColors(projectColorsCopy);
+        setProjectColors(projectColorsCopy);
         setCanSelectProject(true);
         setSelectedProjectName([null, index, null]);
       }, 1000);
@@ -133,62 +139,71 @@ const Projects: React.FC<ProjectsPageProps> = ({
               }}
               className="caster cursor-pointer flex flex-col"
             >
-              {coversReady !== null && coversReady.map((item, index) => {
-                return (
-                  <div
-                    className={`text-[30px] leading-[38px] md:text-[37px] md:leading-[46px] lg:text-[46px] lg:leading-[59px]`}
-                    style={{ transition: "opacity 0.5s ease-in-out" }}
-                    key={index}
-                    onMouseEnter={() => {
-                      if (selectedProject === null) {
-                        setHoveredIndex(index);
-                      }
-                    }}
-                    onMouseLeave={() => {
-                      if (selectedProject === null) {
-                        setHoveredIndex(null);
-                      }
-                    }}
-                    onClick={() => {
-                      setTimeout(() => {
-                        setIsSmall(true);
-                      }, 1000);
-                      handleProjectClick(index, item);
-                    }}
-                  >
-                    <div className={` ${titlesVisible ? "visible" : "hidden"}`}>
-                      <div className="project-container">
-                        <div
-                          key={index}
-                          className={`${
-                            selectedProject === null
-                              ? "white-dim"
-                              : "select-dark"
-                          } project-letter  ${
-                            titlesVisible && animate ? "project-reveal" : ""
-                          }`}
-                          style={{
-                            whiteSpace: "nowrap",
-                            animationDelay: animateWave
-                              ? `${Math.pow(index, 0.75) * 0.045}s`
-                              : "none",
-                            color: animate
-                              ? "black"
-                              : selectedProject === index
-                              ? "black"
-                              : "#747474",
-                            transform: animate
-                              ? "translateY(%100)"
-                              : "translateY(0)",
-                          }}
-                        >
-                          {item.title.split("_").map(item => item.charAt(0).toUpperCase() + item.slice(1)).join(" ")}
+              {coversReady !== null &&
+                coversReady.map((item, index) => {
+                  return (
+                    <div
+                      className={`text-[30px] leading-[38px] md:text-[37px] md:leading-[46px] lg:text-[46px] lg:leading-[59px]`}
+                      style={{ transition: "opacity 0.5s ease-in-out" }}
+                      key={index}
+                      onMouseEnter={() => {
+                        if (selectedProject === null) {
+                          setHoveredIndex(index);
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (selectedProject === null) {
+                          setHoveredIndex(null);
+                        }
+                      }}
+                      onClick={() => {
+                        setTimeout(() => {
+                          setIsSmall(true);
+                        }, 1000);
+                        handleProjectClick(index, item);
+                      }}
+                    >
+                      <div
+                        className={` ${titlesVisible ? "visible" : "hidden"}`}
+                      >
+                        <div className="project-container">
+                          <div
+                            key={index}
+                            className={`${
+                              selectedProject === null
+                                ? "white-dim"
+                                : "select-dark"
+                            } project-letter  ${
+                              titlesVisible && animate ? "project-reveal" : ""
+                            }`}
+                            style={{
+                              whiteSpace: "nowrap",
+                              animationDelay: animateWave
+                                ? `${Math.pow(index, 0.75) * 0.045}s`
+                                : "none",
+                              color: animate
+                                ? "black"
+                                : selectedProject === index
+                                ? "black"
+                                : "#747474",
+                              transform: animate
+                                ? "translateY(%100)"
+                                : "translateY(0)",
+                            }}
+                          >
+                            {item.title
+                              .split("_")
+                              .map(
+                                (item) =>
+                                  item.charAt(0).toUpperCase() + item.slice(1)
+                              )
+                              .join(" ")}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           </div>
         </div>
@@ -228,7 +243,10 @@ const Projects: React.FC<ProjectsPageProps> = ({
                       ease: "easeInOut",
                     }}
                   >
-                    <ProjectCover projectIndex={hoveredIndex} coversReady={coversReady}/>
+                    <ProjectCover
+                      projectIndex={hoveredIndex}
+                      coversReady={coversReady}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
