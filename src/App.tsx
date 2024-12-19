@@ -461,7 +461,7 @@ const App = () => {
         title,
         images: Object.keys(value).map(
           (item) =>
-            `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/home/${key}/` +
+            `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/${key}/` +
             item
         ),
         number: parseInt(number, 10),
