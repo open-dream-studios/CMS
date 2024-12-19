@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Page } from "../../App";
 import Slider from "../../Components/Slider/Slider";
 // import ArchivesDisplay from "../../Components/ArchivesDisplay/ArchivesDisplay";
 import "./Archives.css";
 import Hero from "../../Components/Slider/Hero/Hero";
 import useCurrentNavColorState from "../../store/useCurrentNavColorStore";
+import { IoPlayCircleOutline } from "react-icons/io5";
+import useSelectedArchiveGroupStore from "../../store/useSelectedArchiveGroupStore";
 
 type ArchivesPageProps = {
   navigate: (page: Page) => void;
@@ -20,7 +22,13 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [borderRadius, setBorderRadius] = useState("50%");
   const [slideOpen, setSlideOpen] = useState(true);
-  const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState()
+  const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState();
+  const { selectedArchiveGroup, setSelectedArchiveGroup } =
+    useSelectedArchiveGroupStore();
+  const [imageDisplayOpen, setImageDisplayOpen] = useState<boolean>(false);
+  const [currentDisplayBG, setCurrentDisplayBG] = useState<string>("white");
+  const closeIconRef = useRef<HTMLDivElement>(null);
+  const playIconRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setTimeout(() => {
@@ -28,7 +36,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
         setSlideOpen(false);
       }
     }, 1000);
-    
+
     setIsRevealing1(true);
     setIsVisible(true);
     setDropdown1Display(true);
@@ -71,8 +79,27 @@ const Archives: React.FC<ArchivesPageProps> = ({
     customScroll(window.innerHeight); // Scroll down to the viewport height
   };
 
-  const handleProjectClick = (item: number) => {
-    // console.log(item);
+  const handleArchiveGroupClick = (item: number) => {
+    setSelectedArchiveGroup(item);
+    setImageDisplayOpen(true);
+    setTimeout(() => {
+      if (closeIconRef.current && playIconRef.current) {
+        closeIconRef.current.style.opacity = "1";
+        playIconRef.current.style.opacity = "1";
+      }
+    }, 300);
+  };
+
+  const handleCloseArchiveGroup = () => {
+    setSelectedArchiveGroup(null);
+    setImageDisplayOpen(false);
+
+    setTimeout(() => {
+      if (closeIconRef.current && playIconRef.current) {
+        closeIconRef.current.style.opacity = "0";
+        playIconRef.current.style.opacity = "0";
+      }
+    }, 1000);
   };
 
   return (
@@ -157,6 +184,9 @@ const Archives: React.FC<ArchivesPageProps> = ({
       </div>
 
       <div
+        onClick={() => {
+          handleArchiveGroupClick(1);
+        }}
         className="w-[100vw] h-[100vh] fixed top-0 left-0 z-[105]"
         // className="fixed top-0 left-0 w-[100vw] h-[100vh]"
         style={{
@@ -166,14 +196,21 @@ const Archives: React.FC<ArchivesPageProps> = ({
           backgroundColor: slideOpen ? "white" : "#013559",
         }}
       >
-        <div style={{backgroundColor: "pink"}} className="absolute left-0 top-0 w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]">
+        <div
+          style={{ backgroundColor: "pink" }}
+          className="absolute left-0 top-0 w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
+        >
           <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex lg:items-center mt-[] lg:mt-0">
             <div
               className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
-              style={{ backgroundColor: "green", color: "white", fontWeight: "700" }}
+              style={{
+                backgroundColor: "green",
+                color: "white",
+                fontWeight: "700",
+              }}
             >
               <div className="absolute kayonest text-[calc(20px+10vw)]">
-                Lifestyle 
+                Lifestyle
               </div>
 
               <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
@@ -184,7 +221,6 @@ const Archives: React.FC<ArchivesPageProps> = ({
             </div>
 
             <div
-              onClick={() => handleProjectClick(0)}
               onMouseEnter={() => setBorderRadius("30px")}
               onMouseLeave={() => setBorderRadius("50%")}
               className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
@@ -217,12 +253,54 @@ const Archives: React.FC<ArchivesPageProps> = ({
         </div>
       </div>
 
-      {/* {!slideOpen && (
+      <div
+        className={`fixed z-[999] min-h-[500px] top-0 left-0 flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
+        style={{
+          backgroundColor: currentDisplayBG,
+          transition: "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
+          transform: imageDisplayOpen ? "translateY(0)" : "translateY(100%)",
+        }}
+      >
         <div
-          className="absolute top-[100vh] left-0 w-[100vw] h-[100vh] z-[106]"
-          style={{ backgroundColor: "red" }}
-        ></div>
-      )} */}
+          className="absolute top-[25px] right-[27px] cursor-pointer hover-dim5"
+          onClick={() => {
+            handleCloseArchiveGroup();
+          }}
+          style={{ transition: "opacity 1s ease-in-out", opacity: 0}}
+          ref={closeIconRef}
+        >
+          <div className="relative h-[34px] w-[35px] flex hover-dim5">
+            <div
+              className="nav-transition h-[3px] w-[42px] select-none absolute top-[16px] left-0"
+              style={{
+                backgroundColor: "black",
+                transform: "rotate(45deg)",
+                borderRadius: 5,
+              }}
+            ></div>
+            <div
+              className="nav-transition h-[3px] w-[42px] select-none absolute top-[16px] left-0"
+              style={{
+                backgroundColor: "black",
+                transform: "rotate(-45deg)",
+                borderRadius: 5,
+              }}
+            ></div>
+          </div>
+        </div>
+
+        <div
+          ref={playIconRef}
+          style={{ transition: "opacity 1s ease-in-out", opacity: 0}}
+          className="absolute bottom-[22px] right-[18px] w-[55px] cursor-pointer"
+        >
+          <IoPlayCircleOutline
+            color={currentDisplayBG === "white" ? "black" : "white"}
+            size={`100%`}
+            className="hover-dim5"
+          />
+        </div>
+      </div>
     </div>
   );
 };

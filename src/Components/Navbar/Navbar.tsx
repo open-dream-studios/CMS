@@ -7,6 +7,7 @@ import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import useCurrentNavColorState from "../../store/useCurrentNavColorStore";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
+import useSelectedArchiveGroupStore from "../../store/useSelectedArchiveGroupStore";
 
 interface PageProps {
   navigate: (page: Page) => void;
@@ -20,10 +21,13 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const navOverlayBG = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState();
+  const { selectedArchiveGroup, setSelectedArchiveGroup } =
+    useSelectedArchiveGroupStore();
 
   const indexRef = useRef<HTMLDivElement>(null);
   const infosRef = useRef<HTMLDivElement>(null);
   const archivesRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
   const [canSelectPage, setCanSelectPage] = useState(true);
 
@@ -37,12 +41,25 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
 
   const { currentPage, setCurrentPage } = useCurrentPageState();
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
-  const { selectedProjectName, setSelectedProjectName } = useSelectedProjectNameState();
+  const { selectedProjectName, setSelectedProjectName } =
+    useSelectedProjectNameState();
 
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
-  const [projectsList, setProjectsList] = useState<string[]>([])
+  const [projectsList, setProjectsList] = useState<string[]>([]);
 
-    useEffect(() => {
+  useEffect(() => {
+    if (navRef.current) {
+      if (selectedArchiveGroup == null) {
+        navRef.current.style.opacity = "1";
+        navRef.current.style.pointerEvents = "all";
+      } else {
+        navRef.current.style.opacity = "0";
+        navRef.current.style.pointerEvents = "none";
+      }
+    }
+  }, [selectedArchiveGroup]);
+
+  useEffect(() => {
     if (
       projectAssets !== null &&
       projectAssets["projects"] &&
@@ -289,7 +306,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
       if (dropdown) {
         setSelectedProject(null);
         setSelectedProjectName([null, null, null]);
-        
+
         clickedDropdownPage("projects");
       } else {
         if (currentPage !== "projects") {
@@ -330,7 +347,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   };
 
   return (
-    <>
+    <div ref={navRef} style={{transition: "opacity 0.9s ease-in-out"}}>
       <div
         className="w-[100vw] h-[88px] fixed z-[910] flex justify-between lg:px-[32px] px-[18px]"
         style={{
@@ -346,10 +363,13 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         >
           JESSICA SHULMAN
         </div>
-        <div
-          className="mt-[32px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]"
-        >
-          <div style={{ color: currentNavColor }} className="nav-text-item select-none text-[14px]">PHOTOGRAPHER & DESIGNER</div>
+        <div className="mt-[32px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]">
+          <div
+            style={{ color: currentNavColor }}
+            className="nav-text-item select-none text-[14px]"
+          >
+            PHOTOGRAPHER & DESIGNER
+          </div>
           <div className="flex flex-row gap-[6px] text-[14px] h-[15px]">
             <div
               onClick={handleSendNewEmailClick}
@@ -358,7 +378,12 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
             >
               JESSSHUL27@GMAIL.COM
             </div>
-            <p style={{ color: currentNavColor }} className="nav-text-item select-none text-[13px] mt-[-1.3px] font-[400]">/</p>
+            <p
+              style={{ color: currentNavColor }}
+              className="nav-text-item select-none text-[13px] mt-[-1.3px] font-[400]"
+            >
+              /
+            </p>
             <a
               className="select-none nav-item cursor-pointer"
               href="https://www.instagram.com/jessica.shulman.design/"
@@ -505,7 +530,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
