@@ -7,6 +7,8 @@ import Hero from "../../Components/Slider/Hero/Hero";
 import useCurrentNavColorState from "../../store/useCurrentNavColorStore";
 import { IoPlayCircleOutline } from "react-icons/io5";
 import useSelectedArchiveGroupStore from "../../store/useSelectedArchiveGroupStore";
+import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
+import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 
 type ArchivesPageProps = {
   navigate: (page: Page) => void;
@@ -29,6 +31,20 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const [currentDisplayBG, setCurrentDisplayBG] = useState<string>("white");
   const closeIconRef = useRef<HTMLDivElement>(null);
   const playIconRef = useRef<HTMLDivElement>(null);
+  const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
+
+  useEffect(() => {
+    if (
+      projectAssets !== null &&
+      projectAssets["archives"] &&
+      Array.isArray(projectAssets["archives"]) &&
+      projectAssets["archives"].length > 0
+    ) {
+      console.log(projectAssets["archives"])
+    }
+  }, [projectAssets]);
+
 
   useEffect(() => {
     setTimeout(() => {

@@ -156,6 +156,16 @@ export type ProjectInputObject = {
   };
 };
 
+export type ArchivesInputObject = {
+  [key: string]: { [key: string]: string };
+};
+
+export type ArchivesOutputItem = {
+  title: string;
+  images: string[];
+};
+
+
 const App = () => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
@@ -211,6 +221,7 @@ const App = () => {
       let projectCoverImages = [];
       let projectImages = [];
       let projectsArray: string[] = []
+      let archiveImages = [];
 
       if (fullRepo && Object.keys(fullRepo).length > 0 && fullRepo["public"]) {
         if (
@@ -277,12 +288,27 @@ const App = () => {
             }
           }
 
+          if (
+            fullProject["archives"] &&
+            Object.keys(fullProject["archives"]).length > 0
+          ) {
+            const coversList = processAndSortArchivesObject(
+              fullProject["archives"] as ArchivesInputObject
+            );
+            fullProject["archives"] = coversList;
+            for (let i = 0; i < coversList.length; i++) {
+              for (let j = 0; j < coversList[i].images.length; j++) {
+                archiveImages.push(coversList[i].images[j]);
+              }
+            }
+          }
+
           setProjectAssets(fullProject);
 
           // Preload images according to page
-          const allImages = [homeImages, projectCoverImages, projectImages];
+          const allImages = [homeImages, projectCoverImages, projectImages, archiveImages];
           let priority = 0;
-          if (path === "/projects") {
+          if (path === "/projects" && path.split("/").length !== 3) {
             priority = 1;
           }
           if (
@@ -291,6 +317,9 @@ const App = () => {
             path.split("/").length === 3
           ) {
             priority = 2;
+          }
+          if (path === "/archives") {
+            priority = 3;
           }
 
           // Preload priority
@@ -415,6 +444,27 @@ const App = () => {
             item
         ),
         number: parseInt(number, 10), // Parse the number to use for sorting
+      };
+    });
+
+    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
+    return sortedEntries.map(({ number, ...rest }) => rest);
+  };
+
+  const processAndSortArchivesObject = (
+    input: ArchivesInputObject
+  ): ArchivesOutputItem[] => {
+    const entries = Object.entries(input);
+    const mappedEntries = entries.map(([key, value]) => {
+      const [number, title] = key.split("--");
+      return {
+        title,
+        images: Object.keys(value).map(
+          (item) =>
+            `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/home/${key}/` +
+            item
+        ),
+        number: parseInt(number, 10),
       };
     });
 
