@@ -155,7 +155,7 @@ const Slider = () => {
         </div>
       )}
 
-      <Hero />
+      <Hero images={[]}/>
     </>
   );
 }

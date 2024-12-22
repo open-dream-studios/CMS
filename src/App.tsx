@@ -19,6 +19,7 @@ import useIncomingImageStylesStore from "./store/useIncomingImageStylesStore";
 import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "./store/useProjectAssetsStore";
 import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
+import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -162,6 +163,7 @@ export type ArchivesInputObject = {
 
 export type ArchivesOutputItem = {
   title: string;
+  bg_color: string;
   images: string[];
 };
 
@@ -170,6 +172,8 @@ const App = () => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
   const [projectsList, setProjectsList] = useState<string[]>([]);
+  const { selectedArchiveGroup, setSelectedArchiveGroup } =
+    useSelectedArchiveGroupStore();
 
   useEffect(() => {
     const fetchFullRepoTree = async (
@@ -304,6 +308,7 @@ const App = () => {
           }
 
           setProjectAssets(fullProject);
+          setSelectedArchiveGroup(null)
 
           // Preload images according to page
           const allImages = [homeImages, projectCoverImages, projectImages, archiveImages];
@@ -456,9 +461,10 @@ const App = () => {
   ): ArchivesOutputItem[] => {
     const entries = Object.entries(input);
     const mappedEntries = entries.map(([key, value]) => {
-      const [number, title] = key.split("--");
+      const [number, title, bg_color] = key.split("--");
       return {
         title,
+        bg_color,
         images: Object.keys(value).map(
           (item) =>
             `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/${key}/` +

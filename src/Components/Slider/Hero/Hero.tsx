@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./hero.css";
-import appData from "../../../app-details.json"
 
-const Hero = () => {
-  const images = [
-    "home1.jpeg",
-    "home2.jpeg",
-    "home3.jpeg",
-    "home4.jpeg",
-    "home5.jpeg",
-    "home6.jpeg",
-  ]
+const Hero = ({images}: {images: string[]}) => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -18,9 +9,8 @@ const Hero = () => {
     // Image slider logic
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 2500);
+    }, 2100);
     return () => clearInterval(interval);
-
   }, [images]);
 
   return (
@@ -34,10 +24,9 @@ const Hero = () => {
             height: "100%",
           }}
           key={index}
-          src={"/assets/" + image}
+          src={image}
           alt={`Slide ${index + 1}`}
           className={`slider-image ${currentIndex === index ? "active" : ""}`}
-          // priority={currentIndex === index} // Load the current image with priority
         />
       ))}
     </div>

@@ -34,6 +34,12 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
   const archivesRef = useRef<ArchivesOutputItem[] | null>(null);
+  
+  const [bgColors, setbgColors] = useState<string[]>([])
+  const containerRef = useRef<HTMLDivElement>(null);
+  const bgColorRef = useRef("white");
+  const [arrowSRC, setArrowSRC] = useState<string>("");
+
 
   useEffect(() => {
     if (
@@ -42,8 +48,21 @@ const Archives: React.FC<ArchivesPageProps> = ({
       Array.isArray(projectAssets["archives"]) &&
       projectAssets["archives"].length > 0
     ) {
-      console.log(projectAssets["archives"]);
-      archivesRef.current = projectAssets["archives"] as ArchivesOutputItem[];
+      const archivesOutput = projectAssets["archives"] as ArchivesOutputItem[]
+      archivesRef.current = archivesOutput
+      const newbgColors = archivesOutput.map(item => validateColor(item.bg_color))
+      setbgColors(newbgColors)
+      bgColorRef.current = validateColor(newbgColors[0])
+      if (containerRef.current) {
+        containerRef.current.style.backgroundColor = validateColor(newbgColors[0])
+      }
+
+      if (projectAssets !== null && projectAssets["icons"] && Object.keys(projectAssets["icons"]).length > 0 && projectAssets["icons"]) {
+        const icons = projectAssets["icons"] as Record<string, string>
+        if (icons["arrow1.png"]) {
+          setArrowSRC(`https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/icons/arrow1.png`)
+        }
+      }
     }
   }, [projectAssets]);
 
@@ -119,6 +138,95 @@ const Archives: React.FC<ArchivesPageProps> = ({
     }, 1000);
   };
 
+  function validateColor(input: string) {
+    const isColorName = (color: string) => {
+      const testElement = document.createElement("div");
+      testElement.style.color = color;
+      return testElement.style.color !== "";
+    };
+    const isHexCode = (color: string) =>
+      /^#?[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(color);
+    if (isColorName(input)) {
+      return input;
+    }
+    if (isHexCode(input)) {
+      return input.startsWith("#") ? input : `#${input}`;
+    }
+    return "white";
+  }
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+
+      const scrollTop = window.scrollY;
+      const screenHeight = window.innerHeight;
+      const gapHeight = screenHeight * 0.2; // 20vh gap
+
+      // Effective height of each "page" including the gap
+      const totalPageHeight = screenHeight + gapHeight;
+
+      // Get the index of the page currently in view
+      const currentPage = Math.floor(scrollTop / totalPageHeight);
+      const nextPage = currentPage + 1;
+
+      const progress =
+        (scrollTop - currentPage * totalPageHeight) / screenHeight;
+
+      // Calculate interpolated color between the current and the next page
+      const currentColor = bgColors[currentPage] || bgColors[bgColors.length - 1];
+      const nextColor = bgColors[nextPage] || bgColors[bgColors.length - 1];
+      const interpolatedColor = interpolateColor(
+        currentColor,
+        nextColor,
+        Math.max(0, Math.min(1, progress)) // Clamp progress between 0 and 1
+      );
+
+      // Apply the background color
+      bgColorRef.current = interpolatedColor;
+      containerRef.current.style.backgroundColor = interpolatedColor;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [bgColors]);
+
+  const interpolateColor = (color1: string, color2: string, factor: number) => {
+    const [r1, g1, b1] = parseColor(color1);
+    const [r2, g2, b2] = parseColor(color2);
+
+    const r = Math.round(r1 + (r2 - r1) * factor);
+    const g = Math.round(g1 + (g2 - g1) * factor);
+    const b = Math.round(b1 + (b2 - b1) * factor);
+
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  const parseColor = (color: string): [number, number, number] => {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) throw new Error("Failed to create canvas context");
+
+    ctx.fillStyle = color; // Set the color
+    const computedColor = ctx.fillStyle; // Get the computed color (browser-standardized)
+
+    // Convert to `rgb(r, g, b)` format if it's in hex
+    if (computedColor.startsWith("#")) {
+      const bigint = parseInt(computedColor.slice(1), 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return [r, g, b];
+    }
+
+    // Match RGB components from `rgb()` format
+    const rgb = computedColor.match(/\d+/g);
+    if (!rgb || rgb.length < 3) {
+      throw new Error(`Invalid color format: ${computedColor}`);
+    }
+
+    return [parseInt(rgb[0], 10), parseInt(rgb[1], 10), parseInt(rgb[2], 10)];
+  };
+
   return (
     <div className="w-[100%] h-[100vh]">
       <div
@@ -135,9 +243,9 @@ const Archives: React.FC<ArchivesPageProps> = ({
             style={{ backgroundColor: "transparent" }}
           >
             <div
-              className={`text-reveal-wrapper 
-            ${dropdown1Display ? "flex" : "hidden"}
-            ${isVisible ? "visible" : ""}`}
+              className={`text-reveal-wrapper
+              ${dropdown1Display ? "flex" : "hidden"}
+              ${isVisible ? "visible" : ""}`}
             >
               <div
                 className={`klivora ${
@@ -151,82 +259,76 @@ const Archives: React.FC<ArchivesPageProps> = ({
         )}
       </div>
 
-      {archivesRef.current !== null && archivesRef.current.map((item, index) => {
-        return (
-          <div
-            onClick={() => {
-              handleArchiveGroupClick(1);
-            }}
-            className="w-[100vw] min-h-[600px] h-[100vh] z-[105]"
-            style={{
-              marginBottom: archivesRef.current !== null ? index === archivesRef.current.length - 1? 0 : "20vh" : 0,
-              transition:
-                "transform 1.5s cubic-bezier(0.5, 0, 0.1, 1), background-color 1.5s cubic-bezier(0.5, 0, 0.1, 1)",
-              transform: slideOpen ? "translateY(20%)" : "translateY(0%)",
-              backgroundColor: slideOpen ? "white" : "#013559",
-            }}
-          >
+      <div ref={containerRef}>
+        {archivesRef.current !== null &&
+          archivesRef.current.map((item, index) => (
             <div
-              style={{ backgroundColor: "pink" }}
-              className="absolute left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
+              key={index}
+              style={{ marginBottom: "20vh" }}
+              className="relative w-[100%] h-[100vh] flex items-center justify-center"
             >
-              <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex lg:items-center mt-[] lg:mt-0">
-                <div
-                  className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
-                  style={{
-                    backgroundColor: "green",
-                    color: "white",
-                    fontWeight: "700",
-                  }}
-                >
-                  <div className="absolute kayonest text-[calc(20px+10vw)]">
-                    {item.title}
-                  </div>
-
-                  <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
-                    <p>BEHANDLET EGETRAE</p>
-                    <p className="ml-[100px]">
-                      MUNDVANDSDRIVENDE KAFFERISTNING
-                    </p>
-                    <p>MINIMALISTISK INERIOR</p>
-                  </div>
-                </div>
-
-                <div
-                  onMouseEnter={() => setBorderRadius("30px")}
-                  onMouseLeave={() => setBorderRadius("50%")}
-                  className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
-                >
+              <div
+                style={{ border: "1px solid white" }}
+                className="cursor-pointer absolute left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
+                onClick={() => {handleArchiveGroupClick(index)}}
+              >
+                <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex lg:items-center mt-[] lg:mt-0">
                   <div
-                    className="w-[100%] flex items-center justify-center cursor-pointer"
+                    className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
                     style={{
                       border: "1px solid white",
-                      borderRadius: borderRadius,
-                      height:
-                        borderRadius === "50%" ? "calc(70px + 5vw)" : "50px",
-                      transition:
-                        "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                      color: "white",
+                      fontWeight: "700",
                     }}
                   >
-                    <img
-                      className="w-[45%] select-none"
-                      src="/assets/icons/arrow1.png"
-                      alt="arrow"
-                    />
+                    <div className="absolute kayonest text-[calc(20px+10vw)]">
+                      {item.title}
+                    </div>
+
+                    <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
+                      <p>BEHANDLET EGETRAE</p>
+                      <p className="ml-[100px]">
+                        MUNDVANDSDRIVENDE KAFFERISTNING
+                      </p>
+                      <p>MINIMALISTISK INERIOR</p>
+                    </div>
+                  </div>
+
+                  <div
+                    onMouseEnter={() => setBorderRadius("30px")}
+                    onMouseLeave={() => setBorderRadius("50%")}
+                    className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
+                  >
+                    <div
+                      className="w-[100%] flex items-center justify-center cursor-pointer"
+                      style={{
+                        border: "1px solid white",
+                        borderRadius: borderRadius,
+                        height:
+                          borderRadius === "50%" ? "calc(70px + 5vw)" : "50px",
+                        transition:
+                          "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                      }}
+                    >
+                      <img
+                        className="w-[45%] select-none"
+                        src={arrowSRC}
+                        alt="arrow"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div
-              className="absolute select-none right-[calc(20px+1vw)] md:right-[calc(20px+2vw)] lg:right-[calc(10px+7vw)] w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] top-[50%] aspect-[1/1.4] z-[105]"
-              style={{ transform: "translateY(-50%)" }}
-            >
-              <Hero />
+              <div
+                className="absolute select-none right-[calc(20px+1vw)] md:right-[calc(20px+2vw)] lg:right-[calc(10px+7vw)] w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] top-[50%] aspect-[1/1.4] z-[105]"
+                style={{ transform: "translateY(-50%)" }}
+              >
+                <Hero images={archivesRef.current === null ? [] : archivesRef.current[index].images}/>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          ))}
+      </div>
 
       <div
         className={`fixed z-[999] min-h-[500px] top-0 left-0 flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
