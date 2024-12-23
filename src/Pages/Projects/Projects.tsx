@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IncomingPage, Page, ProjectOutputItem } from "../../App2";
+import { IncomingPage, Page, ProjectOutputItem } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";
 import useProjectColorsState from "../../store/useProjectColorsStore";

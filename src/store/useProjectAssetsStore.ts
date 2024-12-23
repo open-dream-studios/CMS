@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { FileTree } from "../App2";
+import { FileTree } from "../App";
 
 type StateType = {
   projectAssets: FileTree | null;  

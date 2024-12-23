@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Page, ProjectOutputItem } from "../../App2";
+import { Page, ProjectOutputItem } from "../../App";
 import "./Navbar.css";
 import { useLocation } from "react-router-dom";
 import useCurrentPageState from "../../store/useCurrentPageStore";
