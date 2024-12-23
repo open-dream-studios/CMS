@@ -12,8 +12,12 @@ collections:
     folder: "content/projects" # Path to project folders in your repo
     create: true               # Allow creating new entries
     fields:
-      - { name: "title", label: "Title", widget: "string" }
-      - { name: "image", label: "Project Image", widget: "image" }
+      - name: "title"
+        label: "Title"
+        widget: "string"
+      - name: "image"
+        label: "Project Image"
+        widget: "image"
 
   # Define a collection for nested folders of images
   - name: "imageFolders"
@@ -22,20 +26,26 @@ collections:
     create: true
     slug: "{{slug}}"           # Use the folder name as slug
     fields:
-      - { name: "title", label: "Folder Name", widget: "string" }
-      - {
-          name: "subfolders",
-          label: "Subfolders",
-          widget: "list",      # Allow creating multiple subfolders
-          fields:
-            - { name: "folder_name", label: "Subfolder Name", widget: "string" }
-            - {
-                name: "images",
-                label: "Images",
-                widget: "list",  # Allow multiple images in each subfolder
-                fields:
-                  - { name: "image", label: "Image File", widget: "image" }
-                  - { name: "name", label: "Image Name", widget: "string" } # Editable name for the image
-                  - { name: "url", label: "Image URL", widget: "string" }   # Editable URL for the image
-              }
-        }
+      - name: "title"
+        label: "Folder Name"
+        widget: "string"
+      - name: "subfolders"
+        label: "Subfolders"
+        widget: "list"         # Allow creating multiple subfolders
+        fields:
+          - name: "folder_name"
+            label: "Subfolder Name"
+            widget: "string"
+          - name: "images"
+            label: "Images"
+            widget: "list"     # Allow multiple images in each subfolder
+            fields:
+              - name: "image"
+                label: "Image File"
+                widget: "image"
+              - name: "name"
+                label: "Image Name"
+                widget: "string" # Editable name for the image
+              - name: "url"
+                label: "Image URL"
+                widget: "string" # Editable URL for the image
