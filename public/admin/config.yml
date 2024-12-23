@@ -1,15 +1,31 @@
 backend:
   name: git-gateway
-  branch: master # or the branch you use for deployment
+  branch: master
 
-media_folder: "public/assets/test" # Path to store images
-public_folder: "/assets/test"      # Public URL for images
+media_folder: "public/assets/test" # Root folder for media files
+public_folder: "/assets/test"      # Public URL for media
 
 collections:
+  # Define a collection for projects
   - name: "projects"
     label: "Projects"
-    folder: "content/projects" # Where content will be stored in the repo
-    create: true               # Allow new entries
+    folder: "content/projects" # Path to project folders in your repo
+    create: true               # Allow creating new entries
     fields:
       - { name: "title", label: "Title", widget: "string" }
       - { name: "image", label: "Project Image", widget: "image" }
+
+  # Define a collection for folders of images
+  - name: "imageFolders"
+    label: "Image Folders"
+    folder: "content/images"   # Folder for image categories
+    create: true
+    slug: "{{slug}}"           # Use the folder name as slug
+    fields:
+      - { name: "title", label: "Folder Name", widget: "string" }
+      - {
+          name: "images",
+          label: "Images",
+          widget: "list",      # Allow multiple images
+          field: { name: "image", label: "Image", widget: "image" }
+        }
