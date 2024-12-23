@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Page } from "../../App";
+import { Page } from "../../App2";
 import ArchivesDisplay from "../../Components/ArchivesDisplay/ArchivesDisplay";
 
 type ArchivesPageProps = {

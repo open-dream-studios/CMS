@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Page } from "../App";
+import { Page } from "../App2";
 
 type StateType = {
   currentPage: Page;

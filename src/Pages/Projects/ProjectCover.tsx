@@ -1,7 +1,7 @@
 import React from "react";
 import useProjectsLayoutOrderState from "../../store/useProjectsLayoutOrderState";
 import useProjectCoversState from "../../store/useProjectCoversState";
-import { ProjectOutputItem } from "../../App";
+import { ProjectOutputItem } from "../../App2";
 
 const ProjectCover = ({ projectIndex, coversReady }: { projectIndex: number, coversReady: ProjectOutputItem[] | null }) => {
   const { projectsLayoutOrder } = useProjectsLayoutOrderState();

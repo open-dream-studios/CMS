@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Home.css";
-import { CoverOutputItem, Page } from "../../App";
+import { CoverOutputItem, Page } from "../../App2";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
