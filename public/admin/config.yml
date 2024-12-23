@@ -6,20 +6,6 @@ media_folder: "public/assets" # Root folder for media files
 public_folder: "/assets"      # Public URL for media
 
 collections:
-  # Define a collection for projects
-  - name: "projects"
-    label: "Projects"
-    folder: "content/projects" # Path to project folders in your repo
-    create: true               # Allow creating new entries
-    fields:
-      - name: "title"
-        label: "Title"
-        widget: "string"
-      - name: "image"
-        label: "Project Image"
-        widget: "image"
-
-  # Define a collection for nested folders of images
   - name: "imageFolders"
     label: "Image Folders"
     folder: "content/images"   # Root folder for image categories
@@ -29,23 +15,39 @@ collections:
       - name: "title"
         label: "Folder Name"
         widget: "string"
-      - name: "subfolders"
-        label: "Subfolders"
-        widget: "list"         # Allow creating multiple subfolders
+      - name: "content"
+        label: "Folder Contents"
+        widget: "list"         # Allow nested contents
         fields:
+          - name: "type"
+            label: "Type"
+            widget: "select"
+            options:
+              - { label: "Subfolder", value: "subfolder" }
+              - { label: "Image", value: "image" }
           - name: "folder_name"
             label: "Subfolder Name"
             widget: "string"
-          - name: "images"
-            label: "Images"
-            widget: "list"     # Allow multiple images in each subfolder
-            fields:
-              - name: "image"
-                label: "Image File"
-                widget: "image"
-              - name: "name"
-                label: "Image Name"
-                widget: "string" # Editable name for the image
-              - name: "url"
-                label: "Image URL"
-                widget: "string" # Editable URL for the image
+            required: false
+            hint: "Only required if this is a subfolder."
+          - name: "image"
+            label: "Image File"
+            widget: "image"
+            required: false
+            hint: "Only required if this is an image."
+          - name: "image_name"
+            label: "Image Name"
+            widget: "string"
+            required: false
+            hint: "Provide the name for the image (excluding the file extension)."
+
+hooks:
+  # Optional processing to ensure the correct naming logic
+  after_save:
+    - script: >
+        if (file && file.image && file.image_name) {
+          const ext = file.image.split('.').pop();
+          const newName = `${file.image_name}.${ext}`;
+          renameImageFile(file.image, newName); 
+          updateFileReference(newName);
+        }
