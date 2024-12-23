@@ -20,6 +20,7 @@ import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "./store/useProjectAssetsStore";
 import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
+import netlifyIdentity from 'netlify-identity-widget';
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -169,6 +170,7 @@ export type ArchivesOutputItem = {
 
 
 const App = () => {
+  netlifyIdentity.init();  
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
   const [projectsList, setProjectsList] = useState<string[]>([]);
