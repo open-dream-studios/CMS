@@ -2,34 +2,34 @@ backend:
   name: git-gateway
   branch: master
 
-media_folder: "public/assets/{{fields.title}}/{{fields.subfolders.title}}" # Save media in structured folders
-public_folder: "/assets/{{fields.title}}/{{fields.subfolders.title}}"      # Public URLs for media
+media_folder: "public/assets" # Root folder for media files
+public_folder: "/assets"      # Public URL for media
 
 collections:
   - name: "imageFolders"
     label: "Image Folders"
-    folder: "content/images"       # Root folder for all image categories
+    folder: "content/images"   # Root folder for all image categories
     create: true
-    slug: "{{slug}}"               # Use folder name as the slug
+    slug: "{{slug}}"           # Use folder name as the slug
     fields:
       - name: "title"
-        label: "Project Type Name"
-        widget: "string"           # Name of the project type
+        label: "Page Name"
+        widget: "string"       # Name of the project type
       - name: "subfolders"
-        label: "Projects"
-        widget: "list"             # List of project subfolders
+        label: "Pages"
+        widget: "list"         # List of project subfolders
         fields:
           - name: "title"
-            label: "Project Name"
-            widget: "string"       # Name of the project
+            label: "Folder Name"
+            widget: "string"   # Name of the project
           - name: "images"
             label: "Images"
-            widget: "list"         # List of images for this project
+            widget: "list"     # List of images for this project
             fields:
               - name: "image"
                 label: "Image File"
-                widget: "image"    # Upload image
+                widget: "image" # Upload image
               - name: "name"
                 label: "Image Name"
-                widget: "string"   # Custom name for the image (excluding extension)
+                widget: "string" # Name for the image (excluding extension)
                 hint: "Provide a name for the image. The file extension will be added automatically."
