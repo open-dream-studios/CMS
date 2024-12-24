@@ -28,8 +28,7 @@ collections:
             fields:
               - name: "image"
                 label: "Image File"
-                widget: "image"
-                pattern: "{{fields.name}}" # Save image with its custom name
+                widget: "image"    # Upload image
               - name: "name"
                 label: "Image Name"
                 widget: "string"   # Custom name for the image (excluding extension)
