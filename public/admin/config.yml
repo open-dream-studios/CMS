@@ -6,46 +6,30 @@ media_folder: "public/assets" # Root folder for media files
 public_folder: "/assets"      # Public URL for media
 
 collections:
-  # Define a collection for projects
-  - name: "projects"
-    label: "Projects"
-    folder: "content/projects" # Path to project folders in your repo
-    create: true               # Allow creating new entries
-    fields:
-      - name: "title"
-        label: "Title"
-        widget: "string"
-      - name: "image"
-        label: "Project Image"
-        widget: "image"
-
-  # Define a collection for nested folders of images
   - name: "imageFolders"
     label: "Image Folders"
-    folder: "content/images"   # Root folder for image categories
+    folder: "content/images"   # Root folder for all image categories
     create: true
-    slug: "{{slug}}"           # Use the folder name as slug
+    slug: "{{slug}}"           # Use folder name as the slug
     fields:
       - name: "title"
-        label: "Folder Name"
-        widget: "string"
+        label: "Project Type Name"
+        widget: "string"       # Name of the project type
       - name: "subfolders"
-        label: "Subfolders"
-        widget: "list"         # Allow creating multiple subfolders
+        label: "Projects"
+        widget: "list"         # List of project subfolders
         fields:
-          - name: "folder_name"
-            label: "Subfolder Name"
-            widget: "string"
+          - name: "title"
+            label: "Project Name"
+            widget: "string"   # Name of the project
           - name: "images"
             label: "Images"
-            widget: "list"     # Allow multiple images in each subfolder
+            widget: "list"     # List of images for this project
             fields:
               - name: "image"
                 label: "Image File"
-                widget: "image"
+                widget: "image" # Upload image
               - name: "name"
                 label: "Image Name"
-                widget: "string" # Editable name for the image
-              - name: "url"
-                label: "Image URL"
-                widget: "string" # Editable URL for the image
+                widget: "string" # Name for the image (excluding extension)
+                hint: "Provide a name for the image. The file extension will be added automatically."
