@@ -20,6 +20,14 @@ import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "./store/useProjectAssetsStore";
 import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
+import fs from 'fs';
+import path from 'path';
+
+interface FolderTree {
+  [key: string]: FolderTree | string[] | undefined; 
+  images?: string[] | undefined; 
+}
+
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -169,6 +177,55 @@ export type ArchivesOutputItem = {
 
 
 const App = () => {
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Root directory of your "Image Folders" (local or from the CMS repo)
+const rootDir = isProduction
+  ? path.join(__dirname, 'path-to-deployed-content-folder') // Adjust for production path
+  : path.join(__dirname, 'content/images'); // Local development folder
+
+// Function to recursively create the tree structure
+function createFolderTree(dirPath: string): FolderTree {
+  const tree: FolderTree = {};
+
+  if (!fs.existsSync(dirPath)) {
+    console.error(`Directory not found: ${dirPath}`);
+    return tree;
+  }
+
+  const items = fs.readdirSync(dirPath);
+
+  items.forEach((item) => {
+    const itemPath = path.join(dirPath, item);
+    const isDirectory = fs.statSync(itemPath).isDirectory();
+
+    if (isDirectory) {
+      // If it's a folder, recursively add its contents
+      tree[item] = createFolderTree(itemPath);
+    } else {
+      // If it's a file (image), add its name to the images array
+      const ext = path.extname(item); // Get file extension
+      const baseName = path.basename(item, ext); // Get name without extension
+      if (!tree.images) {
+        tree.images = [];
+      }
+      tree.images.push(`${baseName}${ext}`); // Add full name (e.g., image.jpg)
+    }
+  });
+
+  return tree;
+}
+
+// Generate the tree starting from the root folder
+const folderTree = createFolderTree(rootDir);
+
+// Log the folder tree to see the result
+console.log(JSON.stringify(folderTree, null, 2));
+
+
+
+
+
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
   const [projectsList, setProjectsList] = useState<string[]>([]);
