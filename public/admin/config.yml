@@ -1,46 +1,40 @@
 backend:
   name: git-gateway
-  branch: master # Adjust this to your repository's default branch
+  branch: master
 
-media_folder: "content/images" # Root folder for uploaded images
-public_folder: "/images" # Public path for the images
+media_folder: "content/images" # Root folder for images in the GitHub repository
+public_folder: "/assets"       # Public URL for media files
 
 collections:
-  - name: "images"
-    label: "Images"
-    folder: "content/images"
-    create: true # Allow creating new files
-    format: "yml" # Each image represented as a Markdown or YAML file
+  - name: "imageFolders"
+    label: "Image Folders"
+    folder: "content/images"   # Root folder for all image categories
+    create: true
+    slug: "{{slug}}"           # Use folder name as the slug
     fields:
-      - label: "Root Folder"
-        name: "root_folder"
-        widget: "object"
+      - name: "title"
+        label: "Project Type Name"
+        widget: "string"       # Name of the project type
+      - name: "subfolders"
+        label: "Projects"
+        widget: "list"         # List of project subfolders
         fields:
-          - label: "Subfolders"
-            name: "subfolders"
-            widget: "list"
+          - name: "title"
+            label: "Project Name"
+            widget: "string"   # Name of the project
+          - name: "images"
+            label: "Images"
+            widget: "list"     # List of images for this project
             fields:
-              - label: "Subfolder Name"
-                name: "name"
+              - name: "image"
+                label: "Image File"
+                widget: "image" 
+                allow_multiple: false
+                hint: "Upload an image. The file will be renamed to match the Image Name field."
+              - name: "name"
+                label: "Image Name"
                 widget: "string"
-              - label: "Subfolder Contents"
-                name: "contents"
-                widget: "list"
-                fields:
-                  - label: "Sub-Subfolder Name"
-                    name: "name"
-                    widget: "string"
-                  - label: "Images"
-                    name: "images"
-                    widget: "list"
-                    fields:
-                      - label: "Image File"
-                        name: "image_file"
-                        widget: "image"
-                        media_library:
-                          config:
-                            multiple: true
-                      - label: "Image Name"
-                        name: "image_name"
-                        widget: "string"
-                        hint: "Name will be used for the URL (e.g., example.com/folder/image_name.png)"
+                required: true
+                hint: "Provide a name for the image. The image file will be renamed and saved under this name in the GitHub repository."
+
+slug: "{{fields.name}}" # Image will be saved using the name field
