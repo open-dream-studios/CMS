@@ -1,6 +1,6 @@
 backend:
   name: git-gateway
-  branch: main # Adjust this to your repository's default branch
+  branch: master # Adjust this to your repository's default branch
 
 media_folder: "content/images" # Root folder for uploaded images
 public_folder: "/images" # Public path for the images
