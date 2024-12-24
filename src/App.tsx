@@ -20,6 +20,7 @@ import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "./store/useProjectAssetsStore";
 import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
+import yaml from "js-yaml";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -167,6 +168,16 @@ export type ArchivesOutputItem = {
   images: string[];
 };
 
+type MDImage = {
+  name: string;
+  image: string;
+};
+
+type MDNode = {
+  title: string;
+  subfolders?: MDNode[];
+  images?: MDImage[];
+};
 
 const App = () => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
@@ -224,8 +235,136 @@ const App = () => {
       let homeImages = [];
       let projectCoverImages = [];
       let projectImages = [];
-      let projectsArray: string[] = []
+      let projectsArray: string[] = [];
       let archiveImages = [];
+
+      const folderURLS: string[] = [];
+      if (
+        fullRepo &&
+        Object.keys(fullRepo).length > 0 &&
+        fullRepo["content"]["images"]
+      ) {
+        const contentImages = fullRepo["content"]["images"];
+        Object.keys(contentImages).forEach((item) => {
+          folderURLS.push(contentImages[item]);
+        });
+      } else {
+        return;
+      }
+
+      const folderStructures: string[] = [];
+      async function getMDFileContents(urls: string[]) {
+        // Create an array of fetch promises
+        const fetchPromises = urls.map((url) =>
+          fetch(url, {
+            headers: {
+              Accept: "application/vnd.github.v3+json", // GitHub API version header
+            },
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then((data) => {
+              // Decode base64 content
+              const content = atob(data.content);
+              return content; // Return the decoded content
+            })
+            .catch((error) => {
+              console.error("Error fetching file:", error);
+              return null; // Handle errors gracefully
+            })
+        );
+
+        // Wait for all fetches to complete
+        const contents = await Promise.all(fetchPromises);
+
+        // Filter out nulls (if any fetch failed) and push the content to folderStructures
+        contents
+          .filter((content) => content !== null)
+          .forEach((content) => folderStructures.push(content as string));
+      }
+
+      await getMDFileContents(folderURLS);
+
+
+
+
+
+
+
+
+
+      function fixUrl(url: string) {
+    // Decode the improperly encoded characters
+    const decodedUrl = decodeURIComponent(url);
+
+    // Re-encode the URL correctly
+    const fixedUrl = encodeURI(decodedUrl);
+
+    return fixedUrl;
+}
+
+// Example
+const url = "/assets/screenshot-2024-12-19-at-6.55.22â¯pm.png";
+const correctedUrl = fixUrl(url);
+
+console.log("CORRECT", correctedUrl);
+
+
+
+      function cleanYAMLString(yamlString: string): string {
+        // Replace non-printable characters
+        return yamlString
+          .replace(/[\u200B-\u200D\uFEFF]/g, "") // Zero-width characters
+          .replace(/[^\x20-\x7E\r\n\t]/g, ""); // Remove other non-ASCII characters
+      }
+
+      function toTree(node: MDNode): {
+        name: string;
+        children: Array<{ name: string; children?: any[]; image?: string }>;
+      } {
+        const tree = {
+          name: node.title,
+          children: [] as Array<{
+            name: string;
+            children?: any[];
+            image?: string;
+          }>,
+        };
+
+        if (node.subfolders) {
+          tree.children.push(...node.subfolders.map(toTree));
+        }
+
+        if (node.images) {
+          tree.children.push(
+            ...node.images.map((image) => ({
+              name: image.name,
+              image: image.image,
+            }))
+          );
+        }
+
+        return tree;
+      }
+
+      for (let i = 0; i < folderStructures.length; i++) {
+        const cleanedYAML = cleanYAMLString(folderStructures[i]).replaceAll(
+          "---",
+          ""
+        );
+        try {
+          const parsedData = yaml.load(cleanedYAML) as MDNode; // Parse the cleaned YAML
+          const tree = toTree(parsedData); // Convert to tree structure
+          console.log(JSON.stringify(tree, null, 2));
+        } catch (error) {
+          console.error(`Error parsing YAML at index ${i}:`, error);
+        }
+      }
+
 
       if (fullRepo && Object.keys(fullRepo).length > 0 && fullRepo["public"]) {
         if (
@@ -308,10 +447,15 @@ const App = () => {
           }
 
           setProjectAssets(fullProject);
-          setSelectedArchiveGroup(null)
+          setSelectedArchiveGroup(null);
 
           // Preload images according to page
-          const allImages = [homeImages, projectCoverImages, projectImages, archiveImages];
+          const allImages = [
+            homeImages,
+            projectCoverImages,
+            projectImages,
+            archiveImages,
+          ];
           let priority = 0;
           if (path === "/projects" && path.split("/").length !== 3) {
             priority = 1;
@@ -379,8 +523,11 @@ const App = () => {
       }
     };
 
-    getRepoTree(); 
+    getRepoTree();
   }, []);
+
+// https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/screenshot-2024-12-19-at-6.55.22pm.png
+// https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/screenshot-2024-12-19-at-6.55.22%E2%80%AFpm.png
 
   const processAndSortProjectsObject = (
     input: ProjectInputObject
