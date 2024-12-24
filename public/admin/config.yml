@@ -2,8 +2,8 @@ backend:
   name: git-gateway
   branch: master
 
-media_folder: "public/assets" # Root folder for media files
-public_folder: "/assets"      # Public URL for media
+media_folder: "content/images/{{slug}}" # Use the slug as the root folder for images in GitHub
+public_folder: "/content/images/{{slug}}" # Public URL mirrors the folder structure
 
 collections:
   - name: "imageFolders"
@@ -28,8 +28,10 @@ collections:
             fields:
               - name: "image"
                 label: "Image File"
-                widget: "image" # Upload image
+                widget: "image" 
+                media_folder: "content/images/{{fields.slug}}/images" # Subfolder per project
+                public_folder: "/content/images/{{fields.slug}}/images"
               - name: "name"
                 label: "Image Name"
-                widget: "string" # Name for the image (excluding extension)
+                widget: "string" 
                 hint: "Provide a name for the image. The file extension will be added automatically."
