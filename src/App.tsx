@@ -20,14 +20,6 @@ import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "./store/useProjectAssetsStore";
 import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
-import fs from 'fs';
-import path from 'path';
-
-interface FolderTree {
-  [key: string]: FolderTree | string[] | undefined; 
-  images?: string[] | undefined; 
-}
-
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -177,52 +169,47 @@ export type ArchivesOutputItem = {
 
 
 const App = () => {
-const isProduction = process.env.NODE_ENV === 'production';
 
-// Root directory of your "Image Folders" (local or from the CMS repo)
-const rootDir = isProduction
-  ? path.join(__dirname, 'path-to-deployed-content-folder') // Adjust for production path
-  : path.join(__dirname, 'content/images'); // Local development folder
 
-// Function to recursively create the tree structure
-function createFolderTree(dirPath: string): FolderTree {
-  const tree: FolderTree = {};
+  useEffect(() => {
+    const fetchImageTree = async () => {
+      try {
+        // Fetch the content/images folder structure
+        const response = await fetch("/content/images"); // Adjust the path based on your setup
+        if (!response.ok) {
+          throw new Error("Failed to fetch image folder data");
+        }
 
-  if (!fs.existsSync(dirPath)) {
-    console.error(`Directory not found: ${dirPath}`);
-    return tree;
-  }
+        const folders = await response.json(); // Assuming your API or CMS returns JSON
 
-  const items = fs.readdirSync(dirPath);
+        // Helper function to recursively build the tree structure
+        const buildTree = (folders: any): any => {
+          return folders.map((folder: any) => {
+            const subfolders = folder.subfolders || [];
+            const images = folder.images || [];
 
-  items.forEach((item) => {
-    const itemPath = path.join(dirPath, item);
-    const isDirectory = fs.statSync(itemPath).isDirectory();
+            return {
+              title: folder.title, // Folder or project name
+              images: images.map((img: any) => ({
+                name: img.name,
+                url: `/assets/${img.image}`, // Construct URL based on media_folder and public_folder
+              })),
+              subfolders: buildTree(subfolders), // Recursively handle subfolders
+            };
+          });
+        };
 
-    if (isDirectory) {
-      // If it's a folder, recursively add its contents
-      tree[item] = createFolderTree(itemPath);
-    } else {
-      // If it's a file (image), add its name to the images array
-      const ext = path.extname(item); // Get file extension
-      const baseName = path.basename(item, ext); // Get name without extension
-      if (!tree.images) {
-        tree.images = [];
+        const tree = buildTree(folders);
+
+        console.log("Generated Tree Structure:");
+        console.log(tree);
+      } catch (error) {
+        console.error("Error generating image tree:", error);
       }
-      tree.images.push(`${baseName}${ext}`); // Add full name (e.g., image.jpg)
-    }
-  });
+    };
 
-  return tree;
-}
-
-// Generate the tree starting from the root folder
-const folderTree = createFolderTree(rootDir);
-
-// Log the folder tree to see the result
-console.log(JSON.stringify(folderTree, null, 2));
-
-
+    fetchImageTree();
+  }, []);
 
 
 
