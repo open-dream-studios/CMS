@@ -170,46 +170,101 @@ export type ArchivesOutputItem = {
 
 const App = () => {
 
-
-  useEffect(() => {
-    const fetchImageTree = async () => {
+    useEffect(() => {
+    const fetchImages = async () => {
       try {
-        // Fetch the content/images folder structure
-        const response = await fetch("/content/images"); // Adjust the path based on your setup
-        if (!response.ok) {
-          throw new Error("Failed to fetch image folder data");
-        }
+        // Replace with your site's base URL or use environment variables
+        const baseUrl = "https://jovial-cupcake-499ba5.netlify.app/content/images";
 
-        const folders = await response.json(); // Assuming your API or CMS returns JSON
+        // Fetch the index of the folder (if an index.json exists or list manually if not)
+        const response = await fetch(`${baseUrl}`);
+        if (!response.ok) throw new Error('Failed to fetch folder contents');
 
-        // Helper function to recursively build the tree structure
-        const buildTree = (folders: any): any => {
-          return folders.map((folder: any) => {
-            const subfolders = folder.subfolders || [];
-            const images = folder.images || [];
+        // Parse the response (modify as needed based on your folder setup)
+        const folderContents = await response.json(); // Assuming JSON index or pre-processed API response
 
-            return {
-              title: folder.title, // Folder or project name
-              images: images.map((img: any) => ({
-                name: img.name,
-                url: `/assets/${img.image}`, // Construct URL based on media_folder and public_folder
-              })),
-              subfolders: buildTree(subfolders), // Recursively handle subfolders
-            };
-          });
-        };
-
-        const tree = buildTree(folders);
-
-        console.log("Generated Tree Structure:");
-        console.log(tree);
+        // Log folder contents
+        console.log("Folder Contents:", folderContents);
       } catch (error) {
-        console.error("Error generating image tree:", error);
+        console.error("Error fetching folder contents:", error);
       }
     };
 
-    fetchImageTree();
+    fetchImages();
   }, []);
+
+    useEffect(() => {
+    const fetchGitHubContent = async () => {
+      try {
+        const repoOwner = "JosephGoff";
+        const repoName = "js-portfolio";
+        const folderPath = "content/images";
+        console.log(process.env.REACT_APP_GIT_PAT)
+        const accessToken = process.env.REACT_APP_GIT_PAT
+
+        const response = await fetch(
+          `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPath}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch GitHub content");
+
+        const data = await response.json();
+        console.log("GitHub Content:", data);
+
+        // Process the `.md` files here to extract the image metadata
+      } catch (error) {
+        console.error("Error fetching GitHub content:", error);
+      }
+    };
+
+    fetchGitHubContent();
+  }, []);
+
+
+  // useEffect(() => {
+  //   const fetchImageTree = async () => {
+  //     try {
+  //       // Fetch the content/images folder structure
+  //       const response = await fetch("/content/images"); // Adjust the path based on your setup
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch image folder data");
+  //       }
+
+  //       const folders = await response.json(); // Assuming your API or CMS returns JSON
+
+  //       // Helper function to recursively build the tree structure
+  //       const buildTree = (folders: any): any => {
+  //         return folders.map((folder: any) => {
+  //           const subfolders = folder.subfolders || [];
+  //           const images = folder.images || [];
+
+  //           return {
+  //             title: folder.title, // Folder or project name
+  //             images: images.map((img: any) => ({
+  //               name: img.name,
+  //               url: `/assets/${img.image}`, // Construct URL based on media_folder and public_folder
+  //             })),
+  //             subfolders: buildTree(subfolders), // Recursively handle subfolders
+  //           };
+  //         });
+  //       };
+
+  //       const tree = buildTree(folders);
+
+  //       console.log("Generated Tree Structure:");
+  //       console.log(tree);
+  //     } catch (error) {
+  //       console.error("Error generating image tree:", error);
+  //     }
+  //   };
+
+  //   fetchImageTree();
+  // }, []);
 
 
 
