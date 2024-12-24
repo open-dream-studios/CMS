@@ -1,8 +1,0 @@
-root_folder:
-  subfolders:
-    - name: projects
-      contents:
-        - name: dreamlike_flowers
-          images:
-            - image_file: /images/screenshot-2024-12-19-at-6.53.21 pm.png
-              image_name: image1
