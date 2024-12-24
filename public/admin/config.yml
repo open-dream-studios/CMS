@@ -2,42 +2,30 @@ backend:
   name: git-gateway
   branch: master
 
-media_folder: "content/images" # Root folder for images in the GitHub repository
-public_folder: "/assets"       # Public URL for media files
+media_folder: "public/assets" # Root folder for media files
+public_folder: "/assets"      # Public URL for media
 
 collections:
+  # Define a collection for projects
+  - name: "projects"
+    label: "Projects"
+    folder: "content/projects" # Path to project folders in your repo
+    create: true               # Allow creating new entries
+    fields:
+      - { name: "title", label: "Title", widget: "string" }
+      - { name: "image", label: "Project Image", widget: "image" }
+
+  # Define a collection for folders of images
   - name: "imageFolders"
     label: "Image Folders"
-    folder: "content/images"   # Root folder for all image categories
+    folder: "content/images"   # Folder for image categories
     create: true
-    slug: "{{slug}}"           # Folder name as slug for the collection
+    slug: "{{slug}}"           # Use the folder name as slug
     fields:
-      - name: "title"
-        label: "Project Type Name"
-        widget: "string"       # Name of the project type
-      - name: "subfolders"
-        label: "Projects"
-        widget: "list"         # List of project subfolders
-        fields:
-          - name: "title"
-            label: "Project Name"
-            widget: "string"   # Name of the project
-          - name: "images"
-            label: "Images"
-            widget: "list"     # List of images for this project
-            fields:
-              - name: "image"
-                label: "Image File"
-                widget: "image"
-                allow_multiple: false
-                hint: "Upload an image. The file will be renamed to match the Image Name field."
-              - name: "name"
-                label: "Image Name"
-                widget: "string"
-                required: true
-                hint: "Provide a name for the image. The image file will be renamed and saved under this name in the GitHub repository."
-
-    meta: # Ensure slugs are defined for fields that need unique filenames
-      slug:
-        type: "custom"           # Define a custom slug
-        label: "path_title_slug" # Ensure both name+path integrity saves safe
+      - { name: "title", label: "Folder Name", widget: "string" }
+      - {
+          name: "images",
+          label: "Images",
+          widget: "list",      # Allow multiple images
+          field: { name: "image", label: "Image", widget: "image" }
+        }
