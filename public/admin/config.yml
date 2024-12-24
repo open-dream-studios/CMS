@@ -10,7 +10,7 @@ collections:
     label: "Image Folders"
     folder: "content/images"   # Root folder for all image categories
     create: true
-    slug: "{{slug}}"           # Use folder name as the slug
+    slug: "{{slug}}"           # Folder name as slug for the collection
     fields:
       - name: "title"
         label: "Project Type Name"
@@ -28,7 +28,7 @@ collections:
             fields:
               - name: "image"
                 label: "Image File"
-                widget: "image" 
+                widget: "image"
                 allow_multiple: false
                 hint: "Upload an image. The file will be renamed to match the Image Name field."
               - name: "name"
@@ -37,4 +37,7 @@ collections:
                 required: true
                 hint: "Provide a name for the image. The image file will be renamed and saved under this name in the GitHub repository."
 
-slug: "{{fields.name}}" # Image will be saved using the name field
+    meta: # Ensure slugs are defined for fields that need unique filenames
+      slug:
+        type: "custom"           # Define a custom slug
+        label: "path_title_slug" # Ensure both name+path integrity saves safe
