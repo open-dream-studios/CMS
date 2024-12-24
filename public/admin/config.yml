@@ -8,46 +8,28 @@ public_folder: "/assets"      # Public URL for media
 collections:
   - name: "imageFolders"
     label: "Image Folders"
-    folder: "content/images"   # Root folder for image categories
+    folder: "content/images"   # Root folder for all image categories
     create: true
-    slug: "{{slug}}"           # Use the folder name as slug
+    slug: "{{slug}}"           # Use folder name as the slug
     fields:
       - name: "title"
-        label: "Folder Name"
-        widget: "string"
-      - name: "content"
-        label: "Folder Contents"
-        widget: "list"         # Allow nested contents
+        label: "Project Type Name"
+        widget: "string"       # Name of the project type
+      - name: "subfolders"
+        label: "Projects"
+        widget: "list"         # List of project subfolders
         fields:
-          - name: "type"
-            label: "Type"
-            widget: "select"
-            options:
-              - { label: "Subfolder", value: "subfolder" }
-              - { label: "Image", value: "image" }
-          - name: "folder_name"
-            label: "Subfolder Name"
-            widget: "string"
-            required: false
-            hint: "Only required if this is a subfolder."
-          - name: "image"
-            label: "Image File"
-            widget: "image"
-            required: false
-            hint: "Only required if this is an image."
-          - name: "image_name"
-            label: "Image Name"
-            widget: "string"
-            required: false
-            hint: "Provide the name for the image (excluding the file extension)."
-
-hooks:
-  # Optional processing to ensure the correct naming logic
-  after_save:
-    - script: >
-        if (file && file.image && file.image_name) {
-          const ext = file.image.split('.').pop();
-          const newName = `${file.image_name}.${ext}`;
-          renameImageFile(file.image, newName); 
-          updateFileReference(newName);
-        }
+          - name: "title"
+            label: "Project Name"
+            widget: "string"   # Name of the project
+          - name: "images"
+            label: "Images"
+            widget: "list"     # List of images for this project
+            fields:
+              - name: "image"
+                label: "Image File"
+                widget: "image" # Upload image
+              - name: "name"
+                label: "Image Name"
+                widget: "string" # Name for the image (excluding extension)
+                hint: "Provide a name for the image. The file extension will be added automatically."
