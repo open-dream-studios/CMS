@@ -1,37 +1,46 @@
 backend:
   name: git-gateway
-  branch: master
+  branch: main # Adjust this to your repository's default branch
 
-media_folder: "content/images/{{slug}}" # Use the slug as the root folder for images in GitHub
-public_folder: "/content/images/{{slug}}" # Public URL mirrors the folder structure
+media_folder: "content/images" # Root folder for uploaded images
+public_folder: "/images" # Public path for the images
 
 collections:
-  - name: "imageFolders"
-    label: "Image Folders"
-    folder: "content/images"   # Root folder for all image categories
-    create: true
-    slug: "{{slug}}"           # Use folder name as the slug
+  - name: "images"
+    label: "Images"
+    folder: "content/images"
+    create: true # Allow creating new files
+    format: "yml" # Each image represented as a Markdown or YAML file
     fields:
-      - name: "title"
-        label: "Project Type Name"
-        widget: "string"       # Name of the project type
-      - name: "subfolders"
-        label: "Projects"
-        widget: "list"         # List of project subfolders
+      - label: "Root Folder"
+        name: "root_folder"
+        widget: "object"
         fields:
-          - name: "title"
-            label: "Project Name"
-            widget: "string"   # Name of the project
-          - name: "images"
-            label: "Images"
-            widget: "list"     # List of images for this project
+          - label: "Subfolders"
+            name: "subfolders"
+            widget: "list"
             fields:
-              - name: "image"
-                label: "Image File"
-                widget: "image" 
-                media_folder: "content/images/{{fields.slug}}/images" # Subfolder per project
-                public_folder: "/content/images/{{fields.slug}}/images"
-              - name: "name"
-                label: "Image Name"
-                widget: "string" 
-                hint: "Provide a name for the image. The file extension will be added automatically."
+              - label: "Subfolder Name"
+                name: "name"
+                widget: "string"
+              - label: "Subfolder Contents"
+                name: "contents"
+                widget: "list"
+                fields:
+                  - label: "Sub-Subfolder Name"
+                    name: "name"
+                    widget: "string"
+                  - label: "Images"
+                    name: "images"
+                    widget: "list"
+                    fields:
+                      - label: "Image File"
+                        name: "image_file"
+                        widget: "image"
+                        media_library:
+                          config:
+                            multiple: true
+                      - label: "Image Name"
+                        name: "image_name"
+                        widget: "string"
+                        hint: "Name will be used for the URL (e.g., example.com/folder/image_name.png)"
