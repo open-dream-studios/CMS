@@ -3,7 +3,8 @@ backend:
   branch: master
 
 # media_folder: "public/assets" # Root folder for media files
-media_folder: "public/assets/{{slug}}/{{fields.subfolders.title}}/{{fields.subfolders.images.name}}"
+# media_folder: "public/assets/{{slug}}/{{fields.subfolders.title}}/{{fields.subfolders.images.name}}"
+media_folder: "public/assets/{{slug}}/{{subfolder}}/{{name}}"
 public_folder: "/assets"      # Public URL for media
 
 collections:
@@ -14,23 +15,44 @@ collections:
     slug: "{{slug}}"           # Use folder name as the slug
     fields:
       - name: "title"
-        label: "Project Type Name"
+        label: "Page Name"
         widget: "string"       # Name of the project type
+      # - name: "subfolders"
+      #   label: "Projects"
+      #   widget: "list"         # List of project subfolders
+      #   fields:
+      #     - name: "title"
+      #       label: "Project Name"
+      #       widget: "string"   # Name of the project
+      #     - name: "images"
+      #       label: "Images"
+      #       widget: "list"     # List of images for this project
+      #       fields:
+      #         - name: "image"
+      #           label: "Image File"
+      #           widget: "image" # Upload image
+      #         - name: "name"
+      #           label: "Image Name"
+      #           widget: "string" # Name for the image (excluding extension)
+      #           hint: "Provide a name for the image. The file extension will be added automatically."
       - name: "subfolders"
         label: "Projects"
-        widget: "list"         # List of project subfolders
+        widget: "list"
         fields:
           - name: "title"
-            label: "Project Name"
-            widget: "string"   # Name of the project
+            label: "Folder Name"
+            widget: "string"
           - name: "images"
             label: "Images"
-            widget: "list"     # List of images for this project
+            widget: "list"
             fields:
               - name: "image"
                 label: "Image File"
-                widget: "image" # Upload image
+                widget: "image"
               - name: "name"
                 label: "Image Name"
-                widget: "string" # Name for the image (excluding extension)
-                hint: "Provide a name for the image. The file extension will be added automatically."
+                widget: "string"
+              - name: "subfolder"
+                label: "Subfolder Name"
+                widget: "hidden"
+                default: "{{title}}"
