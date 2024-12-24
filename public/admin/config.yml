@@ -2,7 +2,8 @@ backend:
   name: git-gateway
   branch: master
 
-media_folder: "public/assets" # Root folder for media files
+# media_folder: "public/assets" # Root folder for media files
+media_folder: "public/assets/{{slug}}/{{fields.subfolders.title}}/{{fields.subfolders.images.name}}"
 public_folder: "/assets"      # Public URL for media
 
 collections:
