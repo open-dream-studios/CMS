@@ -18,17 +18,17 @@ const About: React.FC<PageProps> = ({ navigate }) => {
     null
   );
 
-  useEffect(() => {
-    if (
-      projectAssets !== null &&
-      projectAssets["home"] &&
-      Array.isArray(projectAssets["home"]) &&
-      projectAssets["home"].length > 0
-    ) {
-      coversRef.current = projectAssets["home"] as CoverOutputItem[];
-      setCoversReady(projectAssets["home"] as CoverOutputItem[]);
-    }
-  }, [projectAssets]);
+  // useEffect(() => {
+  //   if (
+  //     projectAssets !== null &&
+  //     projectAssets["home"] &&
+  //     Array.isArray(projectAssets["home"]) &&
+  //     projectAssets["home"].length > 0
+  //   ) {
+  //     coversRef.current = projectAssets["home"] as CoverOutputItem[];
+  //     setCoversReady(projectAssets["home"] as CoverOutputItem[]);
+  //   }
+  // }, [projectAssets]);
 
   function setUpdatedProject(newProject: number) {
     const currentProj = selectedProject;

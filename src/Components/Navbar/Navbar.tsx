@@ -59,20 +59,20 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     }
   }, [selectedArchiveGroup]);
 
-  useEffect(() => {
-    if (
-      projectAssets !== null &&
-      projectAssets["projects"] &&
-      Array.isArray(projectAssets["projects"]) &&
-      projectAssets["projects"].length > 0
-    ) {
-      const coversList = projectAssets["projects"] as ProjectOutputItem[];
-      const newProjectsList = coversList.map((item) =>
-        item.title.replace("_", "")
-      );
-      setProjectsList(newProjectsList);
-    }
-  }, [projectAssets]);
+  // useEffect(() => {
+  //   if (
+  //     projectAssets !== null &&
+  //     projectAssets["projects"] &&
+  //     Array.isArray(projectAssets["projects"]) &&
+  //     projectAssets["projects"].length > 0
+  //   ) {
+  //     const coversList = projectAssets["projects"] as ProjectOutputItem[];
+  //     const newProjectsList = coversList.map((item) =>
+  //       item.title.replace("_", "")
+  //     );
+  //     setProjectsList(newProjectsList);
+  //   }
+  // }, [projectAssets]);
 
   function showText() {
     setTimeout(() => {

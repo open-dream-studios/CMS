@@ -24,18 +24,18 @@ const Home: React.FC<HomePageProps> = ({
     null
   );
 
-  useEffect(() => {
-    if (
-      projectAssets !== null &&
-      projectAssets["home"] &&
-      Array.isArray(projectAssets["home"]) &&
-      projectAssets["home"].length > 0
-    ) {
-      coversRef.current = projectAssets["home"] as CoverOutputItem[];
-      readyToTransition.current = true;
-      setCoversReady(projectAssets["home"] as CoverOutputItem[]);
-    }
-  }, [projectAssets]);
+  // useEffect(() => {
+  //   if (
+  //     projectAssets !== null &&
+  //     projectAssets["home"] &&
+  //     Array.isArray(projectAssets["home"]) &&
+  //     projectAssets["home"].length > 0
+  //   ) {
+  //     coversRef.current = projectAssets["home"] as CoverOutputItem[];
+  //     readyToTransition.current = true;
+  //     setCoversReady(projectAssets["home"] as CoverOutputItem[]);
+  //   }
+  // }, [projectAssets]);
 
   const coverLayouts = [
     [

@@ -44,22 +44,22 @@ const Projects: React.FC<ProjectsPageProps> = ({
     null
   );
 
-  useEffect(() => {
-    if (
-      projectAssets !== null &&
-      projectAssets["projects"] &&
-      Array.isArray(projectAssets["projects"]) &&
-      projectAssets["projects"].length > 0
-    ) {
-      const coversList = projectAssets["projects"] as ProjectOutputItem[];
-      const newProjectsList = coversList.map((item) =>
-        item.title.replace("_", "")
-      );
-      setProjectsList(newProjectsList);
-      coversRef.current = coversList;
-      setCoversReady(coversList);
-    }
-  }, [projectAssets]);
+  // useEffect(() => {
+  //   if (
+  //     projectAssets !== null &&
+  //     projectAssets["projects"] &&
+  //     Array.isArray(projectAssets["projects"]) &&
+  //     projectAssets["projects"].length > 0
+  //   ) {
+  //     const coversList = projectAssets["projects"] as ProjectOutputItem[];
+  //     const newProjectsList = coversList.map((item) =>
+  //       item.title.replace("_", "")
+  //     );
+  //     setProjectsList(newProjectsList);
+  //     coversRef.current = coversList;
+  //     setCoversReady(coversList);
+  //   }
+  // }, [projectAssets]);
 
   useEffect(() => {
     if (animate === true) {

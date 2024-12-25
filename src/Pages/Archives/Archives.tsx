@@ -41,30 +41,30 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const [arrowSRC, setArrowSRC] = useState<string>("");
 
 
-  useEffect(() => {
-    if (
-      projectAssets !== null &&
-      projectAssets["archives"] &&
-      Array.isArray(projectAssets["archives"]) &&
-      projectAssets["archives"].length > 0
-    ) {
-      const archivesOutput = projectAssets["archives"] as ArchivesOutputItem[]
-      archivesRef.current = archivesOutput
-      const newbgColors = archivesOutput.map(item => validateColor(item.bg_color))
-      setbgColors(newbgColors)
-      bgColorRef.current = validateColor(newbgColors[0])
-      if (containerRef.current) {
-        containerRef.current.style.backgroundColor = validateColor(newbgColors[0])
-      }
+  // useEffect(() => {
+  //   if (
+  //     projectAssets !== null &&
+  //     projectAssets["archives"] &&
+  //     Array.isArray(projectAssets["archives"]) &&
+  //     projectAssets["archives"].length > 0
+  //   ) {
+  //     const archivesOutput = projectAssets["archives"] as ArchivesOutputItem[]
+  //     archivesRef.current = archivesOutput
+  //     const newbgColors = archivesOutput.map(item => validateColor(item.bg_color))
+  //     setbgColors(newbgColors)
+  //     bgColorRef.current = validateColor(newbgColors[0])
+  //     if (containerRef.current) {
+  //       containerRef.current.style.backgroundColor = validateColor(newbgColors[0])
+  //     }
 
-      if (projectAssets !== null && projectAssets["icons"] && Object.keys(projectAssets["icons"]).length > 0 && projectAssets["icons"]) {
-        const icons = projectAssets["icons"] as Record<string, string>
-        if (icons["arrow1.png"]) {
-          setArrowSRC(`https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/icons/arrow1.png`)
-        }
-      }
-    }
-  }, [projectAssets]);
+  //     if (projectAssets !== null && projectAssets["icons"] && Object.keys(projectAssets["icons"]).length > 0 && projectAssets["icons"]) {
+  //       const icons = projectAssets["icons"] as Record<string, string>
+  //       if (icons["arrow1.png"]) {
+  //         setArrowSRC(`https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/icons/arrow1.png`)
+  //       }
+  //     }
+  //   }
+  // }, [projectAssets]);
 
   useEffect(() => {
     setTimeout(() => {

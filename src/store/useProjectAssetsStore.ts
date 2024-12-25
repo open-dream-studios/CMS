@@ -1,14 +1,14 @@
 import { create } from "zustand";
-import { FileTree } from "../App";
+import { Tree } from "../App";
 
 type StateType = {
-  projectAssets: FileTree | null;  
-  setProjectAssets: (newVal: FileTree | null) => void;
+  projectAssets: Tree | null;  
+  setProjectAssets: (newVal: Tree | null) => void;
 };
 
 const useProjectAssetsStore = create<StateType>((set) => ({
   projectAssets: null,  
-  setProjectAssets: (newVal: FileTree | null) =>
+  setProjectAssets: (newVal: Tree | null) =>
     set(() => ({ projectAssets: newVal })),
 }));
 

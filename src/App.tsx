@@ -20,7 +20,8 @@ import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "./store/useProjectAssetsStore";
 import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
-import yaml from "js-yaml";
+// import yaml from "js-yaml";
+import axios from "axios";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -168,16 +169,18 @@ export type ArchivesOutputItem = {
   images: string[];
 };
 
-type MDImage = {
+interface DriveFile {
+  id: string;
   name: string;
-  image: string;
+  mimeType: string;
+  children?: DriveFile[]; // Optional for files; required for folders
+}
+
+export type Tree = {
+  [key: string]: Tree | string[] | string;
 };
 
-type MDNode = {
-  title: string;
-  subfolders?: MDNode[];
-  images?: MDImage[];
-};
+export const BASE_URL = "https://drive.google.com/uc?id=";
 
 const App = () => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
@@ -186,444 +189,95 @@ const App = () => {
   const { selectedArchiveGroup, setSelectedArchiveGroup } =
     useSelectedArchiveGroupStore();
 
-  useEffect(() => {
-    const fetchFullRepoTree = async (
-      owner: string,
-      repo: string,
-      branch = "master"
-    ) => {
-      const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
-      const token = process.env.REACT_APP_GIT_PAT;
-
-      try {
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
+  const fetchFolderContents = async (
+    folderId: string | undefined
+  ): Promise<DriveFile[]> => {
+    if (folderId === undefined) {
+      return [];
+    }
+    try {
+      const response = await axios.get(
+        "https://www.googleapis.com/drive/v3/files",
+        {
+          params: {
+            q: `'${folderId}' in parents and trashed = false`,
+            key: process.env.REACT_APP_GOOGLE_DRIVE_API_KEY,
+            // key: process.env.GOOGLE_DRIVE_API_KEY,
+            fields: "files(id, name, mimeType)",
           },
-        });
-        if (!response.ok) {
-          console.error(
-            "Failed to fetch repository tree:",
-            response.statusText
-          );
-          return null;
         }
-        const data = await response.json();
-        const tree = data.tree.reduce((acc: any, item: any) => {
-          const parts = item.path.split("/");
-          let current = acc;
+      );
 
-          for (const part of parts) {
-            if (!current[part]) {
-              current[part] = item.type === "tree" ? {} : item.url;
-            }
-            current = current[part];
-          }
-          return acc;
-        }, {});
+      const files: DriveFile[] = response.data.files;
 
-        return tree;
-      } catch (error) {
-        console.error("Error fetching repository tree:", error);
-        return null;
-      }
-    };
-
-    const getRepoTree = async () => {
-      const fullRepo = await fetchFullRepoTree("JosephGoff", "js-portfolio");
-      const path = location.pathname;
-      let homeImages = [];
-      let projectCoverImages = [];
-      let projectImages = [];
-      let projectsArray: string[] = [];
-      let archiveImages = [];
-
-      const folderURLS: string[] = [];
-      if (
-        fullRepo &&
-        Object.keys(fullRepo).length > 0 &&
-        fullRepo["content"]["images"]
-      ) {
-        const contentImages = fullRepo["content"]["images"];
-        Object.keys(contentImages).forEach((item) => {
-          folderURLS.push(contentImages[item]);
-        });
-      } else {
-        return;
-      }
-
-      const folderStructures: string[] = [];
-      async function getMDFileContents(urls: string[]) {
-        // Create an array of fetch promises
-        const fetchPromises = urls.map((url) =>
-          fetch(url, {
-            headers: {
-              Accept: "application/vnd.github.v3+json", // GitHub API version header
-            },
-          })
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              return response.json();
-            })
-            .then((data) => {
-              // Decode base64 content
-              const content = atob(data.content);
-              return content; // Return the decoded content
-            })
-            .catch((error) => {
-              console.error("Error fetching file:", error);
-              return null; // Handle errors gracefully
-            })
-        );
-
-        // Wait for all fetches to complete
-        const contents = await Promise.all(fetchPromises);
-
-        // Filter out nulls (if any fetch failed) and push the content to folderStructures
-        contents
-          .filter((content) => content !== null)
-          .forEach((content) => folderStructures.push(content as string));
-      }
-
-      await getMDFileContents(folderURLS);
-
-
-
-
-
-
-
-
-
-      function fixUrl(url: string) {
-    // Decode the improperly encoded characters
-    const decodedUrl = decodeURIComponent(url);
-
-    // Re-encode the URL correctly
-    const fixedUrl = encodeURI(decodedUrl);
-
-    return fixedUrl;
-}
-
-// Example
-const url = "/assets/screenshot-2024-12-19-at-6.55.22â¯pm.png";
-const correctedUrl = fixUrl(url);
-
-console.log("CORRECT", correctedUrl);
-
-
-
-      function cleanYAMLString(yamlString: string): string {
-        // Replace non-printable characters
-        return yamlString
-          .replace(/[\u200B-\u200D\uFEFF]/g, "") // Zero-width characters
-          .replace(/[^\x20-\x7E\r\n\t]/g, ""); // Remove other non-ASCII characters
-      }
-
-      function toTree(node: MDNode): {
-        name: string;
-        children: Array<{ name: string; children?: any[]; image?: string }>;
-      } {
-        const tree = {
-          name: node.title,
-          children: [] as Array<{
-            name: string;
-            children?: any[];
-            image?: string;
-          }>,
-        };
-
-        if (node.subfolders) {
-          tree.children.push(...node.subfolders.map(toTree));
-        }
-
-        if (node.images) {
-          tree.children.push(
-            ...node.images.map((image) => ({
-              name: image.name,
-              image: image.image,
-            }))
-          );
-        }
-
-        return tree;
-      }
-
-      for (let i = 0; i < folderStructures.length; i++) {
-        const cleanedYAML = cleanYAMLString(folderStructures[i]).replaceAll(
-          "---",
-          ""
-        );
-        try {
-          const parsedData = yaml.load(cleanedYAML) as MDNode; // Parse the cleaned YAML
-          const tree = toTree(parsedData); // Convert to tree structure
-          console.log(JSON.stringify(tree, null, 2));
-        } catch (error) {
-          console.error(`Error parsing YAML at index ${i}:`, error);
-        }
-      }
-
-
-      if (fullRepo && Object.keys(fullRepo).length > 0 && fullRepo["public"]) {
-        if (
-          Object.keys(fullRepo["public"]).length > 0 &&
-          fullRepo["public"]["assets"]
-        ) {
-          const fullProject = fullRepo["public"]["assets"];
-
-          if (
-            fullProject["home"] &&
-            Object.keys(fullProject["home"]).length > 0
-          ) {
-            const coversList = processAndSortHomeCoversObject(
-              fullProject["home"] as CoverInputObject
-            );
-            fullProject["home"] = coversList;
-            for (let i = 0; i < coversList.length; i++) {
-              for (let j = 0; j < coversList[i].images.length; j++) {
-                homeImages.push(coversList[i].images[j]);
-              }
-            }
-          }
-
-          if (
-            fullProject["projects"] &&
-            Object.keys(fullProject["projects"]).length > 0
-          ) {
-            const projectCoversList = processAndSortProjectsObject(
-              fullProject["projects"] as ProjectInputObject
-            );
-            fullProject["projects"] = projectCoversList;
-            for (let i = 0; i < projectCoversList.length; i++) {
-              for (let j = 0; j < projectCoversList[i].covers.length; j++) {
-                projectCoverImages.push(projectCoversList[i].covers[j]);
-              }
-              for (let j = 0; j < projectCoversList[i].images.length; j++) {
-                projectImages.push(projectCoversList[i].images[j]);
-              }
-            }
-
-            projectsArray = projectCoversList.map((item) =>
-              item.title.replace("_", "")
-            );
-            setProjectsList(projectsArray);
-            if (
-              projectsArray.length > 0 &&
-              selectedProjectName[1] === null &&
-              path.startsWith("/projects/") &&
-              projectsArray.includes(path.split("/")[2]) &&
-              path.split("/").length === 3
-            ) {
-              const projects = fullProject["projects"] as any[];
-              const insertProject = projectsArray.findIndex(
-                (link) => link === path.split("/")[2]
-              );
-              setSelectedProject(insertProject);
-              setSelectedProjectName([null, insertProject, null]);
-              let projectColorsCopy = projectColors;
-              projectColorsCopy[1] = [
-                projects[insertProject].bg_color,
-                projects[insertProject].text_color,
-              ];
-              setProjectColors(projectColorsCopy);
-            }
-          }
-
-          if (
-            fullProject["archives"] &&
-            Object.keys(fullProject["archives"]).length > 0
-          ) {
-            const coversList = processAndSortArchivesObject(
-              fullProject["archives"] as ArchivesInputObject
-            );
-            fullProject["archives"] = coversList;
-            for (let i = 0; i < coversList.length; i++) {
-              for (let j = 0; j < coversList[i].images.length; j++) {
-                archiveImages.push(coversList[i].images[j]);
-              }
-            }
-          }
-
-          setProjectAssets(fullProject);
-          setSelectedArchiveGroup(null);
-
-          // Preload images according to page
-          const allImages = [
-            homeImages,
-            projectCoverImages,
-            projectImages,
-            archiveImages,
-          ];
-          let priority = 0;
-          if (path === "/projects" && path.split("/").length !== 3) {
-            priority = 1;
-          }
-          if (
-            path.startsWith("/projects/") &&
-            projectsArray.includes(path.split("/")[2]) &&
-            path.split("/").length === 3
-          ) {
-            priority = 2;
-          }
-          if (path === "/archives") {
-            priority = 3;
-          }
-
-          // Preload priority
-          preloadImages(allImages[priority]).then((results) => {
-            const successful = results
-              .filter((result: any) => result.success)
-              .map((res: any) => res.url);
-            const failed = results
-              .filter((result: any) => !result.success)
-              .map((res: any) => res.url);
-
-            const logResults = () => {
-              if (failed.length === 0) {
-                // console.log("All images preloaded successfully:", successful);
-              } else {
-                // console.warn("Some images failed to preload:", failed);
-                // console.log("Successfully preloaded images:", successful);
-              }
+      const children = await Promise.all(
+        files.map(async (file) => {
+          if (file.mimeType === "application/vnd.google-apps.folder") {
+            return {
+              ...file,
+              children: await fetchFolderContents(file.id), // Recursive call
             };
-            logResults();
-            const preloadedImagesCopy = preloadedImages;
-            preloadedImagesCopy[priority] = true;
-            setPreloadedImages(preloadedImagesCopy);
-          });
+          }
+          return file; // Return file as-is if it's not a folder
+        })
+      );
 
-          // Preload all other images in project
-          for (let i = 0; i < allImages.length; i++) {
-            if (i === priority) continue;
-            preloadImages(allImages[i]).then((results) => {
-              const successful = results
-                .filter((result: any) => result.success)
-                .map((res: any) => res.url);
-              const failed = results
-                .filter((result: any) => !result.success)
-                .map((res: any) => res.url);
+      return children;
+    } catch (error) {
+      console.error("Error fetching folder contents:", error);
+      return [];
+    }
+  };
 
-              const logResults = () => {
-                if (failed.length === 0) {
-                  // console.log("All images preloaded successfully:", successful);
-                } else {
-                  // console.warn("Some images failed to preload:", failed);
-                  // console.log("Successfully preloaded images:", successful);
-                }
+  // Fetch the tree structure on component mount
+  useEffect(() => {
+    const fetchTree = async () => {
+      const treeStructure = await fetchFolderContents(
+        process.env.REACT_APP_GOOGLE_DRIVE_FOLDER_ID
+      );
+      const newTree: Tree = {};
+      if (treeStructure.length > 0) {
+        for (let i = 0; i < treeStructure.length; i++) {
+          const page = treeStructure[i];
+          newTree[page.name] = sortPages(page);
+        }
+        setProjectAssets(newTree)
+      } else return;
+
+      function sortPages(page: any) {
+        if (page.name === "about") {
+          if (page.children.length > 0) {
+            return page.children.map((item: any) => {
+              return {
+                name: item.name,
+                url: BASE_URL + item.id,
               };
-              logResults();
-              const preloadedImagesCopy = preloadedImages;
-              preloadedImagesCopy[i] = true;
-              setPreloadedImages(preloadedImagesCopy);
             });
+          } else {
+            return [];
           }
         }
+        if (page.children.length > 0) {
+          const innerFolders: Tree = {};
+          for (let i = 0; i < page.children.length; i++) {
+            const innerFolder = page.children[i];
+            innerFolders[innerFolder.name] = innerFolder.children.map(
+              (item: any) => {
+                return {
+                  name: item.name,
+                  url: BASE_URL + item.id,
+                };
+              }
+            );
+          }
+          return innerFolders;
+        }
+        return {};
       }
     };
 
-    getRepoTree();
+    fetchTree();
   }, []);
-
-// https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/screenshot-2024-12-19-at-6.55.22pm.png
-// https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/screenshot-2024-12-19-at-6.55.22%E2%80%AFpm.png
-
-  const processAndSortProjectsObject = (
-    input: ProjectInputObject
-  ): ProjectOutputItem[] => {
-    const entries = Object.entries(input);
-    const mappedEntries = entries.map(([key, value]) => {
-      const [number, title, bg_color, text_color] = key.split("--");
-      return {
-        title,
-        bg_color,
-        text_color,
-        covers:
-          Object.keys(value).length > 0 &&
-          value["covers"] &&
-          Object.keys(value["covers"]).length > 0
-            ? Object.keys(value["covers"]).map(
-                (item) =>
-                  `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/covers/` +
-                  item
-              )
-            : [],
-        images:
-          Object.keys(value).length > 1
-            ? [
-                `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/` +
-                  Object.keys(value).filter(
-                    (item) => item.split(".")[0] === "cover"
-                  ),
-                ...Object.keys(value)
-                  .filter(
-                    (item) =>
-                      item !== "covers" && item.split(".")[0] !== "cover"
-                  ) // Filter out "cover" and non-numeric keys
-                  .sort((a, b) => {
-                    const aNum = a.split(".")[0]; // Extract numeric part of the filename
-                    const bNum = b.split(".")[0];
-                    return parseInt(aNum, 10) - parseInt(bNum, 10); // Sort numerically
-                  })
-                  .map(
-                    (item) =>
-                      `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/` +
-                      item
-                  ),
-              ]
-            : [],
-        number: parseInt(number, 10),
-      };
-    });
-
-    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-    return sortedEntries.map(({ number, ...rest }) => rest);
-  };
-
-  const processAndSortHomeCoversObject = (
-    input: CoverInputObject
-  ): CoverOutputItem[] => {
-    const entries = Object.entries(input);
-    const mappedEntries = entries.map(([key, value]) => {
-      const [number, title, subTitle] = key.split("--");
-      return {
-        title,
-        subTitle,
-        images: Object.keys(value).map(
-          (item) =>
-            `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/home/${key}/` +
-            item
-        ),
-        number: parseInt(number, 10), // Parse the number to use for sorting
-      };
-    });
-
-    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-    return sortedEntries.map(({ number, ...rest }) => rest);
-  };
-
-  const processAndSortArchivesObject = (
-    input: ArchivesInputObject
-  ): ArchivesOutputItem[] => {
-    const entries = Object.entries(input);
-    const mappedEntries = entries.map(([key, value]) => {
-      const [number, title, bg_color] = key.split("--");
-      return {
-        title,
-        bg_color,
-        images: Object.keys(value).map(
-          (item) =>
-            `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/${key}/` +
-            item
-        ),
-        number: parseInt(number, 10),
-      };
-    });
-
-    const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-    return sortedEntries.map(({ number, ...rest }) => rest);
-  };
 
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
   const [incomingPageDecision, setIncomingPageDecision] =
