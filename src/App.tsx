@@ -134,11 +134,7 @@ export type FileTree = {
   [key: string]: string | FileTree | FileTree[] | string[];
 };
 
-export type CoverInputObject = {
-  [key: string]: { [key: string]: string };
-};
-
-export type CoverOutputItem = {
+export type CoverItem = {
   title: string;
   subTitle: string;
   images: string[];
@@ -241,36 +237,119 @@ const App = () => {
           const page = treeStructure[i];
           newTree[page.name] = sortPages(page);
         }
-        setProjectAssets(newTree)
+        setProjectAssets(newTree);
+        console.log(newTree)
       } else return;
 
       function sortPages(page: any) {
-        if (page.name === "about") {
-          if (page.children.length > 0) {
-            return page.children.map((item: any) => {
+        if (page.children.length > 0) {
+          type Entry = {
+            title: string;
+            subTitle?: string;
+            bg_color?: string;
+            text_color?: string;
+            images: string[];
+            number?: number;
+            img_number?: number;
+          };
+
+          if (page.name === "home") {
+            const mappedEntries: Entry[] = page.children.map((folder: any) => {
+              const [number, title, subTitle] = folder.name.split("--");
               return {
-                name: item.name,
-                url: BASE_URL + item.id,
+                title,
+                subTitle,
+                images: folder.children.map((img: any) => BASE_URL + img.id),
+                number: parseInt(number, 10),
               };
             });
-          } else {
-            return [];
-          }
-        }
-        if (page.children.length > 0) {
-          const innerFolders: Tree = {};
-          for (let i = 0; i < page.children.length; i++) {
-            const innerFolder = page.children[i];
-            innerFolders[innerFolder.name] = innerFolder.children.map(
-              (item: any) => {
-                return {
-                  name: item.name,
-                  url: BASE_URL + item.id,
-                };
-              }
+
+            const sortedEntries = mappedEntries.sort(
+              (a: any, b: any) => a.number - b.number
             );
+            return sortedEntries.map(({ number, ...rest }) => rest);
           }
-          return innerFolders;
+
+          if (page.name === "projects") {
+            const mappedEntries: Entry[] = page.children.map((folder: any) => {
+              const [number, title, bg_color, text_color] =
+                folder.name.split("--");
+
+              const mappedImages: Entry[] = folder.children.map((img: any) => {
+                const imgName = img.name.split(".")[0];
+                const img_number = imgName.split("--")[0];
+                return {
+                  url: BASE_URL + img.id,
+                  img_number: parseInt(img_number, 10),
+                }
+              });
+
+              const sortedImages = mappedImages
+                .sort((a: any, b: any) => a.img_number - b.img_number)
+                .map(({ img_number, ...rest }) => rest);
+
+              return {
+                title,
+                bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
+                text_color: text_color === undefined ? "#000000" : text_color,
+                images: sortedImages.map((img: any) => img.url),
+                number: parseInt(number, 10),
+              };
+            });
+
+            const sortedEntries = mappedEntries.sort(
+              (a: any, b: any) => a.number - b.number
+            );
+            return sortedEntries.map(({ number, ...rest }) => rest);
+          }
+
+          if (page.name === "archives") {
+            const mappedEntries: Entry[] = page.children.map((folder: any) => {
+              const [number, title, bg_color] = folder.name.split("--");
+
+              const mappedImages: Entry[] = folder.children.map((img: any) => {
+                const imgName = img.name.split(".")[0];
+                const [img_number, img_bg_color] = imgName.split("--");
+                return {
+                  url: BASE_URL + img.id,
+                  bg_color:
+                    img_bg_color === undefined ? "#FFFFFF" : img_bg_color,
+                  img_number: parseInt(img_number, 10),
+                };
+              });
+
+              const sortedImages = mappedImages
+                .sort((a: any, b: any) => a.img_number - b.img_number)
+                .map(({ img_number, ...rest }) => rest);
+
+              return {
+                title,
+                bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
+                images: sortedImages,
+                number: parseInt(number, 10),
+              };
+            });
+
+            const sortedEntries = mappedEntries.sort(
+              (a: any, b: any) => a.number - b.number
+            );
+            return sortedEntries.map(({ number, ...rest }) => rest);
+          }
+
+          if (page.name === "about") {
+            const mappedImages: Entry[] = page.children.map((img: any) => {
+              const imgName = img.name.split(".")[0];
+              const number = imgName.split("--")[0];
+              return {
+                url: BASE_URL + img.id,
+                number: parseInt(number, 10),
+              };
+            });
+            const sortedImages = mappedImages
+              .sort((a: any, b: any) => a.number - b.number)
+              .map(({ number, ...rest }) => rest);
+            return sortedImages.map((img: any) => img.url);
+          }
         }
         return {};
       }

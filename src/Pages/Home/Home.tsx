@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Home.css";
-import { CoverOutputItem, Page } from "../../App";
+import { CoverItem, Page } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
@@ -19,23 +19,23 @@ const Home: React.FC<HomePageProps> = ({
 }) => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
-  const coversRef = useRef<CoverOutputItem[] | null>(null);
-  const [coversReady, setCoversReady] = useState<CoverOutputItem[] | null>(
+  const coversRef = useRef<any[] | null>(null);
+  const [coversReady, setCoversReady] = useState<any[] | null>(
     null
   );
 
-  // useEffect(() => {
-  //   if (
-  //     projectAssets !== null &&
-  //     projectAssets["home"] &&
-  //     Array.isArray(projectAssets["home"]) &&
-  //     projectAssets["home"].length > 0
-  //   ) {
-  //     coversRef.current = projectAssets["home"] as CoverOutputItem[];
-  //     readyToTransition.current = true;
-  //     setCoversReady(projectAssets["home"] as CoverOutputItem[]);
-  //   }
-  // }, [projectAssets]);
+  useEffect(() => {
+    if (
+      projectAssets !== null &&
+      projectAssets["home"] &&
+      Array.isArray(projectAssets["home"]) &&
+      projectAssets["home"].length > 0
+    ) {
+      coversRef.current = projectAssets["home"];
+      readyToTransition.current = true;
+      setCoversReady(projectAssets["home"]);
+    }
+  }, [projectAssets]);
 
   const coverLayouts = [
     [
@@ -208,7 +208,7 @@ const Home: React.FC<HomePageProps> = ({
     if (!slideUpComponent && currentCoverRef && coversRef.current !== null) {
       const text = coversRef.current[currentCoverRef.current].title
         .split("_")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
         .join("_")
         .replace(" ", "_")
         .split("");
@@ -238,7 +238,7 @@ const Home: React.FC<HomePageProps> = ({
 
     const text = coversRef.current[incomingProject].title
       .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
       .join("_")
       .replace(" ", "_")
       .split("");
@@ -477,17 +477,22 @@ const Home: React.FC<HomePageProps> = ({
                           bottom: item.top ? "none" : `${item.y}vh`,
                         }}
                       >
-                        <img
-                          alt=""
+                      <img src="https://drive.google.com/uc?id=1aBcDeFgHiJklMnopQrStUvWxYz123456" alt="Image description">
+                      </img>
+                        {/* <img
+                          alt="img"
                           className="image w-[100%] h-[100%]"
-                          style={{ objectFit: "cover" }}
-                          src={
-                            coversRef.current === null
-                              ? ""
-                              : coversRef.current[currentCoverRef.current]
-                                  .images[index]
-                          }
-                        />
+                          // style={{ objectFit: "cover" }}
+                          // src={
+                          //   coversRef.current === null
+                          //     ? ""
+                          //     : coversRef.current[currentCoverRef.current]
+                          //         .images[index]
+                          // }
+                          // src="https://drive.google.com/uc?export=view&id=1na4yBuQVSGCkRy9OFJ-IhVZzd4jKqn_X"
+                          // src="https://www.googleapis.com/drive/v3/files/FILE_ID?alt=media&key=AIzaSyCnNLcV2QQgvx2tOK-8SfOcoNrsN6-zsd4"
+                        // src="https://drive.google.com/uc?export=view&id=1C7WK0pKud_VGderutol1KEO62LFvj3ws" 
+                        /> */}
                       </div>
                     </motion.div>
                   )}

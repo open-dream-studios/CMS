@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { CoverOutputItem, PageProps } from "../../App";
+import { CoverItem, PageProps } from "../../App";
 import useProjectColorsState from "../../store/useProjectColorsStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
@@ -13,8 +13,8 @@ const About: React.FC<PageProps> = ({ navigate }) => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
 
-  const coversRef = useRef<CoverOutputItem[] | null>(null);
-  const [coversReady, setCoversReady] = useState<CoverOutputItem[] | null>(
+  const coversRef = useRef<CoverItem[] | null>(null);
+  const [coversReady, setCoversReady] = useState<CoverItem[] | null>(
     null
   );
 
@@ -25,8 +25,9 @@ const About: React.FC<PageProps> = ({ navigate }) => {
   //     Array.isArray(projectAssets["home"]) &&
   //     projectAssets["home"].length > 0
   //   ) {
-  //     coversRef.current = projectAssets["home"] as CoverOutputItem[];
-  //     setCoversReady(projectAssets["home"] as CoverOutputItem[]);
+  //     console.log(projectAssets["home"])
+  //     // coversRef.current = projectAssets["home"] as CoverItem[];
+  //     // setCoversReady(projectAssets["home"] as CoverItem[]);
   //   }
   // }, [projectAssets]);
 
