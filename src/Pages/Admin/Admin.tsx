@@ -2,9 +2,103 @@ import React, { useEffect, useState } from "react";
 import "./Admin.css";
 
 const Admin = () => {
+   const copyFolder = async () => {
+    const token = process.env.REACT_APP_GIT_PAT
+    const owner = 'JosephGoff'; 
+    const repo = "js-portfolio"; 
+    const sourceFolder = 'test';
+    const destinationFolder = 'test2';
+    const branch = 'master'; 
+
+    const fetchFolderContents = async (path: string) => {
+      const response = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch contents of ${path}`);
+      }
+
+      return response.json();
+    };
+
+    const copyFile = async (sourcePath: string, destinationPath: string, sha: any) => {
+      const fileContentResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${sourcePath}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+          },
+        }
+      );
+
+      if (!fileContentResponse.ok) {
+        throw new Error(`Failed to fetch file content for ${sourcePath}`);
+      }
+
+      const fileContent = await fileContentResponse.json();
+
+      // Create file in the new location
+      const createResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${destinationPath}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+          },
+          body: JSON.stringify({
+            message: `Copying file from ${sourcePath} to ${destinationPath}`,
+            content: fileContent.content,
+            branch,
+          }),
+        }
+      );
+
+      if (!createResponse.ok) {
+        throw new Error(`Failed to copy file: ${sourcePath}`);
+      }
+    };
+
+    const copyFolderContents = async (currentPath: string, newBasePath: string) => {
+      const contents = await fetchFolderContents(currentPath);
+
+      for (const item of contents) {
+        const newPath = `${newBasePath}/${item.name}`;
+
+        if (item.type === 'file') {
+          await copyFile(item.path, newPath, item.sha);
+        } else if (item.type === 'dir') {
+          await copyFolderContents(item.path, newPath);
+        }
+      }
+    };
+
+    try {
+      // Start copying folder contents
+      await copyFolderContents(sourceFolder, destinationFolder);
+      console.log(`Folder copied from ${sourceFolder} to ${destinationFolder} successfully!`);
+    } catch (error) {
+      console.error('Error copying folder:', error);
+    }
+  };
+
+
+
+
+
+
+
     const deleteFolder = async () => {
     const owner = 'JosephGoff';  
-    const repo = 'js-photography';  
+    const repo = 'js-portfolio';  
     const folderPath = 'test'; 
     const branch = 'master';
 
@@ -55,7 +149,7 @@ const Admin = () => {
   };
 
   return (
-    <div onClick={deleteFolder}>button</div>
+    <div onClick={copyFolder}>button</div>
   );
 };
 
