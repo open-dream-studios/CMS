@@ -37,20 +37,16 @@
 
 /* Button styling */
 .button {
-  padding: 10px 20px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
+  padding: 7px 14px;
+  color: black;
+  border: 1px solid black;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .button:hover {
-  background-color: #45a049;
+  background-color: #BBBBBB;
 }
 
-/* Dashboard styling */
-.dashboard {
-  text-align: center;
-}

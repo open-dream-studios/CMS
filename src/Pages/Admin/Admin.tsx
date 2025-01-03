@@ -25,6 +25,7 @@ import useSelectedArchiveGroupStore from "../../store/useSelectedArchiveGroupSto
 import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 // import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 // import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
+import { BiSolidPencil } from "react-icons/bi";
 
 export type FileTree = {
   [key: string]: string | FileTree | FileTree[] | string[];
@@ -63,6 +64,83 @@ export type ArchivesOutputItem = {
   title: string;
   bg_color: string;
   images: string[];
+};
+
+interface PopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  name: string;
+}
+
+const Popup: React.FC<PopupProps> = ({ isOpen, onClose, name }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "#fff",
+          padding: "20px",
+          borderRadius: "8px",
+          width: "300px",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <textarea
+          className="py-1 px-2"
+          style={{
+            width: "100%",
+            height: "100px",
+            resize: "none",
+            overflowY: "auto",
+            border: "1px solid #CCC",
+            borderRadius: "3px",
+          }}
+          defaultValue={name}
+        />
+        <div className="flex flex-row mt-[9px]">
+          <button
+            className="w-[48.5%] mr-[3%] p-[10px] cursor-pointer"
+            style={{
+              backgroundColor: "red",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+            }}
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            className="w-[48.5%] p-[10px] cursor-pointer"
+
+            style={{
+              backgroundColor: "#007BFF",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+            }}
+            onClick={onClose}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const Admin = () => {
@@ -112,8 +190,13 @@ interface DashboardProps {
   onLogout: () => void;
 }
 
+interface FolderStructure {
+  [key: string]: FolderStructure | string;
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
-  const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  // const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
 
   useEffect(() => {
     const fetchFullRepoTree = async (
@@ -160,123 +243,169 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
     const getRepoTree = async () => {
       const fullRepo = await fetchFullRepoTree("JosephGoff", "js-portfolio");
-      if (fullRepo && Object.keys(fullRepo).length > 0 && fullRepo["public"]) {
-        if (
-          Object.keys(fullRepo["public"]).length > 0 &&
-          fullRepo["public"]["assets"]
-        ) {
-          const fullProject = fullRepo["public"]["assets"];
-          // setProjectAssets(fullProject);
-          console.log(fullProject)
-        }
+      if (fullRepo && fullRepo["public"]?.["assets"]) {
+        const { icons, ...filteredProject } = fullRepo["public"]["assets"];
+        setFullProject(filteredProject);
+        console.log(filteredProject);
       }
     };
 
     getRepoTree();
   }, []);
 
-  // const processAndSortProjectsObject = (
-  //   input: ProjectInputObject
-  // ): ProjectOutputItem[] => {
-  //   const entries = Object.entries(input);
-  //   const mappedEntries = entries.map(([key, value]) => {
-  //     const [number, title, bg_color, text_color] = key.split("--");
-  //     return {
-  //       title,
-  //       bg_color,
-  //       text_color,
-  //       covers:
-  //         Object.keys(value).length > 0 &&
-  //         value["covers"] &&
-  //         Object.keys(value["covers"]).length > 0
-  //           ? Object.keys(value["covers"]).map(
-  //               (item) =>
-  //                 `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/covers/` +
-  //                 item
-  //             )
-  //           : [],
-  //       images:
-  //         Object.keys(value).length > 1
-  //           ? [
-  //               `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/` +
-  //                 Object.keys(value).filter(
-  //                   (item) => item.split(".")[0] === "cover"
-  //                 ),
-  //               ...Object.keys(value)
-  //                 .filter(
-  //                   (item) =>
-  //                     item !== "covers" && item.split(".")[0] !== "cover"
-  //                 ) // Filter out "cover" and non-numeric keys
-  //                 .sort((a, b) => {
-  //                   const aNum = a.split(".")[0]; // Extract numeric part of the filename
-  //                   const bNum = b.split(".")[0];
-  //                   return parseInt(aNum, 10) - parseInt(bNum, 10); // Sort numerically
-  //                 })
-  //                 .map(
-  //                   (item) =>
-  //                     `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/projects/${key}/` +
-  //                     item
-  //                 ),
-  //             ]
-  //           : [],
-  //       number: parseInt(number, 10),
-  //     };
-  //   });
+  const [currentPath, setCurrentPath] = useState<string[]>([]);
 
-  //   const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-  //   return sortedEntries.map(({ number, ...rest }) => rest);
-  // };
+  // Helper function to get the current folder contents
+  const getCurrentFolder = (): FolderStructure | string => {
+    if (!fullProject) return {};
+    return currentPath.reduce(
+      (acc: FolderStructure, key) => acc[key] as FolderStructure,
+      fullProject
+    );
+  };
 
-  // const processAndSortHomeCoversObject = (
-  //   input: CoverInputObject
-  // ): CoverOutputItem[] => {
-  //   const entries = Object.entries(input);
-  //   const mappedEntries = entries.map(([key, value]) => {
-  //     const [number, title, subTitle] = key.split("--");
-  //     return {
-  //       title,
-  //       subTitle,
-  //       images: Object.keys(value).map(
-  //         (item) =>
-  //           `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/home/${key}/` +
-  //           item
-  //       ),
-  //       number: parseInt(number, 10), // Parse the number to use for sorting
-  //     };
-  //   });
+  const handleFolderClick = (folderName: string) => {
+    setCurrentPath([...currentPath, folderName]);
+  };
 
-  //   const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-  //   return sortedEntries.map(({ number, ...rest }) => rest);
-  // };
+  const handleBackClick = () => {
+    setCurrentPath(currentPath.slice(0, -1));
+  };
+  const renderContent = () => {
+    const currentFolder = getCurrentFolder();
 
-  // const processAndSortArchivesObject = (
-  //   input: ArchivesInputObject
-  // ): ArchivesOutputItem[] => {
-  //   const entries = Object.entries(input);
-  //   const mappedEntries = entries.map(([key, value]) => {
-  //     const [number, title, bg_color] = key.split("--");
-  //     return {
-  //       title,
-  //       bg_color,
-  //       images: Object.keys(value).map(
-  //         (item) =>
-  //           `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/${key}/` +
-  //           item
-  //       ),
-  //       number: parseInt(number, 10),
-  //     };
-  //   });
+    if (typeof currentFolder === "string") {
+      // Render an individual image
+      return (
+        <div
+          style={{
+            position: "relative",
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            padding: "10px",
+            marginBottom: "10px",
+            cursor: "pointer",
+            backgroundColor: "#f9f9f9",
+          }}
+        >
+          <button
+            style={{
+              position: "absolute",
+              top: "-10px",
+              left: "-10px",
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#fff",
+              border: "1px solid #000",
+              borderRadius: "50%",
+              cursor: "pointer",
+            }}
+            className="flex items-center justify-center"
+            onClick={(e) => {
+              console.log(2);
+              e.stopPropagation();
+              openPopup(currentFolder);
+            }}
+          >
+            <BiSolidPencil className="ml-[-1px]" color={"black"} size={13} />
+          </button>
+          <img
+            src={currentFolder}
+            alt="File"
+            style={{ maxWidth: "100%", height: "auto" }}
+          />
+          <Popup isOpen={popupOpen} onClose={closePopup} name={popupName} />
+        </div>
+      );
+    }
 
-  //   const sortedEntries = mappedEntries.sort((a, b) => a.number - b.number);
-  //   return sortedEntries.map(({ number, ...rest }) => rest);
-  // };
+    // Render folder or multiple items
+    return (
+      <div className="flex flex-row gap-5 mt-10">
+        {Object.keys(currentFolder).map((key) => (
+          <div
+            key={key}
+            style={{
+              position: "relative",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              padding: "10px",
+              marginBottom: "10px",
+              cursor: "pointer",
+              backgroundColor: "#f9f9f9",
+            }}
+            onClick={() => handleFolderClick(key)}
+          >
+            {key !== "about" && key !== "archives" && key !== "projects" && <button
+              style={{
+                position: "absolute",
+                top: "-10px",
+                left: "-10px",
+                width: "20px",
+                height: "20px",
+                backgroundColor: "#fff",
+                border: "1px solid #000",
+                borderRadius: "50%",
+                cursor: "pointer",
+              }}
+              className="flex items-center justify-center"
+              onClick={(e) => {
+                console.log(1);
+                e.stopPropagation();
+                openPopup(key);
+              }}
+            >
+              <BiSolidPencil className="ml-[-1px]" color={"black"} size={13} />
+            </button>}
+            <span>{key}</span>
+          </div>
+        ))}
+        <Popup isOpen={popupOpen} onClose={closePopup} name={popupName} />
+      </div>
+    );
+  };
+
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupName, setPopupName] = useState<string>("");
+
+  const openPopup = (name: string) => {
+    setPopupName(name);
+    setPopupOpen(true);
+  };
+
+  const closePopup = () => {
+    setPopupOpen(false);
+  };
+
+  if (!fullProject) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div className="dashboard">
-      <h1>Welcome to the Dashboard</h1>
-      <button onClick={onLogout} className="button">
-        Logout
-      </button>
+    <div className="w-[100vw] h-[100vh]">
+      <div
+        className="w-[100%] h-[63px] flex absolute top-0 left-0"
+        style={{ borderBottom: "1px solid #ccc" }}
+      >
+        <div className="h-[100%] flex items-center ml-[30px] font-[500] text-[20px]">
+          <div>Project Dashboard</div>
+        </div>
+        <button onClick={onLogout} className="button absolute top-3 right-3">
+          Logout
+        </button>
+      </div>
+
+      <div className="w-[100%] h-[calc(100%-63px)] absolute left-0 top-[63px] px-[30px] flex items-center justify-center">
+        {currentPath.length > 0 && (
+          <button
+            onClick={handleBackClick}
+            className="button absolute top-3 left-3"
+          >
+            Back
+          </button>
+        )}
+        {renderContent()}
+      </div>
     </div>
   );
 };
