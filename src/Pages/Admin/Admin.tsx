@@ -160,15 +160,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
     const getRepoTree = async () => {
       const fullRepo = await fetchFullRepoTree("JosephGoff", "js-portfolio");
-      console.log(fullRepo)
       if (fullRepo && Object.keys(fullRepo).length > 0 && fullRepo["public"]) {
-        console.log("yes")
         if (
           Object.keys(fullRepo["public"]).length > 0 &&
           fullRepo["public"]["assets"]
         ) {
-          console.log("yes2")
-
           const fullProject = fullRepo["public"]["assets"];
           // setProjectAssets(fullProject);
           console.log(fullProject)
