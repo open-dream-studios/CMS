@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router } from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import Home from "./Pages/Home/Home";
@@ -22,6 +22,7 @@ import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
 // import yaml from "js-yaml";
 import axios from "axios";
+import Admin from "./Pages/Admin/Admin";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -43,8 +44,8 @@ export interface SlideUpProjectPageProps {
 }
 
 export interface TreeNode {
-  children: { [key: string]: TreeNode }; // Nested folders
-  images: ImageResource[]; // Images within a folder
+  children: { [key: string]: TreeNode };
+  images: ImageResource[];
 }
 
 interface ImageResource {
@@ -185,7 +186,6 @@ const App = () => {
   const { selectedArchiveGroup, setSelectedArchiveGroup } =
     useSelectedArchiveGroupStore();
   const [loading, setLoading] = useState(true);
-
 
   // const fetchFolderContents = async (
   //   folderId: string | undefined
@@ -360,12 +360,7 @@ const App = () => {
   //   fetchTree();
   // }, []);
 
-
-
-
-
-
-   useEffect(() => {
+  useEffect(() => {
     const fetchImages = async () => {
       try {
         // Fetch Cloudinary images
@@ -405,16 +400,99 @@ const App = () => {
           return root;
         };
 
+        const sortItems = (projectTree: any) => {
+          let newTree = projectTree;
+          type Entry = {
+            title: string;
+            subTitle?: string;
+            bg_color?: string;
+            text_color?: string;
+            images: string[];
+            number?: number;
+            img_number?: number;
+          };
+
+          if (
+            Object.keys(projectTree.children).length > 0 &&
+            projectTree.children["js-portfolio"] &&
+            Object.keys(projectTree.children["js-portfolio"].children).length >
+              0
+          ) {
+            const pagesObject = projectTree.children["js-portfolio"].children;
+
+            // console.log(pagesObject)
+            // Sort each page
+
+            const pageNames = Object.keys(pagesObject);
+            for (let i = 0; i < pageNames.length; i++) {
+              const currentPage = pagesObject[pageNames[i]];
+
+              // ABOUT
+              // if (pageNames[i] === "about") {
+              //   console.log(currentPage)
+              // }
+
+              // PROJECTS
+              if (
+                pageNames[i] === "projects" &&
+                Object.keys(currentPage.children).length > 0
+              ) {
+                const projectsObject = currentPage.children;
+                const projectNames = Object.keys(projectsObject);
+                let projectsArray = [];
+                // for (let i=0;i<projectNames.length;i++) {
+
+                // }
+
+                // const mappedEntries: Entry[] = projectNames.map((folder: any) => {
+                //   const [number, title, bg_color, text_color] = folder.split("--");
+
+                //   const currentChildren = projectsObject[folder]
+                //   console.log(currentChildren)
+
+                // const mappedImages: Entry[] = folder.children.map((img: any) => {
+                //   const imgName = img.name.split(".")[0];
+                //   const img_number = imgName.split("--")[0];
+                //   return {
+                //     url: BASE_URL + img.id,
+                //     img_number: parseInt(img_number, 10),
+                //   }
+                // });
+
+                // const sortedImages = mappedImages
+                //   .sort((a: any, b: any) => a.img_number - b.img_number)
+                //   .map(({ img_number, ...rest }) => rest);
+
+                // return {
+                //   title,
+                //   bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
+                //   text_color: text_color === undefined ? "#000000" : text_color,
+                //   images: sortedImages.map((img: any) => img.url),
+                //   number: parseInt(number, 10),
+                // };
+                // });
+
+                // const sortedEntries = mappedEntries.sort(
+                //   (a: any, b: any) => a.number - b.number
+                // );
+                // return sortedEntries.map(({ number, ...rest }) => rest);
+              }
+
+              // ARCHIVES
+              // if (pageNames[i] === "archives") {
+              //   console.log(currentPage)
+              // }
+            }
+
+            // HOME
+          }
+          return newTree;
+        };
+
         // Build the tree and set it in state
         const tree = buildTree(assetsList);
-        if (Object.keys(tree.children).length > 0 && tree.children["js-portfolio"]) { 
-          const pagesObject = tree.children["js-portfolio"]
-          // console.log(pagesObject)
-          // console.log("Cloudinary Tree Structure:", JSON.stringify(pagesObject, null, 2));
-           
-          setProjectAssets(pagesObject);
-          console.log(pagesObject)
-        }
+        const newProjectAssets = sortItems(tree);
+        // setProjectAssets(newProjectAssets);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching images:", error);
@@ -424,16 +502,6 @@ const App = () => {
 
     fetchImages();
   }, []);
-
-
-
-
-
-
-
-
-
-
 
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
   const [incomingPageDecision, setIncomingPageDecision] =
@@ -835,9 +903,12 @@ const App = () => {
 
 const Root = () => (
   <>
-    <Router>
-      <App />
-    </Router>
+  <Router>
+    <Routes>
+      <Route path="/edit" element={<Admin />} />
+      <Route path="/*" element={<App />} />
+    </Routes>
+  </Router>
   </>
 );
 
