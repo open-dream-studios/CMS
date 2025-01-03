@@ -6,9 +6,10 @@ const Admin = () => {
     const token = process.env.REACT_APP_GIT_PAT
     const owner = 'JosephGoff'; 
     const repo = "js-portfolio"; 
-    const sourceFolder = 'test';
-    const destinationFolder = 'test2';
+    const sourceFolder = 'test.png';
+    const destinationFolder = 'test2.png';
     const branch = 'master'; 
+    const isImage = true
 
     const fetchFolderContents = async (path: string) => {
       const response = await fetch(
@@ -24,8 +25,8 @@ const Admin = () => {
       if (!response.ok) {
         throw new Error(`Failed to fetch contents of ${path}`);
       }
-
-      return response.json();
+      
+      return isImage ? await response.json() : response.json();
     };
 
     const copyFile = async (sourcePath: string, destinationPath: string, sha: any) => {
@@ -68,6 +69,12 @@ const Admin = () => {
     };
 
     const copyFolderContents = async (currentPath: string, newBasePath: string) => {
+      if (isImage) {
+        const fileContent = await fetchFolderContents(currentPath);
+        await copyFile(currentPath, newBasePath, fileContent.sha);
+        return; 
+      }
+
       const contents = await fetchFolderContents(currentPath);
 
       for (const item of contents) {
@@ -82,7 +89,6 @@ const Admin = () => {
     };
 
     try {
-      // Start copying folder contents
       await copyFolderContents(sourceFolder, destinationFolder);
       console.log(`Folder copied from ${sourceFolder} to ${destinationFolder} successfully!`);
     } catch (error) {
