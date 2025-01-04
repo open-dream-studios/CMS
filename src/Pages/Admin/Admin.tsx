@@ -33,6 +33,23 @@ import { IoStarOutline } from "react-icons/io5";
 import Upload from "./Upload";
 import ColorPicker from "./ColorPicker";
 
+export function validateColor(input: string) {
+  const isColorName = (color: string) => {
+    const testElement = document.createElement("div");
+    testElement.style.color = color;
+    return testElement.style.color !== "";
+  };
+  const isHexCode = (color: string) =>
+    /^#?[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(color);
+  if (isColorName(input)) {
+    return input;
+  }
+  if (isHexCode(input)) {
+    return input.startsWith("#") ? input : `#${input}`;
+  }
+  return "white";
+}
+
 export type FileTree = {
   [key: string]: string | FileTree | FileTree[] | string[];
 };
@@ -380,7 +397,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       destinationPath: string,
       sha: any
     ) => {
-      const fileContentResponse = await fetch(
+      const fetchWithRetry = async (url: string, options: any, retries = 3) => {
+        for (let i = 0; i < retries; i++) {
+          const response = await fetch(url, options);
+
+          if (response.status === 403) {
+            const rateLimitReset = response.headers.get("x-ratelimit-reset");
+            if (rateLimitReset) {
+              const waitTime = parseInt(rateLimitReset) * 1000 - Date.now();
+              console.warn(
+                `Rate limit hit. Retrying after ${waitTime / 1000}s.`
+              );
+              await new Promise((resolve) => setTimeout(resolve, waitTime));
+            }
+          } else if (response.ok) {
+            return response;
+          } else {
+            console.error(`Request failed with status ${response.status}`);
+          }
+        }
+        throw new Error("Failed after maximum retries.");
+      };
+
+      const fileContentResponse = await fetchWithRetry(
         `https://api.github.com/repos/${owner}/${repo}/contents/${sourcePath}`,
         {
           headers: {
@@ -396,8 +435,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
       const fileContent = await fileContentResponse.json();
 
-      // Create file in the new location
-      const createResponse = await fetch(
+      let content = fileContent.content;
+
+      if (!content && fileContent.download_url) {
+        const downloadResponse = await fetch(fileContent.download_url);
+        const buffer = await downloadResponse.arrayBuffer();
+        content = btoa(
+          String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer)))
+        );
+      }
+
+      const createResponse = await fetchWithRetry(
         `https://api.github.com/repos/${owner}/${repo}/contents/${destinationPath}`,
         {
           method: "PUT",
@@ -407,7 +455,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           },
           body: JSON.stringify({
             message: `Copying file from ${sourcePath} to ${destinationPath}`,
-            content: fileContent.content,
+            content: content,
             branch,
           }),
         }
@@ -422,23 +470,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       currentPath: string,
       newBasePath: string
     ) => {
-      if (isImage) {
-        const fileContent = await fetchFolderContents(currentPath);
-        await copyFile(currentPath, newBasePath, fileContent.sha);
-        return;
-      }
-
       const contents = await fetchFolderContents(currentPath);
 
-      for (const item of contents) {
-        const newPath = `${newBasePath}/${item.name}`;
-
-        if (item.type === "file") {
-          await copyFile(item.path, newPath, item.sha);
-        } else if (item.type === "dir") {
-          await copyFolderContents(item.path, newPath);
-        }
-      }
+      await Promise.all(
+        contents.map(async (item: any) => {
+          const newPath = `${newBasePath}/${item.name}`;
+          console.log(`Copying ${item.type}: ${item.path} to ${newPath}`);
+          if (item.type === "file") {
+            await copyFile(item.path, newPath, item.sha);
+          } else if (item.type === "dir") {
+            await copyFolderContents(item.path, newPath);
+          }
+        })
+      );
     };
 
     try {
@@ -577,7 +621,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const newPath = "public/assets/" + selectedPath + finalName;
       const isImage = originalPath.split("/").pop()?.includes(".") || false;
       await copyItem(originalPath, newPath, isImage);
-      await deleteItem(originalPath, isImage);
+      // await deleteItem(originalPath, isImage);
       getRepoTree();
     }
   };
@@ -588,21 +632,73 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     details[5] = details[5] === "false" ? "true" : "false";
     const originalPath = "public/assets/projects/" + folder;
     const newPath = "public/assets/projects/" + details.join("--");
-    await copyItem(originalPath, newPath, false);
-    await deleteItem(originalPath, false);
+    console.log(originalPath, newPath);
+    try {
+      await copyItem(originalPath, newPath, false);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+    try {
+      await deleteItem(originalPath, false);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
     getRepoTree();
   };
 
+  const handleProjectColorsChange = async (folder: string) => {
+    if (
+      colorToChange.length === 2 &&
+      (colorToChange[0] !== null || colorToChange[1] !== null)
+    ) {
+      let details = folder.split("--");
+      if (details.length !== 6) return;
+      if (colorToChange[0] !== null) {
+        details[3] = colorToChange[0];
+      }
+      if (colorToChange[1] !== null) {
+        details[4] = colorToChange[1];
+      }
+      const originalPath = "public/assets/projects/" + folder;
+      const newPath =
+        "public/assets/projects/" + details.join("--").replace("#", "");
+      try {
+        await copyItem(originalPath, newPath, false);
+      } catch (error) {
+        console.log(error);
+        return;
+      }
+      try {
+        await deleteItem(originalPath, false);
+      } catch (error) {
+        console.log(error);
+        return;
+      }
+      getRepoTree();
+
+      setChangedColorItems({});
+      setColorToChange([null, null]);
+    }
+  };
+
   const [changedColorItems, setChangedColorItems] = useState<any>({});
+  const [colorToChange, setColorToChange] = useState<any>([null, null]);
   const handleColorChange = (key: any, primary: boolean, newValue: string) => {
-    const index = primary? 0 : 1
-    const updatedValue = changedColorItems[key]
-    updatedValue[index] = newValue
-    setChangedColorItems((prev: any) => ({ ...prev, [key]: newValue }));
+    const index = primary ? 0 : 1;
+    const colorToChangeCopy = colorToChange;
+    colorToChangeCopy[index] = newValue;
+    setColorToChange(colorToChangeCopy);
+    if (Object.keys(changedColorItems).length >= 1 && !changedColorItems[key]) {
+      setChangedColorItems({});
+    }
+    setChangedColorItems((prev: any) => ({ ...prev, [key]: true }));
   };
 
   useEffect(() => {
     setChangedColorItems({});
+    setColorToChange([null, null]);
   }, [currentPath]);
 
   const renderContent = () => {
@@ -765,7 +861,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                                 className="w-[25px] h-[25px] relative"
                               >
                                 <ColorPicker
-                                  initialColor={details[4]}
+                                  initialColor={details[3]}
                                   primary={true}
                                   onColorChange={(
                                     primary: boolean,
@@ -798,9 +894,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                                     color: "black",
                                     border: "1px solid black",
                                   }}
-                                  onClick={() => {
-                                    // updateColors();
-                                    console.log(changedColorItems)
+                                  onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    handleProjectColorsChange(key);
                                   }}
                                 >
                                   Done
@@ -1031,8 +1127,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         )}
 
         <div
-          className={`h-[100%] flex items-center ml-${
-            currentPath.length > 0 ? "[100px]" : "[30px]"
+          className={`h-[100%] flex items-center ${
+            currentPath.length > 0 ? "ml-[100px]" : "ml-[30px]"
           } font-[500] text-[20px]`}
         >
           <div>Project Dashboard</div>

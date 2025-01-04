@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { validateColor } from "./Admin";
 
 interface ColorPickerProps {
   initialColor: string;
@@ -10,7 +11,7 @@ const ColorPicker: React.FC<ColorPickerProps & { onColorChange: (primary: boolea
   onColorChange,
   primary,
 }) => {
-  const [color, setColor] = useState(initialColor);
+  const [color, setColor] = useState(validateColor(initialColor));
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setColor(e.target.value);
