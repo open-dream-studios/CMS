@@ -51,6 +51,23 @@ export function validateColor(input: string) {
   return "white";
 }
 
+const unSanitizeTitle = (title: string, subTitle: boolean) => {
+  if (subTitle) {
+    title = title.toUpperCase();
+  } else {
+    title = title
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join("_");
+  }
+  const newTitle = title.replaceAll("_", " ").trim();
+  return newTitle;
+};
+
+const sanitizeTitle = (title: string) => {
+  return title.trim().replaceAll(" ", "_").toLowerCase();
+};
+
 export type FileTree = {
   [key: string]: string | FileTree | FileTree[] | string[];
 };
@@ -93,26 +110,30 @@ export type ArchivesOutputItem = {
 interface PopupProps {
   isOpen: boolean;
   onClose: () => void;
-  name: string;
-  onRename: (newName: string) => void;
+  title: string;
+  desc: string;
+  onRename: (newTitle: string, newDesc: string) => void;
   popupTrigger: number;
 }
 
 const Popup: React.FC<PopupProps> = ({
   isOpen,
   onClose,
-  name,
+  title,
+  desc,
   onRename,
   popupTrigger,
 }) => {
-  const [newName, setNewName] = useState(name);
+  const [newTitle, setNewTitle] = useState(title);
+  const [newDesc, setNewDesc] = useState(desc);
 
   useEffect(() => {
-    setNewName(name);
-  }, [name, popupTrigger]);
+    setNewTitle(title);
+    setNewDesc(desc);
+  }, [title, desc, popupTrigger]);
 
   const handleRename = () => {
-    onRename(newName);
+    onRename(sanitizeTitle(newTitle), sanitizeTitle(newDesc));
     onClose();
   };
 
@@ -138,33 +159,33 @@ const Popup: React.FC<PopupProps> = ({
       }}
     >
       <div
+        className="flex flex-col p-[20px] w-[300px]"
         style={{
           backgroundColor: "#fff",
-          padding: "20px",
           borderRadius: "8px",
-          width: "300px",
-          display: "flex",
-          flexDirection: "column",
         }}
       >
+        <p className="font-[500] text-[14px] mb-[1px]">
+          {desc === "" ? "Image Name" : "Title"}
+        </p>
         <textarea
           className="py-1 px-2"
           style={{
             width: "100%",
-            height: "100px",
+            height: "60px",
             resize: "none",
             overflowY: "auto",
             border: "1px solid #CCC",
             borderRadius: "3px",
           }}
-          value={newName}
+          value={newTitle}
           onChange={(e) => {
             if (
               e.target.value
                 .split("")
                 .every((item) => isValidFileNameChar(item))
             ) {
-              setNewName(e.target.value.trim());
+              setNewTitle(e.target.value);
             }
           }}
           onKeyDown={(e) => {
@@ -173,7 +194,40 @@ const Popup: React.FC<PopupProps> = ({
             }
           }}
         />
-        <div className="flex flex-row mt-[9px]">
+        {desc !== "" && (
+          <>
+            <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
+              Description
+            </p>
+            <textarea
+              className="py-1 px-2"
+              style={{
+                width: "100%",
+                height: "90px",
+                resize: "none",
+                overflowY: "auto",
+                border: "1px solid #CCC",
+                borderRadius: "3px",
+              }}
+              value={newDesc}
+              onChange={(e) => {
+                if (
+                  e.target.value
+                    .split("")
+                    .every((item) => isValidFileNameChar(item))
+                ) {
+                  setNewDesc(e.target.value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleRename();
+                }
+              }}
+            />
+          </>
+        )}
+        <div className="flex flex-row mt-[13px]">
           <button
             className="w-[48.5%] mr-[3%] p-[10px] cursor-pointer"
             style={{
@@ -263,6 +317,92 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const branch = "master";
   const token = process.env.REACT_APP_GIT_PAT;
 
+  // APP.JSON
+  const [appFile, setAppFile] = useState<any>({});
+
+  const fetchAppFileContents = async (blobUrl: string) => {
+    try {
+      const response = await fetch(blobUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch blob: ${blobUrl}`);
+      }
+
+      const data = await response.json();
+      const fileContent = atob(data.content);
+
+      if (fileContent) {
+        try {
+          const parsedContent = JSON.parse(fileContent);
+          setAppFile(parsedContent);
+        } catch (error) {
+          console.error("Error parsing JSON content:", error);
+        }
+      }
+
+      return fileContent;
+    } catch (error) {
+      console.error("Error fetching file contents:", error);
+    }
+  };
+
+  async function updateAppFile() {
+    const filePath = "src/app.json";
+    try {
+      const fileInfoUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+      const headers = { Authorization: `Bearer ${token}` };
+      const { data: fileInfo } = await axios.get(fileInfoUrl, { headers });
+      const fileSha = fileInfo.sha;
+      const updatedContent = btoa(
+        typeof appFile === "string" ? appFile : JSON.stringify(appFile)
+      );
+      const updateFileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+      const commitMessage = "Update app.json with new content";
+      await axios.put(
+        updateFileUrl,
+        {
+          message: commitMessage,
+          content: updatedContent,
+          sha: fileSha,
+          branch,
+        },
+        { headers }
+      );
+      console.log("File updated successfully");
+    } catch (error) {
+      console.error("Error updating the file:", error);
+    }
+  }
+
+  const getFolderItem = (key: string) => {
+    const pageName =
+      currentPath[0] === "archives"
+        ? "archives"
+        : currentPath[0] === "projects"
+        ? "projects"
+        : null;
+    if (pageName === null) return null;
+    if (Object.keys(appFile).length === 0) return null;
+    const pages = appFile["pages"];
+    if (!pages || Object.keys(pages).length === 0) return null;
+    const page = pages[pageName];
+    if (!page || page.length === 0) return null;
+    const projectItem = page.find((item: any) => item.id === key);
+    if (!projectItem) return null;
+    return projectItem;
+  };
+
+  const updateAppData = async () => {
+    await updateAppFile();
+    await getRepoTree();
+  };
+
+  // FULL REPOSITORY
   const fetchFullRepoTree = async (
     owner: string,
     repo: string,
@@ -308,6 +448,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const { icons, ...filteredProject } = fullRepo["public"]["assets"];
       setFullProject(filteredProject);
     }
+    if (fullRepo["src"]["app.json"]) {
+      const appFileURL = fullRepo["src"]["app.json"];
+      await fetchAppFileContents(appFileURL);
+    }
   };
 
   useEffect(() => {
@@ -316,7 +460,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const [currentPath, setCurrentPath] = useState<string[]>([]);
 
-  // Helper function to get the current folder contents
   const getCurrentFolder = (): FolderStructure | string => {
     if (!fullProject) return {};
     return currentPath.reduce(
@@ -342,7 +485,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   // POPUP
   const [popupOpen, setPopupOpen] = useState(false);
-  const [popupName, setPopupName] = useState("");
+  const [popupKey, setPopupKey] = useState("");
+  const [popupTitle, setPopupTitle] = useState("");
+  const [popupDesc, setPopupDesc] = useState("");
   const [popupTrigger, setPopupTrigger] = useState(0);
   const [popupExtention, setPopupExtention] = useState("");
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
@@ -352,10 +497,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const extention = name.split(".").pop() || "";
       const imgName = name.slice(0, name.lastIndexOf("."));
       setPopupExtention(extention);
-      setPopupName(imgName);
+      setPopupTitle(imgName);
+      setPopupKey(imgName);
+      setPopupDesc("");
     } else {
+      const projectItem = getFolderItem(name);
+      if (projectItem === null) return;
       setPopupExtention("");
-      setPopupName(name);
+      setPopupKey(name);
+      setPopupTitle(unSanitizeTitle(projectItem.title, false));
+      setPopupDesc(unSanitizeTitle(projectItem.description, true));
     }
     setPopupTrigger((prev) => prev + 1);
     setSelectedPath(path);
@@ -371,131 +522,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       "public/assets/" + path,
       path.split("/").pop().includes(".")
     );
-    getRepoTree();
+    await getRepoTree();
   };
-
-  // const copyItem = async (path: string, newPath: string, isImage: boolean) => {
-  //   const fetchFolderContents = async (path: string) => {
-  //     const response = await fetch(
-  //       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           Accept: "application/vnd.github.v3+json",
-  //         },
-  //       }
-  //     );
-
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to fetch contents of ${path}`);
-  //     }
-
-  //     return isImage ? await response.json() : response.json();
-  //   };
-
-  //   const copyFile = async (
-  //     sourcePath: string,
-  //     destinationPath: string,
-  //     sha: any
-  //   ) => {
-  //     if (sourcePath === destinationPath) {
-  //       console.error("Source and destination are the same, skipping copy: ", sourcePath, destinationPath);
-  //     return
-  //     }
-  //     const fetchWithRetry = async (url: string, options: any, retries = 3) => {
-  //       for (let i = 0; i < retries; i++) {
-  //         const response = await fetch(url, options);
-
-  //         if (response.status === 403) {
-  //           const rateLimitReset = response.headers.get("x-ratelimit-reset");
-  //           if (rateLimitReset) {
-  //             const waitTime = parseInt(rateLimitReset) * 1000 - Date.now();
-  //             console.warn(
-  //               `Rate limit hit. Retrying after ${waitTime / 1000}s.`
-  //             );
-  //             await new Promise((resolve) => setTimeout(resolve, waitTime));
-  //           }
-  //         } else if (response.ok) {
-  //           return response;
-  //         } else {
-  //           console.error(`Request failed with status ${response.status}`);
-  //         }
-  //       }
-  //       throw new Error("Failed after maximum retries.");
-  //     };
-
-  //     const fileContentResponse = await fetchWithRetry(
-  //       `https://api.github.com/repos/${owner}/${repo}/contents/${sourcePath}`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           Accept: "application/vnd.github.v3+json",
-  //         },
-  //       }
-  //     );
-
-  //     if (!fileContentResponse.ok) {
-  //       throw new Error(`Failed to fetch file content for ${sourcePath}`);
-  //     }
-
-  //     const fileContent = await fileContentResponse.json();
-
-  //     let content = fileContent.content;
-
-  //     if (!content && fileContent.download_url) {
-  //       const downloadResponse = await fetch(fileContent.download_url);
-  //       const buffer = await downloadResponse.arrayBuffer();
-  //       content = btoa(
-  //         String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer)))
-  //       );
-  //     }
-
-  //     const createResponse = await fetchWithRetry(
-  //       `https://api.github.com/repos/${owner}/${repo}/contents/${destinationPath}`,
-  //       {
-  //         method: "PUT",
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           Accept: "application/vnd.github.v3+json",
-  //         },
-  //         body: JSON.stringify({
-  //           message: `Copying file from ${sourcePath} to ${destinationPath}`,
-  //           content: content,
-  //           branch,
-  //         }),
-  //       }
-  //     );
-
-  //     if (!createResponse.ok) {
-  //       throw new Error(`Failed to copy file: ${sourcePath}`);
-  //     }
-  //   };
-
-  //   const copyFolderContents = async (
-  //     currentPath: string,
-  //     newBasePath: string
-  //   ) => {
-  //     const contents = await fetchFolderContents(currentPath);
-
-  //     await Promise.all(
-  //       contents.map(async (item: any) => {
-  //         const newPath = `${newBasePath}/${item.name}`;
-  //         console.log(`Copying ${item.type}: ${item.path} to ${newPath}`);
-  //         if (item.type === "file") {
-  //           await copyFile(item.path, newPath, item.sha);
-  //         } else if (item.type === "dir") {
-  //           await copyFolderContents(item.path, newPath);
-  //         }
-  //       })
-  //     );
-  //   };
-
-  //   try {
-  //     await copyFolderContents(path, newPath);
-  //   } catch (error) {
-  //     console.error("Error copying item:", error);
-  //   }
-  // };
 
   const copyFolderOnGithub = async (
     sourcePath: string,
@@ -724,96 +752,82 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     return namesList;
   };
 
-  const handleRename = async (newName: string) => {
-    let originalName = "";
-    let finalName = "";
-    let folderContents = [];
-
-    if (popupExtention !== "") {
-      originalName = popupName + "." + popupExtention;
-      finalName = newName + "." + popupExtention;
-      folderContents = collectImgNames();
-    } else {
-      originalName = popupName;
-      finalName = newName;
-      folderContents = collectFolderNames();
-    }
-
-    if (originalName !== finalName && folderContents.includes(finalName)) {
-      alert("Name is already used in this folder");
-      return;
-    }
-    if (folderContents.length > 0 && originalName !== finalName) {
-      const originalPath = "public/assets/" + selectedPath + originalName;
-      const newPath = "public/assets/" + selectedPath + finalName;
-      const isImage = originalPath.split("/").pop()?.includes(".") || false;
-
-      if (isImage) {
-        await copyImageOnGithub(originalPath, newPath);
-        await deleteItem(originalPath, isImage);
-      } else {
-        await copyFolderOnGithub(originalPath, newPath);
-        await deleteItem(originalPath, isImage);
+  const handleRename = async (newTitle: string, newDesc: string) => {
+    if (popupExtention === "") {
+      const projectItem = getFolderItem(popupKey);
+      const pageName =
+        currentPath[0] === "archives"
+          ? "archives"
+          : currentPath[0] === "projects"
+          ? "projects"
+          : null;
+      if (pageName === null || projectItem === null) return;
+      const index = appFile["pages"][pageName].findIndex(
+        (item: any) => item === projectItem
+      );
+      const folderContents = collectFolderNames();
+      const folderNames = folderContents.map(
+        (item, index) => appFile["pages"][pageName][index].title
+      );
+      if (folderNames.includes(newTitle)) {
+        alert("That name is already being used in this folder");
+        return;
       }
-      getRepoTree();
+      const appFileCopy = appFile;
+      appFileCopy["pages"][pageName][index].title = newTitle;
+      appFileCopy["pages"][pageName][index].description = newDesc;
+      setAppFile(appFileCopy);
+      await updateAppData();
+    } else {
+      const folderContents = collectImgNames();
+      const originalName = popupKey + "." + popupExtention;
+      const imageName = newTitle + "." + popupExtention;
+      if (popupTitle !== newTitle && folderContents.length > 0) {
+        if (folderContents.includes(imageName)) {
+          alert("That name is already being used in this folder");
+          return;
+        }
+        const originalPath = "public/assets/" + selectedPath + originalName;
+        const newPath = "public/assets/" + selectedPath + imageName;
+        await copyImageOnGithub(originalPath, newPath);
+        await deleteItem(originalPath, true);
+      }
+      await getRepoTree();
     }
   };
 
-  const handleStarChange = async (folder: string) => {
-    let details = folder.split("--");
-    if (details.length !== 6) return;
-    details[5] = details[5] === "false" ? "true" : "false";
-    const originalPath = "public/assets/projects/" + folder;
-    const newPath = "public/assets/projects/" + details.join("--");
-    console.log(originalPath, newPath);
-    try {
-      await copyFolderOnGithub(originalPath, newPath);
-    } catch (error) {
-      console.log(error);
-      return;
-    }
-    try {
-      await deleteItem(originalPath, false);
-    } catch (error) {
-      console.log(error);
-      return;
-    }
-    getRepoTree();
+  const handleStarChange = async (key: string) => {
+    const projectItem = getFolderItem(key);
+    if (projectItem === null) return;
+    const appFileCopy = appFile;
+    const index = appFileCopy["pages"]["projects"].findIndex(
+      (item: any) => item === projectItem
+    );
+    appFileCopy["pages"]["projects"][index].home_page = !projectItem.home_page;
+    await updateAppData();
   };
 
-  const handleProjectColorsChange = async (folder: string) => {
+  const handleProjectColorsChange = async (key: string) => {
     if (
       colorToChange.length === 2 &&
       (colorToChange[0] !== null || colorToChange[1] !== null)
     ) {
-      let details = folder.split("--");
-      if (details.length !== 6) return;
+      const projectItem = getFolderItem(key);
+      if (projectItem === null) return;
+      const appFileCopy = appFile;
+      const index = appFileCopy["pages"]["projects"].findIndex(
+        (item: any) => item === projectItem
+      );
       if (colorToChange[0] !== null) {
-        details[3] = colorToChange[0];
+        appFileCopy["pages"]["projects"][index].bg_color = colorToChange[0];
       }
       if (colorToChange[1] !== null) {
-        details[4] = colorToChange[1];
+        appFileCopy["pages"]["projects"][index].text_color = colorToChange[1];
       }
-      const originalPath = "public/assets/projects/" + folder;
-      const newPath =
-        "public/assets/projects/" + details.join("--").replace("#", "");
-      try {
-        await copyFolderOnGithub(originalPath, newPath);
-      } catch (error) {
-        console.log(error);
-        return;
-      }
-      try {
-        await deleteItem(originalPath, false);
-      } catch (error) {
-        console.log(error);
-        return;
-      }
-      getRepoTree();
-
-      setChangedColorItems({});
-      setColorToChange([null, null]);
+      await updateAppData();
     }
+    setChangedColorItems({});
+    setColorToChange([null, null]);
   };
 
   const [changedColorItems, setChangedColorItems] = useState<any>({});
@@ -855,19 +869,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         style={{ backgroundColor: "red" }}
       >
         {Object.keys(currentFolder).map((key, index) => {
-          const details = key.split("--");
-          let badDetails = false;
-          if (
-            currentPath[0] === "projects" &&
-            key !== "covers" &&
-            details.length !== 6
-          ) {
-            badDetails = true;
-          }
-          if (currentPath[0] === "archives" && details.length !== 3) {
-            badDetails = true;
-          }
-
           const isSecondaryFolder =
             typeof currentFolder[key] !== "string" &&
             ((currentPath[0] === "projects" && key !== "covers") ||
@@ -882,8 +883,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             typeof currentFolder[key] !== "string" &&
             currentPath[0] === "archives";
 
-          const isStarred =
-            !badDetails && isProjectFolder ? JSON.parse(details[5]) : false;
+          let projectFound = true;
+          const projectItem = getFolderItem(key);
+          if (projectItem === null) {
+            projectFound = false;
+          }
 
           return (
             <div
@@ -936,16 +940,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                           />
                         </button>
 
-                        {isProjectFolder && (
+                        {isProjectFolder && projectFound && (
                           <button
                             className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
                             onClick={async (e) => {
                               e.stopPropagation();
                               await handleStarChange(key);
-                              getRepoTree();
+                              await getRepoTree();
                             }}
                           >
-                            {isStarred ? (
+                            {projectItem.home_page ? (
                               <IoStar
                                 className="mt-[-1px]"
                                 color={"green"}
@@ -976,7 +980,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     currentPath[0] === "projects" &&
                     key !== "covers" && (
                       <div className="h-[200px] w-[auto]">
-                        {badDetails ? (
+                        {!projectFound ? (
                           <>{key}</>
                         ) : (
                           <div
@@ -986,15 +990,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                               whiteSpace: "normal",
                             }}
                           >
-                            <p>{details[1]}</p>
-                            <p>{details[2]}</p>
+                            <p>{unSanitizeTitle(projectItem.title, false)}</p>
+                            <p>
+                              {unSanitizeTitle(projectItem.description, true)}
+                            </p>
                             <div className="flex flex-row gap-2 mt-[7px]">
                               <div
                                 onClick={(e: any) => e.stopPropagation()}
                                 className="w-[25px] h-[25px] relative"
                               >
                                 <ColorPicker
-                                  initialColor={details[3]}
+                                  initialColor={projectItem.bg_color}
                                   primary={true}
                                   onColorChange={(
                                     primary: boolean,
@@ -1009,7 +1015,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                                 className="w-[25px] h-[25px] relative"
                               >
                                 <ColorPicker
-                                  initialColor={details[4]}
+                                  initialColor={projectItem.text_color}
                                   primary={false}
                                   onColorChange={(
                                     primary: boolean,
@@ -1043,11 +1049,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   {typeof currentFolder[key] !== "string" &&
                     currentPath[0] === "archives" && (
                       <div className="h-[200px] w-[auto]">
-                        {badDetails ? (
+                        {!projectFound ? (
                           <>{key}</>
                         ) : (
                           <div>
-                            <p>{details[1]}</p>
+                            <p>{projectItem.title}</p>
                           </div>
                         )}
                       </div>
@@ -1065,7 +1071,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         <Popup
           isOpen={popupOpen}
           onClose={closePopup}
-          name={popupName}
+          title={popupTitle}
+          desc={popupDesc}
           onRename={handleRename}
           popupTrigger={popupTrigger}
         />
@@ -1195,7 +1202,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       Promise.all(readerPromises).then(async (images) => {
         setUploadPopup(false);
         await uploadToGitHub(images);
-        getRepoTree();
+        await getRepoTree();
       });
     } else {
       alert("Only image files are allowed!");
@@ -1203,10 +1210,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleAddFolder = async (folderName: string) => {
-    await uploadBlankImageToGitHub(folderName);
-    setTimeout(() => {
-      getRepoTree();
-    }, 1000);
+    // await uploadBlankImageToGitHub(folderName);
+    // setTimeout(async () => {
+    //   await getRepoTree();
+    // }, 1000);
+    console.log(appFile);
   };
 
   if (!fullProject) {
