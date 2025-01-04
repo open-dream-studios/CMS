@@ -28,6 +28,8 @@ import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 import { BiSolidPencil } from "react-icons/bi";
 import { FaTrash } from "react-icons/fa";
 import { IoCloseOutline } from "react-icons/io5";
+import { IoStar } from "react-icons/io5";
+import { IoStarOutline } from "react-icons/io5";
 import Upload from "./Upload";
 
 export type FileTree = {
@@ -306,8 +308,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const handleFolderClick = (folderName: string) => {
     if (folderName.includes(".")) {
-      const imagePath = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/public/assets/${currentPath.join("/") + "/" + folderName}`;
-      window.location.href = imagePath
+      const imagePath = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/public/assets/${
+        currentPath.join("/") + "/" + folderName
+      }`;
+      window.location.href = imagePath;
       return;
     }
     setCurrentPath([...currentPath, folderName]);
@@ -606,97 +610,175 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
     // Render folders or multiple items, including images
     return (
-      <div className="flex flex-row gap-5 mt-10">
-        {Object.keys(currentFolder).map((key) => (
-          <div key={key}>
-            {key !== "blank.png" && (
-              <div
-                style={{
-                  position: "relative",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  padding: "10px",
-                  marginBottom: "10px",
-                  cursor: "pointer",
-                  backgroundColor: "#f9f9f9",
-                }}
-                onClick={() => handleFolderClick(key)}
-              >
-                {key !== "about" &&
-                  key !== "archives" &&
-                  key !== "projects" && (
-                    <>
-                      <button
-                        style={{
-                          position: "absolute",
-                          top: "-10px",
-                          left: "-10px",
-                          width: "25px",
-                          height: "25px",
-                          backgroundColor: "#fff",
-                          border: "1px solid #000",
-                          borderRadius: "50%",
-                          cursor: "pointer",
-                        }}
-                        className="flex items-center justify-center"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const basePath = `${currentPath.join("/")}/`;
-                          openPopup(key, basePath);
-                        }}
-                      >
-                        <BiSolidPencil
-                          className="ml-[-0.5px]"
-                          color={"black"}
-                          size={13}
-                        />
-                      </button>
+      <div
+        className={`z-[997] flex flex-wrap gap-6 mt-6 ${
+          currentPath[0] === "about" ||
+          (currentPath[0] === "projects" && currentPath.length > 1) ||
+          (currentPath[0] === "archives" && currentPath.length > 1)
+            ? "pb-[35px] top-0 left-0 "
+            : ""
+        } min-h-[40px] justify-center absolute px-[22px]`}
+        style={{ backgroundColor: "red" }}
+      >
+        {Object.keys(currentFolder).map((key, index) => {
+          const details = key.split("--");
+          let badDetails = false;
+          if (
+            currentPath[0] === "projects" &&
+            key !== "covers" &&
+            details.length !== 6
+          ) {
+            badDetails = true;
+          }
+          if (currentPath[0] === "archives" && details.length !== 3) {
+            badDetails = true;
+          }
 
-                      <button
-                        style={{
-                          position: "absolute",
-                          top: "-10px",
-                          right: "-10px",
-                          width: "25px",
-                          height: "25px",
-                          backgroundColor: "#fff",
-                          border: "1px solid #000",
-                          borderRadius: "50%",
-                          cursor: "pointer",
-                        }}
-                        className="flex items-center justify-center"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Delete ${key}?`)) {
-                            const fullPath = `${currentPath.join("/")}/${key}`;
-                            handleDeleteItem(fullPath);
-                          }
-                        }}
-                      >
-                        <FaTrash
-                          className="ml-[0px]"
-                          color={"black"}
-                          size={11}
-                        />
-                      </button>
+          const isSecondaryFolder =
+            typeof currentFolder[key] !== "string" &&
+            ((currentPath[0] === "projects" && key !== "covers") ||
+              currentPath[0] === "archives");
+
+          const isProjectFolder =
+            typeof currentFolder[key] !== "string" &&
+            currentPath[0] === "projects" &&
+            key !== "covers";
+
+          const isArchivesFolder =
+            typeof currentFolder[key] !== "string" &&
+            currentPath[0] === "archives";
+
+          const isStarred = !badDetails && isProjectFolder? JSON.parse(details[5]) : false
+
+          return (
+            <div
+              key={key}
+              className={`flex ${key === "covers" ? "h-[40px]" : ""} ${
+                isSecondaryFolder
+                  ? "flex-col"
+                  : "items-center justify-center w-[calc(33%-1rem)] max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
+              } relative p-2 bg-[#f9f9f9] border border-[#bbb] rounded-lg cursor-pointer`}
+              onClick={() => handleFolderClick(key)}
+            >
+              {key !== "blank.png" && (
+                <>
+                  {key !== "about" &&
+                    key !== "archives" &&
+                    key !== "projects" &&
+                    key !== "covers" && (
+                      <>
+                        <button
+                          className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const basePath = `${currentPath.join("/")}/`;
+                            openPopup(key, basePath);
+                          }}
+                        >
+                          <BiSolidPencil
+                            className="ml-[-0.5px]"
+                            color={"black"}
+                            size={13}
+                          />
+                        </button>
+
+                        <button
+                          className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Delete ${key}?`)) {
+                              const fullPath = `${currentPath.join(
+                                "/"
+                              )}/${key}`;
+                              handleDeleteItem(fullPath);
+                            }
+                          }}
+                        >
+                          <FaTrash
+                            className="ml-[0px]"
+                            color={"black"}
+                            size={11}
+                          />
+                        </button>
+
+                        {isProjectFolder &&
+                          <button
+                            className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log("Going home");
+                            }}
+                          >
+                            {isStarred ? (
+                              <IoStar
+                                className="mt-[-1px]"
+                                color={"green"}
+                                size={15}
+                              />
+                            ) : (
+                              <IoStarOutline
+                                className="mt-[-1px]"
+                                color={"#888"}
+                                size={15}
+                              />
+                            )}
+                          </button>
+                        }
+                      </>
+                    )}
+                  {typeof currentFolder[key] === "string" && (
+                    <>
+                      <img
+                        src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
+                        alt={key}
+                        className="w-full h-auto mb-8"
+                      />
+                      <span className="absolute bottom-2">{key}</span>
                     </>
                   )}
-                {typeof currentFolder[key] === "string" && (
-                  <img
-                    src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
-                    alt={key}
-                    style={{
-                      width: "100px",
-                      height: "auto",
-                      marginBottom: "5px",
-                    }}
-                  />
-                )}
-                <span>{key}</span>
-              </div>
-            )}
-          </div>
-        ))}
+                  {typeof currentFolder[key] !== "string" &&
+                    currentPath[0] === "projects" &&
+                    key !== "covers" && (
+                      <div className="h-[200px] w-[auto]">
+                        {badDetails ? (
+                          <>{key}</>
+                        ) : (
+                          <div
+                            className="flex flex-col"
+                            style={{
+                              wordWrap: "break-word",
+                              whiteSpace: "normal",
+                            }}
+                          >
+                            <p>{details[1]}</p>
+                            <p>{details[2]}</p>
+                            <p>{details[3]}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  {typeof currentFolder[key] !== "string" &&
+                    currentPath[0] === "archives" && (
+                      <div className="h-[200px] w-[auto]">
+                        {badDetails ? (
+                          <>{key}</>
+                        ) : (
+                          <div>
+                            <p>{details[1]}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  {typeof currentFolder[key] !== "string" &&
+                    (currentPath[0] !== "projects" || key === "covers") &&
+                    currentPath[0] !== "archives" && (
+                      <span className="">{key}</span>
+                    )}
+                </>
+              )}
+            </div>
+          );
+        })}
         <Popup
           isOpen={popupOpen}
           onClose={closePopup}
@@ -883,18 +965,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </>
       )}
       <div
-        className="w-[100%] h-[63px] flex absolute top-0 left-0"
-        style={{ borderBottom: "1px solid #ccc" }}
+        className="z-[998] w-[100%] h-[63px] flex fixed top-0 left-0"
+        style={{ borderBottom: "1px solid #ccc", backgroundColor: "white" }}
       >
-        <div className="h-[100%] flex items-center ml-[30px] font-[500] text-[20px]">
-          <div>Project Dashboard</div>
-        </div>
-        <button onClick={onLogout} className="button absolute top-3 right-3">
-          Logout
-        </button>
-      </div>
-
-      <div className="w-[100%] h-[calc(100%-63px)] absolute left-0 top-[63px] px-[30px] flex items-center justify-center">
         {currentPath.length > 0 && (
           <button
             onClick={handleBackClick}
@@ -904,6 +977,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           </button>
         )}
 
+        <div
+          className={`h-[100%] flex items-center ml-${
+            currentPath.length > 0 ? "[100px]" : "[30px]"
+          } font-[500] text-[20px]`}
+        >
+          <div>Project Dashboard</div>
+        </div>
+        <button onClick={onLogout} className="button absolute top-3 right-3">
+          Logout
+        </button>
+      </div>
+
+      <div className="z-[998] w-[100%] h-[calc(100vh-63px)] absolute left-0 top-[63px] flex items-center justify-center">
         {currentPath.length > 0 &&
           (currentPath[0] === "about" ||
             (currentPath[0] === "archives" && currentPath.length === 2) ||
