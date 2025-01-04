@@ -33,6 +33,7 @@ import { IoStarOutline } from "react-icons/io5";
 import Upload from "./Upload";
 import ColorPicker from "./ColorPicker";
 import axios from "axios";
+import { DotLoader } from "react-spinners";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -310,6 +311,8 @@ interface FolderStructure {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
+  const [loading, setLoading] = useState(false);
+
   // const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
   const owner = "JosephGoff";
@@ -518,11 +521,49 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleDeleteItem = async (path: any) => {
-    await deleteItem(
-      "public/assets/" + path,
-      path.split("/").pop().includes(".")
-    );
-    await getRepoTree();
+    setLoading(true);
+    try {
+      let pageName = null;
+      let index = null;
+      if (!path.split("/").pop().includes(".")) {
+        pageName =
+          currentPath[0] === "archives"
+            ? "archives"
+            : currentPath[0] === "projects"
+            ? "projects"
+            : null;
+        if (pageName === null) return null;
+        if (Object.keys(appFile).length === 0) return null;
+        const pages = appFile["pages"];
+        if (!pages || Object.keys(pages).length === 0) return null;
+        const page = pages[pageName];
+        if (!page || page.length === 0) return null;
+        index = page.findIndex((item: any) => item.id === path.split("/")[1]);
+        if (index === null) return null;
+      }
+
+      await deleteItem(
+        "public/assets/" + path,
+        path.split("/").pop().includes(".")
+      );
+
+      if (
+        !path.split("/").pop().includes(".") &&
+        pageName !== null &&
+        index !== null
+      ) {
+        const appFileCopy = appFile;
+        appFileCopy["pages"][pageName].splice(index, 1);
+        setAppFile(appFileCopy);
+        updateAppData();
+      }
+
+      await getRepoTree();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const copyFolderOnGithub = async (
@@ -866,7 +907,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             ? "pb-[35px] top-0 left-0 "
             : ""
         } min-h-[40px] justify-center absolute px-[22px]`}
-        style={{ backgroundColor: "red" }}
+        // style={{ backgroundColor: "red" }}
       >
         {Object.keys(currentFolder).map((key, index) => {
           const isSecondaryFolder =
@@ -925,7 +966,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                           className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (window.confirm(`Delete ${key}?`)) {
+                            if (window.confirm(`Delete item?`)) {
                               const fullPath = `${currentPath.join(
                                 "/"
                               )}/${key}`;
@@ -1214,7 +1255,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     // setTimeout(async () => {
     //   await getRepoTree();
     // }, 1000);
-    console.log(appFile);
   };
 
   if (!fullProject) {
@@ -1274,6 +1314,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         >
           <div>Project Dashboard</div>
         </div>
+        {loading && (
+          <div className="absolute top-4 right-[107px] simple-spinner"></div>
+        )}
         <button onClick={onLogout} className="button absolute top-3 right-3">
           Logout
         </button>
