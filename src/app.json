@@ -1,0 +1,59 @@
+{
+  "pages": {
+    "projects": [
+      {
+        "id": "p1",
+        "index": 0,
+        "title": "dreamlike_flowers",
+        "description": "capsule_ceremonie_claudie_pierlot_ss24",
+        "bg_color": "pink",
+        "text_color": "blue",
+        "home_page": true
+      },
+      {
+        "id": "p2",
+        "index": 1,
+        "title": "la_croisette",
+        "description": "capsule_cannes_claudie_pierlot_ss24",
+        "bg_color": "red",
+        "text_color": "green",
+        "home_page": true
+      },
+      {
+        "id": "p3",
+        "index": 2,
+        "title": "provence",
+        "description": "provence_description",
+        "bg_color": "lightblue",
+        "text_color": "pink",
+        "home_page": false
+      }
+    ],
+    "archives": [
+      {
+        "id": "a1",
+        "index": 0,
+        "title": "lifestyle",
+        "bg_color": "#013559"
+      },
+      {
+        "id": "a2",
+        "index": 1,
+        "title": "earth",
+        "bg_color": "lightgreen"
+      },
+      {
+        "id": "a3",
+        "index": 2,
+        "title": "travel",
+        "bg_color": "lightblue"
+      },
+      {
+        "id": "a4",
+        "index": 3,
+        "title": "people",
+        "bg_color": "pink"
+      }
+    ]
+  }
+}

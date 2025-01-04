@@ -32,6 +32,7 @@ import { IoStar } from "react-icons/io5";
 import { IoStarOutline } from "react-icons/io5";
 import Upload from "./Upload";
 import ColorPicker from "./ColorPicker";
+import axios from "axios";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -373,122 +374,245 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     getRepoTree();
   };
 
-  const copyItem = async (path: string, newPath: string, isImage: boolean) => {
-    const fetchFolderContents = async (path: string) => {
-      const response = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        }
-      );
+  // const copyItem = async (path: string, newPath: string, isImage: boolean) => {
+  //   const fetchFolderContents = async (path: string) => {
+  //     const response = await fetch(
+  //       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           Accept: "application/vnd.github.v3+json",
+  //         },
+  //       }
+  //     );
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch contents of ${path}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch contents of ${path}`);
+  //     }
 
-      return isImage ? await response.json() : response.json();
-    };
+  //     return isImage ? await response.json() : response.json();
+  //   };
 
-    const copyFile = async (
-      sourcePath: string,
-      destinationPath: string,
-      sha: any
-    ) => {
-      const fetchWithRetry = async (url: string, options: any, retries = 3) => {
-        for (let i = 0; i < retries; i++) {
-          const response = await fetch(url, options);
+  //   const copyFile = async (
+  //     sourcePath: string,
+  //     destinationPath: string,
+  //     sha: any
+  //   ) => {
+  //     if (sourcePath === destinationPath) {
+  //       console.error("Source and destination are the same, skipping copy: ", sourcePath, destinationPath);
+  //     return
+  //     }
+  //     const fetchWithRetry = async (url: string, options: any, retries = 3) => {
+  //       for (let i = 0; i < retries; i++) {
+  //         const response = await fetch(url, options);
 
-          if (response.status === 403) {
-            const rateLimitReset = response.headers.get("x-ratelimit-reset");
-            if (rateLimitReset) {
-              const waitTime = parseInt(rateLimitReset) * 1000 - Date.now();
-              console.warn(
-                `Rate limit hit. Retrying after ${waitTime / 1000}s.`
-              );
-              await new Promise((resolve) => setTimeout(resolve, waitTime));
-            }
-          } else if (response.ok) {
-            return response;
-          } else {
-            console.error(`Request failed with status ${response.status}`);
-          }
-        }
-        throw new Error("Failed after maximum retries.");
+  //         if (response.status === 403) {
+  //           const rateLimitReset = response.headers.get("x-ratelimit-reset");
+  //           if (rateLimitReset) {
+  //             const waitTime = parseInt(rateLimitReset) * 1000 - Date.now();
+  //             console.warn(
+  //               `Rate limit hit. Retrying after ${waitTime / 1000}s.`
+  //             );
+  //             await new Promise((resolve) => setTimeout(resolve, waitTime));
+  //           }
+  //         } else if (response.ok) {
+  //           return response;
+  //         } else {
+  //           console.error(`Request failed with status ${response.status}`);
+  //         }
+  //       }
+  //       throw new Error("Failed after maximum retries.");
+  //     };
+
+  //     const fileContentResponse = await fetchWithRetry(
+  //       `https://api.github.com/repos/${owner}/${repo}/contents/${sourcePath}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           Accept: "application/vnd.github.v3+json",
+  //         },
+  //       }
+  //     );
+
+  //     if (!fileContentResponse.ok) {
+  //       throw new Error(`Failed to fetch file content for ${sourcePath}`);
+  //     }
+
+  //     const fileContent = await fileContentResponse.json();
+
+  //     let content = fileContent.content;
+
+  //     if (!content && fileContent.download_url) {
+  //       const downloadResponse = await fetch(fileContent.download_url);
+  //       const buffer = await downloadResponse.arrayBuffer();
+  //       content = btoa(
+  //         String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer)))
+  //       );
+  //     }
+
+  //     const createResponse = await fetchWithRetry(
+  //       `https://api.github.com/repos/${owner}/${repo}/contents/${destinationPath}`,
+  //       {
+  //         method: "PUT",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           Accept: "application/vnd.github.v3+json",
+  //         },
+  //         body: JSON.stringify({
+  //           message: `Copying file from ${sourcePath} to ${destinationPath}`,
+  //           content: content,
+  //           branch,
+  //         }),
+  //       }
+  //     );
+
+  //     if (!createResponse.ok) {
+  //       throw new Error(`Failed to copy file: ${sourcePath}`);
+  //     }
+  //   };
+
+  //   const copyFolderContents = async (
+  //     currentPath: string,
+  //     newBasePath: string
+  //   ) => {
+  //     const contents = await fetchFolderContents(currentPath);
+
+  //     await Promise.all(
+  //       contents.map(async (item: any) => {
+  //         const newPath = `${newBasePath}/${item.name}`;
+  //         console.log(`Copying ${item.type}: ${item.path} to ${newPath}`);
+  //         if (item.type === "file") {
+  //           await copyFile(item.path, newPath, item.sha);
+  //         } else if (item.type === "dir") {
+  //           await copyFolderContents(item.path, newPath);
+  //         }
+  //       })
+  //     );
+  //   };
+
+  //   try {
+  //     await copyFolderContents(path, newPath);
+  //   } catch (error) {
+  //     console.error("Error copying item:", error);
+  //   }
+  // };
+
+  const copyFolderOnGithub = async (
+    sourcePath: string,
+    destinationPath: string
+  ) => {
+    try {
+      const baseURL = `https://api.github.com/repos/${owner}/${repo}/contents`;
+      const headers = {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
       };
 
-      const fileContentResponse = await fetchWithRetry(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${sourcePath}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        }
-      );
+      const fetchFolderContents = async (path: string) => {
+        const response = await axios.get(`${baseURL}/${path}?ref=${branch}`, {
+          headers,
+        });
+        if (response.status !== 200)
+          throw new Error(`Failed to fetch folder: ${path}`);
+        return response.data;
+      };
 
-      if (!fileContentResponse.ok) {
-        throw new Error(`Failed to fetch file content for ${sourcePath}`);
-      }
+      const fetchFileContent = async (path: string) => {
+        const response = await axios.get(`${baseURL}/${path}?ref=${branch}`, {
+          headers,
+        });
+        if (response.status !== 200)
+          throw new Error(`Failed to fetch file: ${path}`);
+        return response.data.content; // This is base64 encoded.
+      };
 
-      const fileContent = await fileContentResponse.json();
+      const uploadFile = async (path: string, content: any) => {
+        const data = {
+          message: `Copying file to ${path}`,
+          content, // base64 encoded
+          branch,
+        };
+        const response = await axios.put(`${baseURL}/${path}`, data, {
+          headers,
+        });
+        if (response.status !== 201)
+          throw new Error(`Failed to upload file: ${path}`);
+      };
 
-      let content = fileContent.content;
-
-      if (!content && fileContent.download_url) {
-        const downloadResponse = await fetch(fileContent.download_url);
-        const buffer = await downloadResponse.arrayBuffer();
-        content = btoa(
-          String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer)))
-        );
-      }
-
-      const createResponse = await fetchWithRetry(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${destinationPath}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-          body: JSON.stringify({
-            message: `Copying file from ${sourcePath} to ${destinationPath}`,
-            content: content,
-            branch,
-          }),
-        }
-      );
-
-      if (!createResponse.ok) {
-        throw new Error(`Failed to copy file: ${sourcePath}`);
-      }
-    };
-
-    const copyFolderContents = async (
-      currentPath: string,
-      newBasePath: string
-    ) => {
-      const contents = await fetchFolderContents(currentPath);
-
-      await Promise.all(
-        contents.map(async (item: any) => {
-          const newPath = `${newBasePath}/${item.name}`;
-          console.log(`Copying ${item.type}: ${item.path} to ${newPath}`);
-          if (item.type === "file") {
-            await copyFile(item.path, newPath, item.sha);
-          } else if (item.type === "dir") {
-            await copyFolderContents(item.path, newPath);
+      const processFolder = async (source: any, destination: any) => {
+        const folderContents = await fetchFolderContents(source);
+        for (const item of folderContents) {
+          if (item.type === "dir") {
+            // Recurse into subfolders.
+            await processFolder(
+              `${source}/${item.name}`,
+              `${destination}/${item.name}`
+            );
+          } else if (item.type === "file") {
+            // Fetch and upload the file.
+            const fileContent = await fetchFileContent(
+              `${source}/${item.name}`
+            );
+            await uploadFile(`${destination}/${item.name}`, fileContent);
           }
-        })
-      );
-    };
+        }
+      };
 
-    try {
-      await copyFolderContents(path, newPath);
+      console.log(`Starting to copy from ${sourcePath} to ${destinationPath}`);
+      await processFolder(sourcePath, destinationPath);
+      console.log("Folder copy completed successfully!");
     } catch (error) {
-      console.error("Error copying item:", error);
+      console.error("An error occurred during the folder copy:", error);
+      if (error) {
+        console.error("Response data:", error);
+      }
+    }
+  };
+
+  const copyImageOnGithub = async (
+    sourcePath: string,
+    destinationPath: string
+  ) => {
+    try {
+      const baseURL = `https://api.github.com/repos/${owner}/${repo}/contents`;
+      const headers = {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
+      };
+
+      const fetchFileContent = async (path: string) => {
+        const response = await axios.get(`${baseURL}/${path}?ref=${branch}`, {
+          headers,
+        });
+        if (response.status !== 200)
+          throw new Error(`Failed to fetch file: ${path}`);
+        return response.data.content; // This is base64 encoded.
+      };
+
+      const uploadFile = async (path: string, content: any) => {
+        const data = {
+          message: `Copying file to ${path}`,
+          content,
+          branch,
+        };
+        const response = await axios.put(`${baseURL}/${path}`, data, {
+          headers,
+        });
+        if (response.status !== 201)
+          throw new Error(`Failed to upload file: ${path}`);
+      };
+
+      console.log(
+        `Starting to copy image from ${sourcePath} to ${destinationPath}`
+      );
+      const fileContent = await fetchFileContent(sourcePath); // Fetch the image content.
+      await uploadFile(destinationPath, fileContent); // Upload it to the new location.
+      console.log("Image file copy completed successfully!");
+    } catch (error) {
+      console.error("An error occurred during the image copy:", error);
+      if (error) {
+        console.error("Response data:", error);
+      }
     }
   };
 
@@ -505,7 +629,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch folder contents");
+        throw new Error(`Failed to fetch folder contents for path: ${path}`);
       }
 
       const files = await response.json();
@@ -530,13 +654,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         if (!deleteResponse.ok) {
           throw new Error(`Failed to delete file: ${path}`);
         }
+        console.log(`Successfully deleted image file: ${path}`);
       } else {
+        console.log(`Deleting folder and its contents: ${path}`);
         for (const file of files) {
           await deleteItem(file.path, file.type === "file");
         }
+        console.log(`Successfully deleted all contents of folder: ${path}`);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error(`Error while deleting item at path: ${path}`, error);
     }
   };
 
@@ -620,8 +747,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const originalPath = "public/assets/" + selectedPath + originalName;
       const newPath = "public/assets/" + selectedPath + finalName;
       const isImage = originalPath.split("/").pop()?.includes(".") || false;
-      await copyItem(originalPath, newPath, isImage);
-      // await deleteItem(originalPath, isImage);
+
+      if (isImage) {
+        await copyImageOnGithub(originalPath, newPath);
+        await deleteItem(originalPath, isImage);
+      } else {
+        await copyFolderOnGithub(originalPath, newPath);
+        await deleteItem(originalPath, isImage);
+      }
       getRepoTree();
     }
   };
@@ -634,7 +767,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     const newPath = "public/assets/projects/" + details.join("--");
     console.log(originalPath, newPath);
     try {
-      await copyItem(originalPath, newPath, false);
+      await copyFolderOnGithub(originalPath, newPath);
     } catch (error) {
       console.log(error);
       return;
@@ -665,7 +798,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const newPath =
         "public/assets/projects/" + details.join("--").replace("#", "");
       try {
-        await copyItem(originalPath, newPath, false);
+        await copyFolderOnGithub(originalPath, newPath);
       } catch (error) {
         console.log(error);
         return;
@@ -712,7 +845,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     // Render folders or multiple items, including images
     return (
       <div
-        className={`z-[997] flex flex-wrap gap-6 mt-6 ${
+        className={`z-[990] flex flex-wrap gap-6 mt-6 ${
           currentPath[0] === "about" ||
           (currentPath[0] === "projects" && currentPath.length > 1) ||
           (currentPath[0] === "archives" && currentPath.length > 1)
@@ -1081,7 +1214,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   }
 
   return (
-    <div className="w-[100vw] h-[100vh]">
+    <div className="w-[100vw] h-[100vh] z-[998]">
       {uploadPopup && (
         <>
           <div
