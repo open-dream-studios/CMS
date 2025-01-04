@@ -31,6 +31,7 @@ import { IoCloseOutline } from "react-icons/io5";
 import { IoStar } from "react-icons/io5";
 import { IoStarOutline } from "react-icons/io5";
 import Upload from "./Upload";
+import ColorPicker from "./ColorPicker";
 
 export type FileTree = {
   [key: string]: string | FileTree | FileTree[] | string[];
@@ -337,7 +338,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     } else {
       setPopupExtention("");
       setPopupName(name);
-      console.log(name);
     }
     setPopupTrigger((prev) => prev + 1);
     setSelectedPath(path);
@@ -488,25 +488,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         }
       } else {
         for (const file of files) {
-          const deleteResponse = await fetch(
-            `https://api.github.com/repos/${owner}/${repo}/contents/${file.path}`,
-            {
-              method: "DELETE",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/vnd.github.v3+json",
-              },
-              body: JSON.stringify({
-                message: `Deleting file ${file.path}`,
-                sha: file.sha,
-                branch,
-              }),
-            }
-          );
-
-          if (!deleteResponse.ok) {
-            throw new Error(`Failed to delete file: ${file.path}`);
-          }
+          await deleteItem(file.path, file.type === "file");
         }
       }
     } catch (error) {
@@ -600,6 +582,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const handleStarChange = async (folder: string) => {
+    let details = folder.split("--");
+    if (details.length !== 6) return;
+    details[5] = details[5] === "false" ? "true" : "false";
+    const originalPath = "public/assets/projects/" + folder;
+    const newPath = "public/assets/projects/" + details.join("--");
+    await copyItem(originalPath, newPath, false);
+    await deleteItem(originalPath, false);
+    getRepoTree();
+  };
+
+  const [changedColorItems, setChangedColorItems] = useState<any>({});
+  const handleColorChange = (key: any, primary: boolean, newValue: string) => {
+    const index = primary? 0 : 1
+    const updatedValue = changedColorItems[key]
+    updatedValue[index] = newValue
+    setChangedColorItems((prev: any) => ({ ...prev, [key]: newValue }));
+  };
+
+  useEffect(() => {
+    setChangedColorItems({});
+  }, [currentPath]);
+
   const renderContent = () => {
     const currentFolder = getCurrentFolder();
     const githubBaseUrl =
@@ -648,7 +653,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             typeof currentFolder[key] !== "string" &&
             currentPath[0] === "archives";
 
-          const isStarred = !badDetails && isProjectFolder? JSON.parse(details[5]) : false
+          const isStarred =
+            !badDetails && isProjectFolder ? JSON.parse(details[5]) : false;
 
           return (
             <div
@@ -701,12 +707,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                           />
                         </button>
 
-                        {isProjectFolder &&
+                        {isProjectFolder && (
                           <button
                             className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
-                              console.log("Going home");
+                              await handleStarChange(key);
+                              getRepoTree();
                             }}
                           >
                             {isStarred ? (
@@ -723,7 +730,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                               />
                             )}
                           </button>
-                        }
+                        )}
                       </>
                     )}
                   {typeof currentFolder[key] === "string" && (
@@ -752,7 +759,54 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                           >
                             <p>{details[1]}</p>
                             <p>{details[2]}</p>
-                            <p>{details[3]}</p>
+                            <div className="flex flex-row gap-2 mt-[7px]">
+                              <div
+                                onClick={(e: any) => e.stopPropagation()}
+                                className="w-[25px] h-[25px] relative"
+                              >
+                                <ColorPicker
+                                  initialColor={details[4]}
+                                  primary={true}
+                                  onColorChange={(
+                                    primary: boolean,
+                                    newValue: string
+                                  ) =>
+                                    handleColorChange(key, primary, newValue)
+                                  }
+                                />
+                              </div>
+                              <div
+                                onClick={(e: any) => e.stopPropagation()}
+                                className="w-[25px] h-[25px] relative"
+                              >
+                                <ColorPicker
+                                  initialColor={details[4]}
+                                  primary={false}
+                                  onColorChange={(
+                                    primary: boolean,
+                                    newValue: string
+                                  ) =>
+                                    handleColorChange(key, primary, newValue)
+                                  }
+                                />
+                              </div>
+
+                              {changedColorItems[key] && (
+                                <button
+                                  className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
+                                  style={{
+                                    color: "black",
+                                    border: "1px solid black",
+                                  }}
+                                  onClick={() => {
+                                    // updateColors();
+                                    console.log(changedColorItems)
+                                  }}
+                                >
+                                  Done
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -921,7 +975,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const handleAddFolder = async (folderName: string) => {
     await uploadBlankImageToGitHub(folderName);
-    console.log("Uploaded blank image");
     setTimeout(() => {
       getRepoTree();
     }, 1000);
