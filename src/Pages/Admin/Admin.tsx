@@ -27,6 +27,7 @@ import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 // import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
 import { BiSolidPencil } from "react-icons/bi";
 import { FaTrash } from "react-icons/fa";
+import { IoCloseOutline } from "react-icons/io5";
 import Upload from "./Upload";
 
 export type FileTree = {
@@ -76,12 +77,17 @@ interface PopupProps {
   popupTrigger: number;
 }
 
-const Popup: React.FC<PopupProps> = ({ isOpen, onClose, name, onRename, popupTrigger }) => {
+const Popup: React.FC<PopupProps> = ({
+  isOpen,
+  onClose,
+  name,
+  onRename,
+  popupTrigger,
+}) => {
   const [newName, setNewName] = useState(name);
 
   useEffect(() => {
     setNewName(name);
-    console.log("name changed")
   }, [name, popupTrigger]);
 
   const handleRename = () => {
@@ -231,6 +237,11 @@ interface FolderStructure {
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   // const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
+  const owner = "JosephGoff";
+  const repo = "js-portfolio";
+  const branch = "master";
+  const token = process.env.REACT_APP_GIT_PAT;
+
   const fetchFullRepoTree = async (
     owner: string,
     repo: string,
@@ -294,6 +305,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleFolderClick = (folderName: string) => {
+    if (folderName.includes(".")) {
+      const imagePath = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/public/assets/${currentPath.join("/") + "/" + folderName}`;
+      window.location.href = imagePath
+      return;
+    }
     setCurrentPath([...currentPath, folderName]);
   };
 
@@ -317,9 +333,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     } else {
       setPopupExtention("");
       setPopupName(name);
-      console.log(name)
+      console.log(name);
     }
-    setPopupTrigger(prev => prev + 1)
+    setPopupTrigger((prev) => prev + 1);
     setSelectedPath(path);
     setPopupOpen(true);
   };
@@ -335,11 +351,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     );
     getRepoTree();
   };
-
-  const owner = "JosephGoff";
-  const repo = "js-portfolio";
-  const branch = "master";
-  const token = process.env.REACT_APP_GIT_PAT;
 
   const copyItem = async (path: string, newPath: string, isImage: boolean) => {
     const fetchFolderContents = async (path: string) => {
@@ -566,11 +577,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       finalName = newName + "." + popupExtention;
       folderContents = collectImgNames();
     } else {
-      originalName = popupName
-      finalName = newName
+      originalName = popupName;
+      finalName = newName;
       folderContents = collectFolderNames();
     }
-    console.log(folderContents);
 
     if (originalName !== finalName && folderContents.includes(finalName)) {
       alert("Name is already used in this folder");
@@ -588,166 +598,103 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const renderContent = () => {
     const currentFolder = getCurrentFolder();
-
     const githubBaseUrl =
       "https://raw.githubusercontent.com/JosephGoff/js-portfolio/master/public/assets/";
-
     if (typeof currentFolder === "string") {
-      // Render an individual image
-      return (
-        <div
-          style={{
-            position: "relative",
-            border: "1px solid #ddd",
-            borderRadius: "4px",
-            padding: "10px",
-            marginBottom: "10px",
-            cursor: "pointer",
-            backgroundColor: "#f9f9f9",
-          }}
-        >
-          <>
-            <button
-              style={{
-                position: "absolute",
-                top: "-10px",
-                left: "-10px",
-                width: "20px",
-                height: "20px",
-                backgroundColor: "#fff",
-                border: "1px solid #000",
-                borderRadius: "50%",
-                cursor: "pointer",
-              }}
-              className="flex items-center justify-center"
-              onClick={(e) => {
-                e.stopPropagation();
-                const basePath = `${currentPath.join("/")}/`;
-                openPopup(currentFolder, basePath);
-              }}
-            >
-              <BiSolidPencil className="ml-[-1px]" color={"black"} size={13} />
-            </button>
-
-            <button
-              style={{
-                position: "absolute",
-                top: "-10px",
-                right: "-10px",
-                width: "20px",
-                height: "20px",
-                backgroundColor: "#fff",
-                border: "1px solid #000",
-                borderRadius: "50%",
-                cursor: "pointer",
-              }}
-              className="flex items-center justify-center"
-              onClick={(e) => {
-                e.stopPropagation();
-                const fullPath = `${currentPath.join("/")}/${currentFolder}`;
-                if (window.confirm(`Delete ${currentFolder}?`)) {
-                  handleDeleteItem(fullPath);
-                }
-              }}
-            >
-              <FaTrash className="ml-[-1px]" color={"black"} size={13} />
-            </button>
-
-            <img
-              src={`${githubBaseUrl}${currentPath.join("/")}/${currentFolder}`}
-              alt="File"
-              style={{ maxWidth: "100%", height: "auto" }}
-            />
-            <Popup
-              isOpen={popupOpen}
-              onClose={closePopup}
-              name={popupName}
-              onRename={handleRename}
-              popupTrigger={popupTrigger}
-            />
-          </>
-        </div>
-      );
+      return <></>;
     }
 
     // Render folders or multiple items, including images
     return (
       <div className="flex flex-row gap-5 mt-10">
         {Object.keys(currentFolder).map((key) => (
-          <div
-            key={key}
-            style={{
-              position: "relative",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              padding: "10px",
-              marginBottom: "10px",
-              cursor: "pointer",
-              backgroundColor: "#f9f9f9",
-            }}
-            onClick={() => handleFolderClick(key)}
-          >
-            {key !== "about" && key !== "archives" && key !== "projects" && (
-              <>
-                <button
-                  style={{
-                    position: "absolute",
-                    top: "-10px",
-                    left: "-10px",
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: "#fff",
-                    border: "1px solid #000",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                  }}
-                  className="flex items-center justify-center"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const basePath = `${currentPath.join("/")}/`;
-                    openPopup(key, basePath);
-                  }}
-                >
-                  <BiSolidPencil
-                    className="ml-[-1px]"
-                    color={"black"}
-                    size={13}
-                  />
-                </button>
+          <div key={key}>
+            {key !== "blank.png" && (
+              <div
+                style={{
+                  position: "relative",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  padding: "10px",
+                  marginBottom: "10px",
+                  cursor: "pointer",
+                  backgroundColor: "#f9f9f9",
+                }}
+                onClick={() => handleFolderClick(key)}
+              >
+                {key !== "about" &&
+                  key !== "archives" &&
+                  key !== "projects" && (
+                    <>
+                      <button
+                        style={{
+                          position: "absolute",
+                          top: "-10px",
+                          left: "-10px",
+                          width: "25px",
+                          height: "25px",
+                          backgroundColor: "#fff",
+                          border: "1px solid #000",
+                          borderRadius: "50%",
+                          cursor: "pointer",
+                        }}
+                        className="flex items-center justify-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const basePath = `${currentPath.join("/")}/`;
+                          openPopup(key, basePath);
+                        }}
+                      >
+                        <BiSolidPencil
+                          className="ml-[-0.5px]"
+                          color={"black"}
+                          size={13}
+                        />
+                      </button>
 
-                <button
-                  style={{
-                    position: "absolute",
-                    top: "-10px",
-                    right: "-10px",
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: "#fff",
-                    border: "1px solid #000",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                  }}
-                  className="flex items-center justify-center"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`Delete ${key}?`)) {
-                      const fullPath = `${currentPath.join("/")}/${key}`;
-                      handleDeleteItem(fullPath);
-                    }
-                  }}
-                >
-                  <FaTrash className="ml-[-1px]" color={"black"} size={13} />
-                </button>
-              </>
+                      <button
+                        style={{
+                          position: "absolute",
+                          top: "-10px",
+                          right: "-10px",
+                          width: "25px",
+                          height: "25px",
+                          backgroundColor: "#fff",
+                          border: "1px solid #000",
+                          borderRadius: "50%",
+                          cursor: "pointer",
+                        }}
+                        className="flex items-center justify-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete ${key}?`)) {
+                            const fullPath = `${currentPath.join("/")}/${key}`;
+                            handleDeleteItem(fullPath);
+                          }
+                        }}
+                      >
+                        <FaTrash
+                          className="ml-[0px]"
+                          color={"black"}
+                          size={11}
+                        />
+                      </button>
+                    </>
+                  )}
+                {typeof currentFolder[key] === "string" && (
+                  <img
+                    src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
+                    alt={key}
+                    style={{
+                      width: "100px",
+                      height: "auto",
+                      marginBottom: "5px",
+                    }}
+                  />
+                )}
+                <span>{key}</span>
+              </div>
             )}
-            {typeof currentFolder[key] === "string" && (
-              <img
-                src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
-                alt={key}
-                style={{ width: "100px", height: "auto", marginBottom: "5px" }}
-              />
-            )}
-            <span>{key}</span>
           </div>
         ))}
         <Popup
@@ -809,6 +756,58 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const uploadBlankImageToGitHub = async (folderName: string) => {
+    try {
+      const response = await fetch(`${window.location.origin}/blank.png`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch the image from the public folder.");
+      }
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const result = reader.result;
+
+        if (typeof result === "string") {
+          const base64Content = result.split(",")[1];
+          if (
+            currentPath.length === 1 &&
+            (currentPath[0] === "projects" || currentPath[0] === "archives")
+          ) {
+            const githubResponse = await fetch(
+              `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${currentPath[0]}/${folderName}/blank.png`,
+              {
+                method: "PUT",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  message: "Add blank.png",
+                  content: base64Content,
+                  branch: branch,
+                }),
+              }
+            );
+
+            if (!githubResponse.ok) {
+              throw new Error(
+                `Failed to upload blank.png: ${githubResponse.statusText}`
+              );
+            }
+          }
+          console.log("upload successful");
+        } else {
+          throw new Error("Failed to read the image as a base64 string.");
+        }
+      };
+
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error("Error uploading to GitHub:", error);
+      alert("Failed to upload blank.png to GitHub. Check console for details.");
+    }
+  };
+
   const handleFiles = (files: File[]) => {
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
 
@@ -819,7 +818,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
           const reader = new FileReader();
           reader.onload = (event) => {
-            resolve({ name: sanitizedFileName, src: event.target?.result as string });
+            resolve({
+              name: sanitizedFileName,
+              src: event.target?.result as string,
+            });
           };
           reader.readAsDataURL(file);
         });
@@ -833,6 +835,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     } else {
       alert("Only image files are allowed!");
     }
+  };
+
+  const handleAddFolder = async (folderName: string) => {
+    await uploadBlankImageToGitHub(folderName);
+    console.log("Uploaded blank image");
+    setTimeout(() => {
+      getRepoTree();
+    }, 1000);
   };
 
   if (!fullProject) {
@@ -850,7 +860,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           <div className="z-[999] absolute top-0 w-[100vw] h-[100vh] flex items-center justify-center">
             <div
               ref={divRef}
-              className="w-[70%] aspect-[1.5/1]"
+              className="w-[70%] aspect-[1.5/1] relative"
               style={{
                 userSelect: "none",
                 backgroundColor: "white",
@@ -859,6 +869,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               }}
             >
               <Upload handleFiles={handleFiles} />
+              <IoCloseOutline
+                onClick={() => {
+                  setUploadPopup(false);
+                }}
+                className="absolute top-2 right-3 z-[999]"
+                style={{ cursor: "pointer" }}
+                color={"black"}
+                size={50}
+              />
             </div>
           </div>
         </>
@@ -897,6 +916,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               className="button absolute bottom-3 right-3"
             >
               Upload
+            </button>
+          )}
+
+        {currentPath.length === 1 &&
+          (currentPath[0] === "archives" || currentPath[0] === "projects") && (
+            <button
+              onClick={() => {
+                const folderName = window.prompt("Folder Name:");
+                if (folderName && folderName !== "") {
+                  const sanitizedFolderName = folderName
+                    .trim()
+                    .replace(/[^a-zA-Z0-9-]/g, "_");
+                  handleAddFolder(sanitizedFolderName);
+                }
+              }}
+              className="button absolute bottom-3 right-3"
+            >
+              Add Folder
             </button>
           )}
 

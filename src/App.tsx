@@ -7,7 +7,6 @@ import About from "./Pages/About/About";
 import Projects from "./Pages/Projects/Projects";
 import Navbar from "./Components/Navbar/Navbar";
 import Archives from "./Pages/Archives/Archives";
-import "./App.css";
 import ProjectsPage from "./Pages/Projects/ProjectsPage/ProjectsPage";
 import useProjectColorsState from "./store/useProjectColorsStore";
 import useCurrentPageState from "./store/useCurrentPageStore";
@@ -905,7 +904,7 @@ const Root = () => (
   <>
   <Router>
     <Routes>
-      <Route path="/edit" element={<Admin />} />
+      <Route path="/admin" element={<Admin />} />
       <Route path="/*" element={<App />} />
     </Routes>
   </Router>
