@@ -22,6 +22,7 @@ import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
 // import yaml from "js-yaml";
 import axios from "axios";
 import Admin from "./Pages/Admin/Admin";
+import useAppDataFileStore from "./store/useAppDataFileStore";
 
 export interface SlideUpPageProps {
   children: React.ReactNode;
@@ -169,7 +170,7 @@ interface DriveFile {
   id: string;
   name: string;
   mimeType: string;
-  children?: DriveFile[]; // Optional for files; required for folders
+  children?: DriveFile[];
 }
 
 export type Tree = {
@@ -184,322 +185,217 @@ const App = () => {
   const [projectsList, setProjectsList] = useState<string[]>([]);
   const { selectedArchiveGroup, setSelectedArchiveGroup } =
     useSelectedArchiveGroupStore();
+  const { appDataFile, setAppDataFile } = useAppDataFileStore();
   const [loading, setLoading] = useState(true);
 
-  // const fetchFolderContents = async (
-  //   folderId: string | undefined
-  // ): Promise<DriveFile[]> => {
-  //   if (folderId === undefined) {
-  //     return [];
-  //   }
-  //   try {
-  //     const response = await axios.get(
-  //       "https://www.googleapis.com/drive/v3/files",
-  //       {
-  //         params: {
-  //           q: `'${folderId}' in parents and trashed = false`,
-  //           key: process.env.REACT_APP_GOOGLE_DRIVE_API_KEY,
-  //           // key: process.env.GOOGLE_DRIVE_API_KEY,
-  //           fields: "files(id, name, mimeType)",
-  //         },
-  //       }
-  //     );
+  // FULL REPOSITORY & APP FILE
+  const fetchAppFileContents = async (blobUrl: string) => {
+    try {
+      const response = await fetch(blobUrl, {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_GIT_PAT}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      });
 
-  //     const files: DriveFile[] = response.data.files;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch blob: ${blobUrl}`);
+      }
 
-  //     const children = await Promise.all(
-  //       files.map(async (file) => {
-  //         if (file.mimeType === "application/vnd.google-apps.folder") {
-  //           return {
-  //             ...file,
-  //             children: await fetchFolderContents(file.id), // Recursive call
-  //           };
-  //         }
-  //         return file; // Return file as-is if it's not a folder
-  //       })
-  //     );
+      const data = await response.json();
+      const fileContent = atob(data.content);
 
-  //     return children;
-  //   } catch (error) {
-  //     console.error("Error fetching folder contents:", error);
-  //     return [];
-  //   }
-  // };
+      if (fileContent) {
+        try {
+          const parsedContent = JSON.parse(fileContent);
+          setAppDataFile(parsedContent);
+        } catch (error) {
+          console.error("Error parsing JSON content:", error);
+        }
+      }
 
-  // // Fetch the tree structure on component mount
-  // useEffect(() => {
-  //   const fetchTree = async () => {
-  //     const treeStructure = await fetchFolderContents(
-  //       process.env.REACT_APP_GOOGLE_DRIVE_FOLDER_ID
-  //     );
-  //     const newTree: Tree = {};
-  //     if (treeStructure.length > 0) {
-  //       for (let i = 0; i < treeStructure.length; i++) {
-  //         const page = treeStructure[i];
-  //         newTree[page.name] = sortPages(page);
-  //       }
-  //       setProjectAssets(newTree);
-  //       console.log(newTree)
-  //     } else return;
+      return fileContent;
+    } catch (error) {
+      console.error("Error fetching file contents:", error);
+    }
+  };
 
-  //     function sortPages(page: any) {
-  //       if (page.children.length > 0) {
-  //         type Entry = {
-  //           title: string;
-  //           subTitle?: string;
-  //           bg_color?: string;
-  //           text_color?: string;
-  //           images: string[];
-  //           number?: number;
-  //           img_number?: number;
-  //         };
+  const fetchFullRepoTree = async (
+    owner: string,
+    repo: string,
+    branch = "master"
+  ) => {
+    const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+    const token = process.env.REACT_APP_GIT_PAT;
 
-  //         if (page.name === "home") {
-  //           const mappedEntries: Entry[] = page.children.map((folder: any) => {
-  //             const [number, title, subTitle] = folder.name.split("--");
-  //             return {
-  //               title,
-  //               subTitle,
-  //               images: folder.children.map((img: any) => BASE_URL + img.id),
-  //               number: parseInt(number, 10),
-  //             };
-  //           });
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        console.error("Failed to fetch repository tree:", response.statusText);
+        return null;
+      }
+      const data = await response.json();
+      const tree = data.tree.reduce((acc: any, item: any) => {
+        const parts = item.path.split("/");
+        let current = acc;
 
-  //           const sortedEntries = mappedEntries.sort(
-  //             (a: any, b: any) => a.number - b.number
-  //           );
-  //           return sortedEntries.map(({ number, ...rest }) => rest);
-  //         }
+        for (const part of parts) {
+          if (!current[part]) {
+            current[part] = item.type === "tree" ? {} : item.url;
+          }
+          current = current[part];
+        }
+        return acc;
+      }, {});
 
-  //         if (page.name === "projects") {
-  //           const mappedEntries: Entry[] = page.children.map((folder: any) => {
-  //             const [number, title, bg_color, text_color] =
-  //               folder.name.split("--");
+      return tree;
+    } catch (error) {
+      console.error("Error fetching repository tree:", error);
+      return null;
+    }
+  };
 
-  //             const mappedImages: Entry[] = folder.children.map((img: any) => {
-  //               const imgName = img.name.split(".")[0];
-  //               const img_number = imgName.split("--")[0];
-  //               return {
-  //                 url: BASE_URL + img.id,
-  //                 img_number: parseInt(img_number, 10),
-  //               }
-  //             });
+  const getRepoTree = async () => {
+    const fullRepo = await fetchFullRepoTree("JosephGoff", "js-portfolio");
+    if (fullRepo && fullRepo["public"]?.["assets"]) {
+      const { icons, ...filteredProject } = fullRepo["public"]["assets"];
+      const tree: any = {}
+      for (let i=0;i<Object.keys(filteredProject).length;i++) {
+        const newPage = sortPages(Object.keys(filteredProject)[i], filteredProject)
+        tree[Object.keys(filteredProject)[i]] = newPage
+      }
+      console.log(tree);
+      // setProjectAssets(sortedProject);
+    }
+    if (fullRepo["src"]["app.json"]) {
+      const appFileURL = fullRepo["src"]["app.json"];
+      await fetchAppFileContents(appFileURL);
+    }
+  };
 
-  //             const sortedImages = mappedImages
-  //               .sort((a: any, b: any) => a.img_number - b.img_number)
-  //               .map(({ img_number, ...rest }) => rest);
+  function sortPages(page: any, project: any) {
+    if (Object.keys(project[page]).length > 0) {
+      type Entry = {
+        title: string;
+        subTitle?: string;
+        bg_color?: string;
+        text_color?: string;
+        images: string[];
+        number?: number;
+        img_number?: number;
+      };
 
-  //             return {
-  //               title,
-  //               bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
-  //               text_color: text_color === undefined ? "#000000" : text_color,
-  //               images: sortedImages.map((img: any) => img.url),
-  //               number: parseInt(number, 10),
-  //             };
-  //           });
+      if (page === "about") {
+        const mappedImages: Entry[] = project[page].map((img: any) => {
+          const imgName = img.name.split(".")[0];
+          const number = imgName.split("--")[0];
+          return {
+            url: BASE_URL + img.id,
+            number: parseInt(number, 10),
+          };
+        });
+        const sortedImages = mappedImages
+          .sort((a: any, b: any) => a.number - b.number)
+          .map(({ number, ...rest }) => rest);
+        return sortedImages.map((img: any) => img.url);
+      }
 
-  //           const sortedEntries = mappedEntries.sort(
-  //             (a: any, b: any) => a.number - b.number
-  //           );
-  //           return sortedEntries.map(({ number, ...rest }) => rest);
-  //         }
 
-  //         if (page.name === "archives") {
-  //           const mappedEntries: Entry[] = page.children.map((folder: any) => {
-  //             const [number, title, bg_color] = folder.name.split("--");
 
-  //             const mappedImages: Entry[] = folder.children.map((img: any) => {
-  //               const imgName = img.name.split(".")[0];
-  //               const [img_number, img_bg_color] = imgName.split("--");
-  //               return {
-  //                 url: BASE_URL + img.id,
-  //                 bg_color:
-  //                   img_bg_color === undefined ? "#FFFFFF" : img_bg_color,
-  //                 img_number: parseInt(img_number, 10),
-  //               };
-  //             });
 
-  //             const sortedImages = mappedImages
-  //               .sort((a: any, b: any) => a.img_number - b.img_number)
-  //               .map(({ img_number, ...rest }) => rest);
 
-  //             return {
-  //               title,
-  //               bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
-  //               images: sortedImages,
-  //               number: parseInt(number, 10),
-  //             };
-  //           });
+      // if (page.name === "home") {
+      //   const mappedEntries: Entry[] = page.children.map((folder: any) => {
+      //     const [number, title, subTitle] = folder.name.split("--");
+      //     return {
+      //       title,
+      //       subTitle,
+      //       images: folder.children.map((img: any) => BASE_URL + img.id),
+      //       number: parseInt(number, 10),
+      //     };
+      //   });
 
-  //           const sortedEntries = mappedEntries.sort(
-  //             (a: any, b: any) => a.number - b.number
-  //           );
-  //           return sortedEntries.map(({ number, ...rest }) => rest);
-  //         }
+      //   const sortedEntries = mappedEntries.sort(
+      //     (a: any, b: any) => a.number - b.number
+      //   );
+      //   return sortedEntries.map(({ number, ...rest }) => rest);
+      // }
 
-  //         if (page.name === "about") {
-  //           const mappedImages: Entry[] = page.children.map((img: any) => {
-  //             const imgName = img.name.split(".")[0];
-  //             const number = imgName.split("--")[0];
-  //             return {
-  //               url: BASE_URL + img.id,
-  //               number: parseInt(number, 10),
-  //             };
-  //           });
-  //           const sortedImages = mappedImages
-  //             .sort((a: any, b: any) => a.number - b.number)
-  //             .map(({ number, ...rest }) => rest);
-  //           return sortedImages.map((img: any) => img.url);
-  //         }
-  //       }
-  //       return {};
-  //     }
-  //   };
+      // if (page.name === "projects") {
+      //   const mappedEntries: Entry[] = page.children.map((folder: any) => {
+      //     const [number, title, bg_color, text_color] = folder.name.split("--");
 
-  //   fetchTree();
-  // }, []);
+      //     const mappedImages: Entry[] = folder.children.map((img: any) => {
+      //       const imgName = img.name.split(".")[0];
+      //       const img_number = imgName.split("--")[0];
+      //       return {
+      //         url: BASE_URL + img.id,
+      //         img_number: parseInt(img_number, 10),
+      //       };
+      //     });
+
+      //     const sortedImages = mappedImages
+      //       .sort((a: any, b: any) => a.img_number - b.img_number)
+      //       .map(({ img_number, ...rest }) => rest);
+
+      //     return {
+      //       title,
+      //       bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
+      //       text_color: text_color === undefined ? "#000000" : text_color,
+      //       images: sortedImages.map((img: any) => img.url),
+      //       number: parseInt(number, 10),
+      //     };
+      //   });
+
+      //   const sortedEntries = mappedEntries.sort(
+      //     (a: any, b: any) => a.number - b.number
+      //   );
+      //   return sortedEntries.map(({ number, ...rest }) => rest);
+      // }
+
+      // if (page.name === "archives") {
+      //   const mappedEntries: Entry[] = page.children.map((folder: any) => {
+      //     const [number, title, bg_color] = folder.name.split("--");
+
+      //     const mappedImages: Entry[] = folder.children.map((img: any) => {
+      //       const imgName = img.name.split(".")[0];
+      //       const [img_number, img_bg_color] = imgName.split("--");
+      //       return {
+      //         url: BASE_URL + img.id,
+      //         bg_color: img_bg_color === undefined ? "#FFFFFF" : img_bg_color,
+      //         img_number: parseInt(img_number, 10),
+      //       };
+      //     });
+
+      //     const sortedImages = mappedImages
+      //       .sort((a: any, b: any) => a.img_number - b.img_number)
+      //       .map(({ img_number, ...rest }) => rest);
+
+      //     return {
+      //       title,
+      //       bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
+      //       images: sortedImages,
+      //       number: parseInt(number, 10),
+      //     };
+      //   });
+
+      //   const sortedEntries = mappedEntries.sort(
+      //     (a: any, b: any) => a.number - b.number
+      //   );
+      //   return sortedEntries.map(({ number, ...rest }) => rest);
+      // }
+
+
+      return project[page]
+    }
+  }
 
   useEffect(() => {
-    const fetchImages = async () => {
-      try {
-        // Fetch Cloudinary images
-        const response = await axios.get("/api/sign-search", {
-          params: { expression: "resource_type:image" },
-        });
-
-        const assetsList = response.data.resources;
-
-        // Function to build the tree structure
-        const buildTree = (resources: any[]): TreeNode => {
-          const root: TreeNode = { children: {}, images: [] }; // Initialize root node
-
-          resources.forEach((resource) => {
-            const { asset_folder, public_id, secure_url } = resource;
-            const folders = asset_folder.split("/");
-
-            let current: TreeNode = root; // Start from root node
-
-            folders.forEach((folder: any) => {
-              // If the folder doesn't exist, initialize it
-              if (!current.children[folder]) {
-                current.children[folder] = { children: {}, images: [] };
-              }
-              // Traverse to the next level
-              current = current.children[folder];
-            });
-
-            // Add the image to the images array of the current folder
-            current.images.push({
-              public_id,
-              url: secure_url,
-              type: "image",
-            });
-          });
-
-          return root;
-        };
-
-        const sortItems = (projectTree: any) => {
-          let newTree = projectTree;
-          type Entry = {
-            title: string;
-            subTitle?: string;
-            bg_color?: string;
-            text_color?: string;
-            images: string[];
-            number?: number;
-            img_number?: number;
-          };
-
-          if (
-            Object.keys(projectTree.children).length > 0 &&
-            projectTree.children["js-portfolio"] &&
-            Object.keys(projectTree.children["js-portfolio"].children).length >
-              0
-          ) {
-            const pagesObject = projectTree.children["js-portfolio"].children;
-
-            // console.log(pagesObject)
-            // Sort each page
-
-            const pageNames = Object.keys(pagesObject);
-            for (let i = 0; i < pageNames.length; i++) {
-              const currentPage = pagesObject[pageNames[i]];
-
-              // ABOUT
-              // if (pageNames[i] === "about") {
-              //   console.log(currentPage)
-              // }
-
-              // PROJECTS
-              if (
-                pageNames[i] === "projects" &&
-                Object.keys(currentPage.children).length > 0
-              ) {
-                const projectsObject = currentPage.children;
-                const projectNames = Object.keys(projectsObject);
-                let projectsArray = [];
-                // for (let i=0;i<projectNames.length;i++) {
-
-                // }
-
-                // const mappedEntries: Entry[] = projectNames.map((folder: any) => {
-                //   const [number, title, bg_color, text_color] = folder.split("--");
-
-                //   const currentChildren = projectsObject[folder]
-                //   console.log(currentChildren)
-
-                // const mappedImages: Entry[] = folder.children.map((img: any) => {
-                //   const imgName = img.name.split(".")[0];
-                //   const img_number = imgName.split("--")[0];
-                //   return {
-                //     url: BASE_URL + img.id,
-                //     img_number: parseInt(img_number, 10),
-                //   }
-                // });
-
-                // const sortedImages = mappedImages
-                //   .sort((a: any, b: any) => a.img_number - b.img_number)
-                //   .map(({ img_number, ...rest }) => rest);
-
-                // return {
-                //   title,
-                //   bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
-                //   text_color: text_color === undefined ? "#000000" : text_color,
-                //   images: sortedImages.map((img: any) => img.url),
-                //   number: parseInt(number, 10),
-                // };
-                // });
-
-                // const sortedEntries = mappedEntries.sort(
-                //   (a: any, b: any) => a.number - b.number
-                // );
-                // return sortedEntries.map(({ number, ...rest }) => rest);
-              }
-
-              // ARCHIVES
-              // if (pageNames[i] === "archives") {
-              //   console.log(currentPage)
-              // }
-            }
-
-            // HOME
-          }
-          return newTree;
-        };
-
-        // Build the tree and set it in state
-        const tree = buildTree(assetsList);
-        const newProjectAssets = sortItems(tree);
-        // setProjectAssets(newProjectAssets);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching images:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchImages();
+    getRepoTree();
   }, []);
 
   const [incomingPage, setIncomingPage] = useState<IncomingPage>(null);
@@ -902,12 +798,12 @@ const App = () => {
 
 const Root = () => (
   <>
-  <Router>
-    <Routes>
-      <Route path="/admin" element={<Admin />} />
-      <Route path="/*" element={<App />} />
-    </Routes>
-  </Router>
+    <Router>
+      <Routes>
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/*" element={<App />} />
+      </Routes>
+    </Router>
   </>
 );
 

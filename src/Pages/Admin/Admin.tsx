@@ -348,7 +348,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [loading, setLoading] = useState(false);
   const [reducedAppFile, setReducedAppFile] = useState<any>({});
 
-  // const { projectAssets, setProjectAssets } = useProjectAssetsStore();
+  const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
   const owner = "JosephGoff";
   const repo = "js-portfolio";
