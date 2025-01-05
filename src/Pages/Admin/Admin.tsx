@@ -34,6 +34,7 @@ import Upload from "./Upload";
 import ColorPicker from "./ColorPicker";
 import axios from "axios";
 import { FaCheck } from "react-icons/fa6";
+import { GrPowerCycle } from "react-icons/gr";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -164,19 +165,7 @@ const Popup: React.FC<PopupProps> = ({
   }, [title, desc, popupTrigger]);
 
   const handleRename = () => {
-    if (
-      popupExtention === "" &&
-      newTitle.trim() !== "" &&
-      newDesc.trim() !== ""
-    ) {
-      onRename(sanitizeTitle(newTitle), sanitizeTitle(newDesc));
-      onClose();
-    }
-    if (
-      popupExtention !== "" &&
-      newTitle.split("--").length >= 2 &&
-      newTitle.split("--")[1].trim() !== ""
-    ) {
+    if (newTitle.trim() !== "") {
       onRename(sanitizeTitle(newTitle), sanitizeTitle(newDesc));
       onClose();
     }
@@ -677,6 +666,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   // POPUP
   const [popupOpen, setPopupOpen] = useState(false);
+  const [popupKeyIndex, setPopupKeyIndex] = useState("");
   const [popupKey, setPopupKey] = useState("");
   const [popupTitle, setPopupTitle] = useState("");
   const [popupDesc, setPopupDesc] = useState("");
@@ -690,9 +680,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
     if (name.includes(".")) {
       const extension = name.split(".").pop() || "";
-      const imgName = name.slice(0, name.lastIndexOf("."));
+      let imgName = name.slice(0, name.lastIndexOf("."));
       setPopupExtention(extension);
-      setPopupTitle(imgName);
+      const imgIndex = extractBeforeIndex(imgName);
+      const slicedImgName = extractAfterIndex(imgName);
+      if (imgIndex !== null) {
+        setPopupKeyIndex(imgIndex);
+      }
+      setPopupTitle(slicedImgName);
       setPopupKey(imgName);
       setPopupDesc("");
     } else {
@@ -1058,7 +1053,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     } else {
       const folderContents = collectImgNames();
       const originalName = popupKey + "." + popupExtention;
-      const imageName = newTitle + "." + popupExtention;
+      const imageName = popupKeyIndex + "--" + newTitle + "." + popupExtention;
       if (popupTitle !== newTitle && folderContents.length > 0) {
         if (folderContents.includes(imageName)) {
           alert("That name is already being used in this folder");
@@ -1191,7 +1186,115 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
     setChangedArchiveImageColorItems({});
     setArchiveImageColorToChange(null);
+
+    setSwapActive(false);
+    setSwapItems([null, null]);
+
+    setFolderSwapActive(false);
+    setFolderSwapItems([null, null]);
   }, [currentPath]);
+
+  const [swapActive, setSwapActive] = useState(false);
+  type swapItemType = string | null;
+  const [swapItems, setSwapItems] = useState<swapItemType[]>([null, null]);
+
+  const handleSwapItems = async () => {
+    const currentFolderContents = collectImgNames();
+    if (
+      swapItems[0] !== null &&
+      swapItems[1] !== null &&
+      swapItems[0] !== swapItems[1] &&
+      currentFolderContents.includes(swapItems[0]) &&
+      currentFolderContents.includes(swapItems[1])
+    ) {
+      setLoading(true);
+      const basePath = "public/assets/" + currentPath.join("/") + "/";
+      const path1 = basePath + swapItems[0];
+      const path2 = basePath + swapItems[1];
+      await handleSwap(path1, path2);
+    }
+    setSwapActive(false);
+    setSwapItems([null, null]);
+    setLoading(false);
+  };
+
+  const handleSwap = async (path1: string, path2: string) => {
+    const lastPart1 = path1.split("/").pop();
+    const lastPart2 = path2.split("/").pop();
+    if (
+      lastPart1 &&
+      extractBeforeIndex(lastPart1) !== null &&
+      lastPart2 &&
+      extractBeforeIndex(lastPart2) !== null
+    ) {
+      const firstIndex = extractBeforeIndex(lastPart1);
+      const secondIndex = extractBeforeIndex(lastPart2);
+
+      const firstAfterIndex = extractAfterIndex(lastPart1);
+      const secondAfterIndex = extractAfterIndex(lastPart2);
+      const fillerIndex = 99999;
+
+      let path1Filler =
+        path1.split("/").slice(0, -1).join("/") +
+        "/" +
+        fillerIndex +
+        "--" +
+        firstAfterIndex;
+      let newPath1 =
+        path1.split("/").slice(0, -1).join("/") +
+        "/" +
+        secondIndex +
+        "--" +
+        firstAfterIndex;
+      let newPath2 =
+        path2.split("/").slice(0, -1).join("/") +
+        "/" +
+        firstIndex +
+        "--" +
+        secondAfterIndex;
+
+      console.log(path1Filler, newPath1, newPath2);
+
+      // Rename the first image
+      await renameImageFile(path1, path1Filler);
+
+      // Rename the second image
+      await renameImageFile(path2, newPath2);
+
+      // Rename the first image again
+      await renameImageFile(path1Filler, newPath1);
+
+      await getRepoTree();
+    }
+  };
+
+
+
+  const [folderSwapActive, setFolderSwapActive] = useState(false);
+  const [folderSwapItems, setFolderSwapItems] = useState<swapItemType[]>([null, null]);
+  const handleFolderSwapItems = async () => {
+    const currentFolders = collectFolderNames();
+    console.log(currentFolders)
+    if (
+      swapItems[0] !== null &&
+      swapItems[1] !== null &&
+      swapItems[0] !== swapItems[1] &&
+      currentFolders.includes(swapItems[0]) &&
+      currentFolders.includes(swapItems[1])
+    ) {
+      setLoading(true);
+      const basePath = "public/assets/" + currentPath.join("/") + "/";
+      const path1 = basePath + swapItems[0];
+      const path2 = basePath + swapItems[1];
+      console.log(path1, path2)
+      // await handleFolderSwap(path1, path2);
+    }
+    // setFolderSwapActive(false);
+    // setFolderSwapItems([null, null]);
+    setLoading(false);
+  };
+
+
 
   const renderContent = () => {
     const currentFolder = getCurrentFolder();
@@ -1217,12 +1320,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           .sort((a, b) => {
             const indexA = extractBeforeIndex(a);
             const indexB = extractBeforeIndex(b);
-            const numA = indexA !== null ? Number(indexA) : Infinity; 
-            const numB = indexB !== null ? Number(indexB) : Infinity; 
-            return numA - numB; 
+            const numA = indexA !== null ? Number(indexA) : Infinity;
+            const numB = indexB !== null ? Number(indexB) : Infinity;
+            return numA - numB;
           })
           .map((key, index) => {
-            console.log(key)
             const isSecondaryFolder =
               typeof currentFolder[key] !== "string" &&
               ((currentPath[0] === "projects" && key !== "covers") ||
@@ -1252,9 +1354,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 defaultImgColor = isColor(imgColor) || "#CCCCCC";
               }
             }
-
-            console.log(key);
-            console.log(extractBeforeIndex(key));
 
             return (
               <div
@@ -1347,6 +1446,45 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                           {extractAfterIndex(key)}
                         </span>
                       </div>
+
+                      <button
+                        style={{
+                          border:
+                            swapActive && swapItems[0] !== key
+                              ? "1px solid #00BBFC"
+                              : "1px solid black",
+                        }}
+                        className="rounded-full absolute top-[20px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!swapActive) {
+                            setSwapActive(true);
+                            const swapItemsCopy = swapItems;
+                            swapItemsCopy[0] = key;
+                            setSwapItems(swapItemsCopy);
+                          } else {
+                            if (key === swapItems[0]) {
+                              setSwapItems([null, null]);
+                              setSwapActive(false);
+                              return;
+                            }
+                            const swapItemsCopy = swapItems;
+                            swapItemsCopy[1] = key;
+                            setSwapItems(swapItemsCopy);
+                            await handleSwapItems();
+                          }
+                        }}
+                      >
+                        <GrPowerCycle
+                          color={
+                            swapActive && swapItems[0] !== key
+                              ? "#00BBFC"
+                              : "black"
+                          }
+                          size={15}
+                          className="ml-[-0.5px]"
+                        />
+                      </button>
 
                       {currentPath.length > 1 &&
                         currentPath[0] === "archives" && (
@@ -1524,6 +1662,50 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     (currentPath[0] !== "projects" || key === "covers") &&
                     currentPath[0] !== "archives" && (
                       <span className="">{key}</span>
+                    )}
+
+                  {typeof currentFolder[key] !== "string" &&
+                    currentPath.length === 1 &&
+                    (currentPath[0] === "archives" ||
+                      currentPath[0] === "projects") && (
+                      <button
+                        style={{
+                          border:
+                            folderSwapActive && folderSwapItems[0] !== key
+                              ? "1px solid #00BBFC"
+                              : "1px solid black",
+                        }}
+                        className="rounded-full absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!folderSwapActive) {
+                            setFolderSwapActive(true);
+                            const folderSwapItemsCopy = folderSwapItems;
+                            folderSwapItemsCopy[0] = key;
+                            setFolderSwapItems(folderSwapItemsCopy);
+                          } else {
+                            if (key === folderSwapItems[0]) {
+                              setFolderSwapItems([null, null]);
+                              setFolderSwapActive(false);
+                              return;
+                            }
+                            const folderSwapItemsCopy = folderSwapItems;
+                            folderSwapItemsCopy[1] = key;
+                            setFolderSwapItems(folderSwapItemsCopy);
+                            await handleFolderSwapItems();
+                          }
+                        }}
+                      >
+                        <GrPowerCycle
+                          color={
+                            folderSwapActive && folderSwapItems[0] !== key
+                              ? "#00BBFC"
+                              : "black"
+                          }
+                          size={15}
+                          className="ml-[-0.5px]"
+                        />
+                      </button>
                     )}
                 </>
               </div>

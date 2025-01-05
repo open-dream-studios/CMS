@@ -38,13 +38,13 @@
       },
       {
         "id": "a2",
-        "index": 1,
+        "index": 2,
         "title": "earth",
         "bg_color": "lightgreen"
       },
       {
         "id": "a3",
-        "index": 2,
+        "index": 1,
         "title": "travel",
         "bg_color": "lightblue"
       },
