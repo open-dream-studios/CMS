@@ -33,7 +33,7 @@ import { IoStarOutline } from "react-icons/io5";
 import Upload from "./Upload";
 import ColorPicker from "./ColorPicker";
 import axios from "axios";
-import { DotLoader } from "react-spinners";
+import { FaCheck } from "react-icons/fa6";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -50,6 +50,23 @@ export function validateColor(input: string) {
     return input.startsWith("#") ? input : `#${input}`;
   }
   return "white";
+}
+
+function isColor(input: string) {
+  const isColorName = (color: string) => {
+    const testElement = document.createElement("div");
+    testElement.style.color = color;
+    return testElement.style.color !== "";
+  };
+  const isHexCode = (color: string) =>
+    /^#?[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(color);
+  if (isColorName(input)) {
+    return input;
+  }
+  if (isHexCode(input)) {
+    return input.startsWith("#") ? input : `#${input}`;
+  }
+  return null;
 }
 
 const unSanitizeTitle = (title: string, subTitle: boolean) => {
@@ -113,6 +130,7 @@ interface PopupProps {
   onClose: () => void;
   title: string;
   desc: string;
+  popupExtention: string;
   onRename: (newTitle: string, newDesc: string) => void;
   popupTrigger: number;
 }
@@ -122,6 +140,7 @@ const Popup: React.FC<PopupProps> = ({
   onClose,
   title,
   desc,
+  popupExtention,
   onRename,
   popupTrigger,
 }) => {
@@ -167,7 +186,7 @@ const Popup: React.FC<PopupProps> = ({
         }}
       >
         <p className="font-[500] text-[14px] mb-[1px]">
-          {desc === "" ? "Image Name" : "Title"}
+          {desc === "" && popupExtention !== "" ? "Image Name" : "Title"}
         </p>
         <textarea
           className="py-1 px-2"
@@ -319,6 +338,52 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const repo = "js-portfolio";
   const branch = "master";
   const token = process.env.REACT_APP_GIT_PAT;
+
+  const renameFile = async () => {
+    const oldFilePath = "test.png";
+    const newFilePath = "test2.png";
+
+    try {
+      const fileResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${oldFilePath}?ref=${branch}`,
+        {
+          headers: {
+            Authorization: `token ${token}`,
+          },
+        }
+      );
+
+      if (!fileResponse.ok) {
+        throw new Error(`Failed to fetch file: ${fileResponse.statusText}`);
+      }
+
+      const fileData = await fileResponse.json();
+      const fileSha = fileData.sha;
+      const renameResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${newFilePath}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `token ${token}`,
+          },
+          body: JSON.stringify({
+            message: `Rename ${oldFilePath} to ${newFilePath}`,
+            branch,
+            sha: fileSha,
+          }),
+        }
+      );
+
+      if (!renameResponse.ok) {
+        throw new Error(`Failed to rename file: ${renameResponse.statusText}`);
+      }
+
+      console.log("File renamed successfully!");
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   // APP.JSON
   const [appFile, setAppFile] = useState<any>({});
@@ -496,6 +561,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   const openPopup = (name: string, path: any) => {
+    if (currentPath.length === 0) {
+      return;
+    }
     if (name.includes(".")) {
       const extention = name.split(".").pop() || "";
       const imgName = name.slice(0, name.lastIndexOf("."));
@@ -509,7 +577,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       setPopupExtention("");
       setPopupKey(name);
       setPopupTitle(unSanitizeTitle(projectItem.title, false));
-      setPopupDesc(unSanitizeTitle(projectItem.description, true));
+      if (currentPath[0] === "projects") {
+        setPopupDesc(unSanitizeTitle(projectItem.description, true));
+      } else {
+        setPopupDesc("");
+      }
     }
     setPopupTrigger((prev) => prev + 1);
     setSelectedPath(path);
@@ -642,46 +714,83 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     sourcePath: string,
     destinationPath: string
   ) => {
-    try {
-      const baseURL = `https://api.github.com/repos/${owner}/${repo}/contents`;
-      const headers = {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
+    const baseURL = `https://api.github.com/repos/${owner}/${repo}/contents`;
+    const headers = {
+      Authorization: `token ${token}`,
+      Accept: "application/vnd.github.v3+json",
+    };
+
+    const uploadFile = async (path: string, content: any) => {
+      const data = {
+        message: `Uploading file to ${path}`,
+        content, // Base64-encoded content
+        branch,
       };
 
-      const fetchFileContent = async (path: string) => {
+      const response = await axios.put(`${baseURL}/${path}`, data, { headers });
+      if (response.status !== 201 && response.status !== 200) {
+        throw new Error(`Failed to upload file: ${path}`);
+      }
+
+      // console.log(`File uploaded successfully to: ${path}`);
+    };
+
+    const fetchFileContent = async (path: string) => {
+      try {
+        // console.log(`Fetching file content from: ${path}`);
         const response = await axios.get(`${baseURL}/${path}?ref=${branch}`, {
           headers,
         });
-        if (response.status !== 200)
-          throw new Error(`Failed to fetch file: ${path}`);
-        return response.data.content; // This is base64 encoded.
-      };
 
-      const uploadFile = async (path: string, content: any) => {
-        const data = {
-          message: `Copying file to ${path}`,
-          content,
-          branch,
-        };
-        const response = await axios.put(`${baseURL}/${path}`, data, {
-          headers,
-        });
-        if (response.status !== 201)
-          throw new Error(`Failed to upload file: ${path}`);
-      };
+        // console.log("Fetch response:", response);
 
+        if (response.status !== 200) {
+          throw new Error(`Failed to fetch file metadata: ${path}`);
+        }
+
+        // If content is empty, fall back to download_url
+        if (!response.data.content) {
+          // console.log("Content field is empty. Fetching from download_url...");
+          const downloadResponse = await axios.get(response.data.download_url, {
+            responseType: "arraybuffer", // Ensure raw binary data
+          });
+
+          // console.log("Fetched file content from download_url.");
+          return btoa(
+            Array.from(new Uint8Array(downloadResponse.data))
+              .map((byte) => String.fromCharCode(byte))
+              .join("")
+          );
+        }
+
+        // console.log("Fetched file content (base64):", response.data.content);
+        return response.data.content; // Base64 encoded content
+      } catch (error) {
+        console.error("Error fetching file content:", error);
+        throw error;
+      }
+    };
+
+    setLoading(true);
+    try {
       console.log(
         `Starting to copy image from ${sourcePath} to ${destinationPath}`
       );
-      const fileContent = await fetchFileContent(sourcePath); // Fetch the image content.
-      await uploadFile(destinationPath, fileContent); // Upload it to the new location.
+      const fileContent = await fetchFileContent(sourcePath);
+
+      if (!fileContent) {
+        throw new Error("Fetched file content is empty or undefined");
+      }
+
+      // console.log("Fetched file content:", fileContent);
+
+      await uploadFile(destinationPath, fileContent);
+
       console.log("Image file copy completed successfully!");
     } catch (error) {
       console.error("An error occurred during the image copy:", error);
-      if (error) {
-        console.error("Response data:", error);
-      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -747,6 +856,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     ) {
       const page = fullProject[splitPath[0]] as any;
       if (splitPath[0] === "about") {
+        delete page["blank.png"];
         namesList = Object.keys(page);
         return namesList;
       }
@@ -754,16 +864,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       if (splitPath.length > 1 && page[splitPath[1]]) {
         const contents = page[splitPath[1]];
         if (splitPath[0] === "archives") {
+          delete contents["blank.png"];
           namesList = Object.keys(contents);
           return namesList;
         }
 
         if (splitPath[0] === "projects" && splitPath.length === 2) {
+          delete contents["blank.png"];
           namesList = Object.keys(contents);
           return namesList;
         }
 
         if (splitPath.length > 2 && contents["covers"]) {
+          delete contents["covers"]["blank.png"];
           namesList = Object.keys(contents["covers"]);
           return namesList;
         }
@@ -773,19 +886,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const collectFolderNames = () => {
-    const splitPath = selectedPath?.split("/");
     let namesList: string[] = [];
     if (
-      splitPath &&
-      splitPath.length > 0 &&
+      currentPath &&
+      currentPath.length === 1 &&
       fullProject &&
-      fullProject[splitPath[0]]
+      fullProject[currentPath[0]]
     ) {
-      const page = fullProject[splitPath[0]] as any;
-      if (
-        (splitPath[0] === "projects" || splitPath[0] === "archives") &&
-        splitPath.length === 2
-      ) {
+      const page = fullProject[currentPath[0]] as any;
+      if (currentPath[0] === "projects" || currentPath[0] === "archives") {
+        delete page["blank.png"];
         namesList = Object.keys(page);
         return namesList;
       }
@@ -810,13 +920,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const folderNames = folderContents.map(
         (item, index) => appFile["pages"][pageName][index].title
       );
+      console.log(folderNames);
       if (folderNames.includes(newTitle)) {
         alert("That name is already being used in this folder");
         return;
       }
       const appFileCopy = appFile;
       appFileCopy["pages"][pageName][index].title = newTitle;
-      appFileCopy["pages"][pageName][index].description = newDesc;
+      if (pageName === "projects") {
+        appFileCopy["pages"][pageName][index].description = newDesc;
+      }
       setAppFile(appFileCopy);
       await updateAppData();
     } else {
@@ -849,6 +962,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleProjectColorsChange = async (key: string) => {
+    if (currentPath.length === 0) return;
+    const pageName =
+      currentPath[0] === "archives"
+        ? "archives"
+        : currentPath[0] === "projects"
+        ? "projects"
+        : null;
+    if (pageName === null) return;
     if (
       colorToChange.length === 2 &&
       (colorToChange[0] !== null || colorToChange[1] !== null)
@@ -856,14 +977,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const projectItem = getFolderItem(key);
       if (projectItem === null) return;
       const appFileCopy = appFile;
-      const index = appFileCopy["pages"]["projects"].findIndex(
+      const index = appFileCopy["pages"][pageName].findIndex(
         (item: any) => item === projectItem
       );
       if (colorToChange[0] !== null) {
-        appFileCopy["pages"]["projects"][index].bg_color = colorToChange[0];
+        appFileCopy["pages"][pageName][index].bg_color = colorToChange[0];
       }
-      if (colorToChange[1] !== null) {
-        appFileCopy["pages"]["projects"][index].text_color = colorToChange[1];
+      if (colorToChange[1] !== null && pageName === "projects") {
+        appFileCopy["pages"][pageName][index].text_color = colorToChange[1];
       }
       await updateAppData();
     }
@@ -873,7 +994,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const [changedColorItems, setChangedColorItems] = useState<any>({});
   const [colorToChange, setColorToChange] = useState<any>([null, null]);
-  const handleColorChange = (key: any, primary: boolean, newValue: string) => {
+  const handleColorChange = (
+    key: string,
+    primary: boolean,
+    newValue: string
+  ) => {
     const index = primary ? 0 : 1;
     const colorToChangeCopy = colorToChange;
     colorToChangeCopy[index] = newValue;
@@ -884,9 +1009,38 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setChangedColorItems((prev: any) => ({ ...prev, [key]: true }));
   };
 
+  const handleArchiveImageColorChange = async (key: string) => {
+    if (currentPath.length === 0) return;
+    console.log(key, archiveImageColorToChange);
+    setChangedArchiveImageColorItems({});
+    setArchiveImageColorToChange(null);
+
+
+    renameFile()
+  };
+
+  const [changedArchiveImageColorItems, setChangedArchiveImageColorItems] =
+    useState<any>({});
+  const [archiveImageColorToChange, setArchiveImageColorToChange] =
+    useState<any>(null);
+  const handleImageColorChange = (key: string, newValue: string) => {
+    console.log(key, newValue);
+    setArchiveImageColorToChange(newValue);
+    if (
+      Object.keys(changedArchiveImageColorItems).length >= 1 &&
+      !changedArchiveImageColorItems[key]
+    ) {
+      setChangedArchiveImageColorItems({});
+    }
+    setChangedArchiveImageColorItems((prev: any) => ({ ...prev, [key]: true }));
+  };
+
   useEffect(() => {
     setChangedColorItems({});
     setColorToChange([null, null]);
+
+    setChangedArchiveImageColorItems({});
+    setArchiveImageColorToChange(null);
   }, [currentPath]);
 
   const renderContent = () => {
@@ -900,11 +1054,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     // Render folders or multiple items, including images
     return (
       <div
-        className={`z-[990] flex flex-wrap gap-6 mt-6 ${
+        className={`flex flex-wrap gap-6 mt-6 ${
           currentPath[0] === "about" ||
           (currentPath[0] === "projects" && currentPath.length > 1) ||
           (currentPath[0] === "archives" && currentPath.length > 1)
-            ? "pb-[35px] top-0 left-0 "
+            ? "pb-[95px] top-0 left-0 "
             : ""
         } min-h-[40px] justify-center absolute px-[22px]`}
         // style={{ backgroundColor: "red" }}
@@ -920,192 +1074,288 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             currentPath[0] === "projects" &&
             key !== "covers";
 
-          const isArchivesFolder =
-            typeof currentFolder[key] !== "string" &&
-            currentPath[0] === "archives";
-
           let projectFound = true;
           const projectItem = getFolderItem(key);
           if (projectItem === null) {
             projectFound = false;
           }
 
+          // Archive Image Coloring Logic
+          let defaultImgColor = "#CCCCCC";
+          if (currentPath.length === 2 && currentPath[0] === "archives") {
+            const imgName = key.split(".")[0];
+            const imgColor = imgName.split("--").pop();
+            if (
+              imgColor &&
+              imgName.split("--").length >= 2 &&
+              isColor(imgColor) !== null
+            ) {
+              defaultImgColor = isColor(imgColor) || "#CCCCCC";
+            }
+          }
+
           return (
             <div
               key={key}
-              className={`flex ${key === "covers" ? "h-[40px]" : ""} ${
+              style={{ display: key === "blank.png" ? "none" : "all" }}
+              className={`min-w-[150px] flex ${
+                key === "covers" ? "h-[40px]" : ""
+              } ${
                 isSecondaryFolder
                   ? "flex-col"
                   : "items-center justify-center w-[calc(33%-1rem)] max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
               } relative p-2 bg-[#f9f9f9] border border-[#bbb] rounded-lg cursor-pointer`}
               onClick={() => handleFolderClick(key)}
             >
-              {key !== "blank.png" && (
-                <>
-                  {key !== "about" &&
-                    key !== "archives" &&
-                    key !== "projects" &&
-                    key !== "covers" && (
-                      <>
-                        <button
-                          className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const basePath = `${currentPath.join("/")}/`;
-                            openPopup(key, basePath);
-                          }}
-                        >
-                          <BiSolidPencil
-                            className="ml-[-0.5px]"
-                            color={"black"}
-                            size={13}
-                          />
-                        </button>
-
-                        <button
-                          className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (window.confirm(`Delete item?`)) {
-                              const fullPath = `${currentPath.join(
-                                "/"
-                              )}/${key}`;
-                              handleDeleteItem(fullPath);
-                            }
-                          }}
-                        >
-                          <FaTrash
-                            className="ml-[0px]"
-                            color={"black"}
-                            size={11}
-                          />
-                        </button>
-
-                        {isProjectFolder && projectFound && (
-                          <button
-                            className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              await handleStarChange(key);
-                              await getRepoTree();
-                            }}
-                          >
-                            {projectItem.home_page ? (
-                              <IoStar
-                                className="mt-[-1px]"
-                                color={"green"}
-                                size={15}
-                              />
-                            ) : (
-                              <IoStarOutline
-                                className="mt-[-1px]"
-                                color={"#888"}
-                                size={15}
-                              />
-                            )}
-                          </button>
-                        )}
-                      </>
-                    )}
-                  {typeof currentFolder[key] === "string" && (
+              <>
+                {key !== "about" &&
+                  key !== "archives" &&
+                  key !== "projects" &&
+                  key !== "covers" && (
                     <>
-                      <img
-                        src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
-                        alt={key}
-                        className="w-full h-auto mb-8"
-                      />
-                      <span className="absolute bottom-2">{key}</span>
+                      <button
+                        className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const basePath = `${currentPath.join("/")}/`;
+                          openPopup(key, basePath);
+                        }}
+                      >
+                        <BiSolidPencil
+                          className="ml-[-0.5px]"
+                          color={"black"}
+                          size={13}
+                        />
+                      </button>
+
+                      <button
+                        className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete item?`)) {
+                            const fullPath = `${currentPath.join("/")}/${key}`;
+                            handleDeleteItem(fullPath);
+                          }
+                        }}
+                      >
+                        <FaTrash
+                          className="ml-[0px]"
+                          color={"black"}
+                          size={11}
+                        />
+                      </button>
+
+                      {isProjectFolder && projectFound && (
+                        <button
+                          className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await handleStarChange(key);
+                            await getRepoTree();
+                          }}
+                        >
+                          {projectItem.home_page ? (
+                            <IoStar
+                              className="mt-[-1px]"
+                              color={"green"}
+                              size={15}
+                            />
+                          ) : (
+                            <IoStarOutline
+                              className="mt-[-1px]"
+                              color={"#888"}
+                              size={15}
+                            />
+                          )}
+                        </button>
+                      )}
                     </>
                   )}
-                  {typeof currentFolder[key] !== "string" &&
-                    currentPath[0] === "projects" &&
-                    key !== "covers" && (
-                      <div className="h-[200px] w-[auto]">
-                        {!projectFound ? (
-                          <>{key}</>
-                        ) : (
-                          <div
-                            className="flex flex-col"
-                            style={{
-                              wordWrap: "break-word",
-                              whiteSpace: "normal",
+                {typeof currentFolder[key] === "string" && (
+                  <>
+                    <img
+                      src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
+                      alt={key}
+                      className="w-full h-auto mb-8"
+                    />
+                    <div className="bottom-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
+                      <span className="truncate overflow-hidden text-ellipsis">
+                        {key}
+                      </span>
+                    </div>
+
+                    {currentPath.length > 1 &&
+                      currentPath[0] === "archives" && (
+                        <>
+                          <button
+                            className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                            style={{ borderRadius: "50%" }}
+                            onClick={async (e) => {
+                              e.stopPropagation();
                             }}
                           >
-                            <p>{unSanitizeTitle(projectItem.title, false)}</p>
-                            <p>
-                              {unSanitizeTitle(projectItem.description, true)}
-                            </p>
-                            <div className="flex flex-row gap-2 mt-[7px]">
-                              <div
-                                onClick={(e: any) => e.stopPropagation()}
-                                className="w-[25px] h-[25px] relative"
-                              >
-                                <ColorPicker
-                                  initialColor={projectItem.bg_color}
-                                  primary={true}
-                                  onColorChange={(
-                                    primary: boolean,
-                                    newValue: string
-                                  ) =>
-                                    handleColorChange(key, primary, newValue)
-                                  }
-                                />
-                              </div>
-                              <div
-                                onClick={(e: any) => e.stopPropagation()}
-                                className="w-[25px] h-[25px] relative"
-                              >
-                                <ColorPicker
-                                  initialColor={projectItem.text_color}
-                                  primary={false}
-                                  onColorChange={(
-                                    primary: boolean,
-                                    newValue: string
-                                  ) =>
-                                    handleColorChange(key, primary, newValue)
-                                  }
-                                />
-                              </div>
-
-                              {changedColorItems[key] && (
-                                <button
-                                  className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
-                                  style={{
-                                    color: "black",
-                                    border: "1px solid black",
-                                  }}
-                                  onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    handleProjectColorsChange(key);
-                                  }}
-                                >
-                                  Done
-                                </button>
-                              )}
+                            <div className="w-[25px] h-[25px] rounded-full overflow-hidden">
+                              <ColorPicker
+                                initialColor={defaultImgColor}
+                                primary={true}
+                                onColorChange={(
+                                  primary: boolean,
+                                  newValue: string
+                                ) => handleImageColorChange(key, newValue)}
+                              />
                             </div>
+
+                            <div
+                              style={{
+                                border: "2px solid white",
+                                pointerEvents: "none",
+                              }}
+                              className="absolute top-0 left-0 w-[23px] h-[23px] rounded-full overflow-hidden"
+                            ></div>
+                            <div
+                              style={{
+                                border: "1px solid #CCCCCC",
+                                pointerEvents: "none",
+                              }}
+                              className="absolute top-[-1px] left-[-1px] w-[25px] h-[25px] rounded-full overflow-hidden"
+                            ></div>
+                          </button>
+
+                          {changedArchiveImageColorItems[key] && (
+                            <button
+                              style={{ border: "1px solid green" }}
+                              className="rounded-full absolute bottom-[-10px] right-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                handleArchiveImageColorChange(key);
+                              }}
+                            >
+                              <FaCheck
+                                color={"green"}
+                                size={15}
+                                className="ml-[-0.5px]"
+                              />
+                            </button>
+                          )}
+                        </>
+                      )}
+                  </>
+                )}
+                {typeof currentFolder[key] !== "string" &&
+                  currentPath[0] === "projects" &&
+                  key !== "covers" && (
+                    <div className="h-[200px] w-[auto]">
+                      {!projectFound ? (
+                        <>{key}</>
+                      ) : (
+                        <div
+                          className="flex flex-col"
+                          style={{
+                            wordWrap: "break-word",
+                            whiteSpace: "normal",
+                          }}
+                        >
+                          <p>{unSanitizeTitle(projectItem.title, false)}</p>
+                          <p>
+                            {unSanitizeTitle(projectItem.description, true)}
+                          </p>
+                          <div className="flex flex-row gap-2 mt-[7px]">
+                            <div
+                              onClick={(e: any) => e.stopPropagation()}
+                              className="w-[25px] h-[25px] relative"
+                            >
+                              <ColorPicker
+                                initialColor={projectItem.bg_color}
+                                primary={true}
+                                onColorChange={(
+                                  primary: boolean,
+                                  newValue: string
+                                ) => handleColorChange(key, primary, newValue)}
+                              />
+                            </div>
+                            <div
+                              onClick={(e: any) => e.stopPropagation()}
+                              className="w-[25px] h-[25px] relative"
+                            >
+                              <ColorPicker
+                                initialColor={projectItem.text_color}
+                                primary={false}
+                                onColorChange={(
+                                  primary: boolean,
+                                  newValue: string
+                                ) => handleColorChange(key, primary, newValue)}
+                              />
+                            </div>
+
+                            {changedColorItems[key] && (
+                              <button
+                                className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
+                                style={{
+                                  color: "black",
+                                  border: "1px solid black",
+                                }}
+                                onClick={(e: any) => {
+                                  e.stopPropagation();
+                                  handleProjectColorsChange(key);
+                                }}
+                              >
+                                Done
+                              </button>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )}
-                  {typeof currentFolder[key] !== "string" &&
-                    currentPath[0] === "archives" && (
-                      <div className="h-[200px] w-[auto]">
-                        {!projectFound ? (
-                          <>{key}</>
-                        ) : (
-                          <div>
-                            <p>{projectItem.title}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                {typeof currentFolder[key] !== "string" &&
+                  currentPath[0] === "archives" && (
+                    <div className="h-[200px] w-[auto]">
+                      {!projectFound ? (
+                        <>{key}</>
+                      ) : (
+                        <div>
+                          <p>{unSanitizeTitle(projectItem.title, false)}</p>
+                          <div className="flex flex-row mt-[7px] ">
+                            <div
+                              onClick={(e: any) => e.stopPropagation()}
+                              className="w-[25px] h-[25px] relative"
+                            >
+                              <ColorPicker
+                                initialColor={projectItem.bg_color}
+                                primary={true}
+                                onColorChange={(
+                                  primary: boolean,
+                                  newValue: string
+                                ) => handleColorChange(key, primary, newValue)}
+                              />
+                            </div>
+
+                            {changedColorItems[key] && (
+                              <button
+                                className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
+                                style={{
+                                  color: "black",
+                                  border: "1px solid black",
+                                }}
+                                onClick={(e: any) => {
+                                  e.stopPropagation();
+                                  handleProjectColorsChange(key);
+                                }}
+                              >
+                                Done
+                              </button>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )}
-                  {typeof currentFolder[key] !== "string" &&
-                    (currentPath[0] !== "projects" || key === "covers") &&
-                    currentPath[0] !== "archives" && (
-                      <span className="">{key}</span>
-                    )}
-                </>
-              )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                {typeof currentFolder[key] !== "string" &&
+                  (currentPath[0] !== "projects" || key === "covers") &&
+                  currentPath[0] !== "archives" && (
+                    <span className="">{key}</span>
+                  )}
+              </>
             </div>
           );
         })}
@@ -1114,6 +1364,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           onClose={closePopup}
           title={popupTitle}
           desc={popupDesc}
+          popupExtention={popupExtention}
           onRename={handleRename}
           popupTrigger={popupTrigger}
         />
@@ -1251,10 +1502,90 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleAddFolder = async (folderName: string) => {
-    // await uploadBlankImageToGitHub(folderName);
-    // setTimeout(async () => {
-    //   await getRepoTree();
-    // }, 1000);
+    setLoading(true);
+    try {
+      const pageName =
+        currentPath[0] === "archives"
+          ? "archives"
+          : currentPath[0] === "projects"
+          ? "projects"
+          : null;
+      if (pageName === null) return;
+      const getPage = () => {
+        if (
+          currentPath &&
+          currentPath.length === 1 &&
+          fullProject &&
+          fullProject[currentPath[0]]
+        ) {
+          const pageObject = fullProject[currentPath[0]] as any;
+          if (currentPath[0] === "projects" || currentPath[0] === "archives") {
+            delete pageObject["blank.png"];
+            return pageObject;
+          }
+        }
+        return null;
+      };
+      const pageObject = getPage();
+      if (pageObject === null) return;
+
+      const folderNames = Object.keys(pageObject).map(
+        (item, index) => appFile["pages"][pageName][index].title
+      );
+      if (folderNames.includes(sanitizeTitle(folderName))) {
+        alert("That folder name is already being used");
+        return;
+      }
+
+      // Now get the app.json
+      const appFileCopy = appFile;
+      if (Object.keys(appFile).length === 0) return null;
+      const pages = appFile["pages"];
+      if (!pages || Object.keys(pages).length === 0) return null;
+      const page = pages[pageName];
+      if (!page || page.length === 0) return null;
+
+      const itemLetter = pageName === "projects" ? "p" : "a";
+      const titleNumbers = Object.keys(pageObject).map((item: string) =>
+        parseInt(item.replaceAll("p", "").replaceAll("a", ""))
+      );
+      const highestIndexObject = page.reduce((maxObj: any, currentObj: any) =>
+        currentObj.index > maxObj.index ? currentObj : maxObj
+      );
+      const nextIndex = highestIndexObject.index + 1;
+      const nextTitle = itemLetter + (Math.max(...titleNumbers) + 1);
+
+      if (pageName === "projects") {
+        appFileCopy["pages"][pageName].push({
+          index: nextIndex,
+          id: nextTitle,
+          title: sanitizeTitle(folderName),
+          description: "default_description",
+          bg_color: "white",
+          text_color: "black",
+          home_page: false,
+        });
+      }
+      if (pageName === "archives") {
+        appFileCopy["pages"][pageName].push({
+          index: nextIndex,
+          id: nextTitle,
+          title: sanitizeTitle(folderName),
+          bg_color: "white",
+        });
+      }
+      setAppFile(appFileCopy);
+      await updateAppData();
+
+      await uploadBlankImageToGitHub(nextTitle);
+      setTimeout(async () => {
+        await getRepoTree();
+      }, 1000);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!fullProject) {
@@ -1262,14 +1593,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   }
 
   return (
-    <div className="w-[100vw] h-[100vh] z-[998]">
+    <div
+      className="w-[100vw] h-[100vh]"
+      style={{ pointerEvents: loading ? "none" : "all" }}
+    >
       {uploadPopup && (
-        <>
+        <div className="z-[999] fixed top-0 left-0">
           <div
-            className="z-[999] absolute top-0 w-[100vw] h-[100vh]"
+            className="absolute top-0 w-[100vw] h-[100vh]"
             style={{ backgroundColor: "black", opacity: 0.4 }}
           ></div>
-          <div className="z-[999] absolute top-0 w-[100vw] h-[100vh] flex items-center justify-center">
+          <div className="absolute top-0 w-[100vw] h-[100vh] flex items-center justify-center">
             <div
               ref={divRef}
               className="w-[70%] aspect-[1.5/1] relative"
@@ -1285,18 +1619,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 onClick={() => {
                   setUploadPopup(false);
                 }}
-                className="absolute top-2 right-3 z-[999]"
+                className="absolute top-2 right-3"
                 style={{ cursor: "pointer" }}
                 color={"black"}
                 size={50}
               />
             </div>
           </div>
-        </>
+        </div>
       )}
+
+      <div className="w-[100%] h-[calc(100vh-63px)] absolute left-0 top-[63px] flex items-center justify-center">
+        {renderContent()}
+      </div>
+
       <div
-        className="z-[998] w-[100%] h-[63px] flex fixed top-0 left-0"
-        style={{ borderBottom: "1px solid #ccc", backgroundColor: "white" }}
+        className="z-[998] w-[100%] h-[63px] fixed left-0 top-0"
+        style={{ backgroundColor: "white", borderBottom: "1px solid #CCCCCC" }}
       >
         {currentPath.length > 0 && (
           <button
@@ -1314,6 +1653,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         >
           <div>Project Dashboard</div>
         </div>
+
         {loading && (
           <div className="absolute top-4 right-[107px] simple-spinner"></div>
         )}
@@ -1322,42 +1662,46 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </button>
       </div>
 
-      <div className="z-[998] w-[100%] h-[calc(100vh-63px)] absolute left-0 top-[63px] flex items-center justify-center">
-        {currentPath.length > 0 &&
-          (currentPath[0] === "about" ||
-            (currentPath[0] === "archives" && currentPath.length === 2) ||
-            (currentPath[0] === "projects" &&
-              (currentPath.length === 2 || currentPath.length === 3))) && (
-            <button
-              onClick={() => {
-                setUploadPopup(true);
-              }}
-              className="button absolute bottom-3 right-3"
-            >
-              Upload
-            </button>
-          )}
+      {currentPath.length > 0 && (
+        <div
+          className="z-[998] w-[100%] h-[63px] fixed left-0 bottom-0"
+          style={{ backgroundColor: "white", borderTop: "1px solid #CCCCCC" }}
+        >
+          {currentPath.length === 1 &&
+            (currentPath[0] === "archives" ||
+              currentPath[0] === "projects") && (
+              <button
+                onClick={() => {
+                  const folderName = window.prompt("Folder Name:");
+                  if (folderName && folderName !== "") {
+                    const sanitizedFolderName = folderName
+                      .trim()
+                      .replace(/[^a-zA-Z0-9-]/g, "_");
+                    handleAddFolder(sanitizedFolderName);
+                  }
+                }}
+                className="button absolute bottom-3 right-3"
+              >
+                Add Folder
+              </button>
+            )}
 
-        {currentPath.length === 1 &&
-          (currentPath[0] === "archives" || currentPath[0] === "projects") && (
-            <button
-              onClick={() => {
-                const folderName = window.prompt("Folder Name:");
-                if (folderName && folderName !== "") {
-                  const sanitizedFolderName = folderName
-                    .trim()
-                    .replace(/[^a-zA-Z0-9-]/g, "_");
-                  handleAddFolder(sanitizedFolderName);
-                }
-              }}
-              className="button absolute bottom-3 right-3"
-            >
-              Add Folder
-            </button>
-          )}
-
-        {renderContent()}
-      </div>
+          {currentPath.length > 0 &&
+            (currentPath[0] === "about" ||
+              (currentPath[0] === "archives" && currentPath.length === 2) ||
+              (currentPath[0] === "projects" &&
+                (currentPath.length === 2 || currentPath.length === 3))) && (
+              <button
+                onClick={() => {
+                  setUploadPopup(true);
+                }}
+                className="button absolute bottom-3 right-3"
+              >
+                Upload
+              </button>
+            )}
+        </div>
+      )}
     </div>
   );
 };

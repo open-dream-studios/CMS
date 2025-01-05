@@ -1,21 +1,36 @@
 import React, { useState } from "react";
-import { validateColor } from "./Admin";
 
 interface ColorPickerProps {
   initialColor: string;
   primary: boolean;
 }
 
-const ColorPicker: React.FC<ColorPickerProps & { onColorChange: (primary: boolean, newValue: string) => void}> = ({
+function validateColor2(color: string): string {
+  const tempDiv = document.createElement("div");
+  tempDiv.style.color = color;
+  document.body.appendChild(tempDiv);
+  const computedColor = window.getComputedStyle(tempDiv).color;
+  document.body.removeChild(tempDiv);
+
+  const match = computedColor.match(/\d+/g);
+  if (match && match.length >= 3) {
+    const [r, g, b] = match.map(Number);
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  }
+  return "#000000"; 
+}
+
+const ColorPicker: React.FC<ColorPickerProps & { onColorChange: (primary: boolean, newValue: string) => void }> = ({
   initialColor,
   onColorChange,
   primary,
 }) => {
-  const [color, setColor] = useState(validateColor(initialColor));
+  const [color, setColor] = useState(validateColor2(initialColor));
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setColor(e.target.value);
-    onColorChange(primary, e.target.value); 
+    const newColor = e.target.value;
+    setColor(newColor);
+    onColorChange(primary, newColor);
   };
 
   return (
@@ -28,19 +43,18 @@ const ColorPicker: React.FC<ColorPickerProps & { onColorChange: (primary: boolea
           position: "absolute",
           top: "0",
           left: "0",
-          opacity: 0, 
+          opacity: 0,
           width: "100%",
           height: "100%",
           cursor: "pointer",
-          border: "1px solid #ccc", 
+          border: "1px solid #ccc",
         }}
       />
-
       <div
         style={{
           width: "100%",
           height: "100%",
-          backgroundColor: color, 
+          backgroundColor: color,
           border: "1px solid #ccc",
           cursor: "pointer",
         }}
@@ -52,5 +66,6 @@ const ColorPicker: React.FC<ColorPickerProps & { onColorChange: (primary: boolea
     </div>
   );
 };
+
 
 export default ColorPicker;
