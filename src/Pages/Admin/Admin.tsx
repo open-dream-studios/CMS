@@ -35,6 +35,7 @@ import ColorPicker from "./ColorPicker";
 import axios from "axios";
 import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
+import { GoChevronRight } from "react-icons/go";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -345,6 +346,7 @@ interface FolderStructure {
 
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [loading, setLoading] = useState(false);
+  const [reducedAppFile, setReducedAppFile] = useState<any>({});
 
   // const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
@@ -521,6 +523,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         try {
           const parsedContent = JSON.parse(fileContent);
           setAppFile(parsedContent);
+
+          if (parsedContent["pages"] !== undefined) {
+            const indexMap = Object.values(parsedContent["pages"])
+              .flat()
+              .reduce((map: any, item: any) => {
+                map[item.id] = item.title;
+                return map;
+              }, {});
+            setReducedAppFile(indexMap);
+          }
         } catch (error) {
           console.error("Error parsing JSON content:", error);
         }
@@ -557,6 +569,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       console.log("File updated successfully");
     } catch (error) {
       console.error("Error updating the file:", error);
+    }
+
+    if (appFile["pages"] !== undefined) {
+      const indexMap = Object.values(appFile["pages"])
+        .flat()
+        .reduce((map: any, item: any) => {
+          map[item.id] = item.title;
+          return map;
+        }, {});
+      setReducedAppFile(indexMap);
     }
   }
 
@@ -651,7 +673,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const handleFolderClick = (folderName: string) => {
     if (folderName.includes(".")) {
-      const imagePath = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/public/assets/${
+      const imagePath = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branch}/public/assets/${
         currentPath.join("/") + "/" + folderName
       }`;
       window.location.href = imagePath;
@@ -662,6 +684,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const handleBackClick = () => {
     setCurrentPath(currentPath.slice(0, -1));
+  };
+
+  const handleBackTextClick = (end: number) => {
+    setCurrentPath(currentPath.slice(0, end));
   };
 
   // POPUP
@@ -1282,23 +1308,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       currentFolders.includes(folderSwapItems[0]) &&
       currentFolders.includes(folderSwapItems[1])
     ) {
-      const appFileCopy = appFile
+      const appFileCopy = appFile;
       const index1 = appFileCopy["pages"][currentPath[0]].findIndex(
         (item: any) => item.id === folderSwapItems[0]
       );
       const index2 = appFileCopy["pages"][currentPath[0]].findIndex(
         (item: any) => item.id === folderSwapItems[1]
       );
-      if (index1 === -1 || index2 === -1) return
+      if (index1 === -1 || index2 === -1) return;
 
-      const storedIndex1 = appFileCopy["pages"][currentPath[0]][index1].index
-      const storedIndex2 = appFileCopy["pages"][currentPath[0]][index2].index
-   
-      appFileCopy["pages"][currentPath[0]][index1].index = storedIndex2
-      appFileCopy["pages"][currentPath[0]][index2].index = storedIndex1
+      const storedIndex1 = appFileCopy["pages"][currentPath[0]][index1].index;
+      const storedIndex2 = appFileCopy["pages"][currentPath[0]][index2].index;
 
-      setAppFile(appFileCopy)
-      await updateAppData()
+      appFileCopy["pages"][currentPath[0]][index1].index = storedIndex2;
+      appFileCopy["pages"][currentPath[0]][index2].index = storedIndex1;
+
+      setAppFile(appFileCopy);
+      await updateAppData();
     }
     setFolderSwapActive(false);
     setFolderSwapItems([null, null]);
@@ -1307,7 +1333,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const renderContent = () => {
     const currentFolder = getCurrentFolder();
     const githubBaseUrl =
-      "https://raw.githubusercontent.com/JosephGoff/js-portfolio/master/public/assets/";
+      "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/";
     if (typeof currentFolder === "string") {
       return <></>;
     }
@@ -1327,15 +1353,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         {Object.keys(currentFolder)
 
           .sort((a, b) => {
-            let indexMap: any = {}
+            let indexMap: any = {};
             if (appFile["pages"] !== undefined) {
-            
-            indexMap = Object.values(appFile["pages"])
-              .flat()
-              .reduce((map: any, item: any) => {
-                map[item.id] = item.index;
-                return map;
-              }, {});
+              indexMap = Object.values(appFile["pages"])
+                .flat()
+                .reduce((map: any, item: any) => {
+                  map[item.id] = item.index;
+                  return map;
+                }, {});
             }
 
             // // First sort (your existing logic)
@@ -2091,10 +2116,45 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
         <div
           className={`h-[100%] flex items-center ${
-            currentPath.length > 0 ? "ml-[100px]" : "ml-[30px]"
+            currentPath.length > 0 ? "ml-[100px]" : "ml-[26px]"
           } font-[500] text-[20px]`}
         >
-          <div>Project Dashboard</div>
+          <div className="mt-[1px] cursor-pointer" onClick={()=>{handleBackTextClick(0)}}>Project Dashboard</div>
+          <div className="ml-[30px] flex flex-row mt-[1px] cursor-pointer"  onClick={()=>{handleBackTextClick(1)}}>
+            {currentPath.length > 0 && (
+              <>
+                <p style={{ color: "#AAAAAA" }}>{currentPath[0]}</p>
+                <GoChevronRight
+                  className="mt-[1px] mx-[1px]"
+                  color={"#AAAAAA"}
+                  size={30}
+                />
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-row mt-[1px] cursor-pointer"  onClick={()=>{handleBackTextClick(2)}}>
+            {currentPath.length > 1 &&
+              Object.keys(reducedAppFile).length > 0 &&
+              reducedAppFile[currentPath[1]] && (
+                <>
+                  <p style={{ color: "#AAAAAA" }}>
+                    {reducedAppFile[currentPath[1]]}
+                  </p>
+                  <GoChevronRight
+                    className="mt-[1px] mx-[1px]"
+                    color={"#AAAAAA"}
+                    size={30}
+                  />
+                </>
+              )}
+          </div>
+
+          <div className="flex flex-row mt-[1px] cursor-pointer">
+            {currentPath.length > 2 && (
+              <p style={{ color: "#AAAAAA" }}>covers</p>
+            )}
+          </div>
         </div>
 
         {loading && (
