@@ -86,6 +86,17 @@ const sanitizeTitle = (title: string) => {
   return title.trim().replaceAll(" ", "_").toLowerCase();
 };
 
+const extractAfterIndex = (str: string) => {
+  const regex = /^\d+--/;
+  return regex.test(str) ? str.replace(regex, "") : str;
+};
+
+const extractBeforeIndex = (str: string) => {
+  const regex = /^(\d+)--/;
+  const match = str.match(regex);
+  return match ? match[1] : null;
+};
+
 export type FileTree = {
   [key: string]: string | FileTree | FileTree[] | string[];
 };
@@ -153,8 +164,22 @@ const Popup: React.FC<PopupProps> = ({
   }, [title, desc, popupTrigger]);
 
   const handleRename = () => {
-    onRename(sanitizeTitle(newTitle), sanitizeTitle(newDesc));
-    onClose();
+    if (
+      popupExtention === "" &&
+      newTitle.trim() !== "" &&
+      newDesc.trim() !== ""
+    ) {
+      onRename(sanitizeTitle(newTitle), sanitizeTitle(newDesc));
+      onClose();
+    }
+    if (
+      popupExtention !== "" &&
+      newTitle.split("--").length >= 2 &&
+      newTitle.split("--")[1].trim() !== ""
+    ) {
+      onRename(sanitizeTitle(newTitle), sanitizeTitle(newDesc));
+      onClose();
+    }
   };
 
   const isValidFileNameChar = (char: any) => {
@@ -339,13 +364,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const branch = "master";
   const token = process.env.REACT_APP_GIT_PAT;
 
-  const renameFile = async () => {
-    const oldFilePath = "test.png";
-    const newFilePath = "test2.png";
-
-    try {
-      const fileResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${oldFilePath}?ref=${branch}`,
+  const renameImageFile = async (oldFilePath: string, newFilePath: string) => {
+    const getBlobSha = async () => {
+      const response = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${oldFilePath}`,
         {
           headers: {
             Authorization: `token ${token}`,
@@ -353,30 +375,132 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         }
       );
 
-      if (!fileResponse.ok) {
-        throw new Error(`Failed to fetch file: ${fileResponse.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Failed to get blob SHA: ${response.statusText}`);
       }
 
-      const fileData = await fileResponse.json();
-      const fileSha = fileData.sha;
-      const renameResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${newFilePath}`,
+      const data = await response.json();
+      return data.sha;
+    };
+
+    try {
+      // Step 1: Get the current reference (SHA of the latest commit)
+      const refResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`,
         {
-          method: "PUT",
+          headers: {
+            Authorization: `token ${token}`,
+          },
+        }
+      );
+
+      if (!refResponse.ok) {
+        throw new Error(
+          `Failed to fetch branch reference: ${refResponse.statusText}`
+        );
+      }
+
+      const refData = await refResponse.json();
+      const latestCommitSha = refData.object.sha;
+
+      // Step 2: Get the tree associated with the latest commit
+      const commitResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/commits/${latestCommitSha}`,
+        {
+          headers: {
+            Authorization: `token ${token}`,
+          },
+        }
+      );
+
+      if (!commitResponse.ok) {
+        throw new Error(`Failed to fetch commit: ${commitResponse.statusText}`);
+      }
+
+      const commitData = await commitResponse.json();
+      const treeSha = commitData.tree.sha;
+
+      // Step 3: Create a new tree with the renamed file
+      const treeResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/trees`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `token ${token}`,
+          },
+          body: JSON.stringify({
+            base_tree: treeSha,
+            tree: [
+              {
+                path: newFilePath,
+                mode: "100644",
+                type: "blob",
+                sha: await getBlobSha(), // Get the blob SHA of the old file
+              },
+              {
+                path: oldFilePath,
+                mode: "100644",
+                type: "blob",
+                sha: null, // Remove the old file
+              },
+            ],
+          }),
+        }
+      );
+
+      if (!treeResponse.ok) {
+        throw new Error(
+          `Failed to create new tree: ${treeResponse.statusText}`
+        );
+      }
+
+      const treeData = await treeResponse.json();
+
+      // Step 4: Create a new commit
+      const commitResponse2 = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/commits`,
+        {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `token ${token}`,
           },
           body: JSON.stringify({
             message: `Rename ${oldFilePath} to ${newFilePath}`,
-            branch,
-            sha: fileSha,
+            tree: treeData.sha,
+            parents: [latestCommitSha],
           }),
         }
       );
 
-      if (!renameResponse.ok) {
-        throw new Error(`Failed to rename file: ${renameResponse.statusText}`);
+      if (!commitResponse2.ok) {
+        throw new Error(
+          `Failed to create new commit: ${commitResponse2.statusText}`
+        );
+      }
+
+      const commitData2 = await commitResponse2.json();
+
+      // Step 5: Update the branch reference to point to the new commit
+      const updateRefResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `token ${token}`,
+          },
+          body: JSON.stringify({
+            sha: commitData2.sha,
+          }),
+        }
+      );
+
+      if (!updateRefResponse.ok) {
+        throw new Error(
+          `Failed to update branch reference: ${updateRefResponse.statusText}`
+        );
       }
 
       console.log("File renamed successfully!");
@@ -565,9 +689,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       return;
     }
     if (name.includes(".")) {
-      const extention = name.split(".").pop() || "";
+      const extension = name.split(".").pop() || "";
       const imgName = name.slice(0, name.lastIndexOf("."));
-      setPopupExtention(extention);
+      setPopupExtention(extension);
       setPopupTitle(imgName);
       setPopupKey(imgName);
       setPopupDesc("");
@@ -846,36 +970,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const collectImgNames = () => {
-    const splitPath = selectedPath?.split("/");
     let namesList: string[] = [];
     if (
-      splitPath &&
-      splitPath.length > 0 &&
+      currentPath &&
+      currentPath.length > 0 &&
       fullProject &&
-      fullProject[splitPath[0]]
+      fullProject[currentPath[0]]
     ) {
-      const page = fullProject[splitPath[0]] as any;
-      if (splitPath[0] === "about") {
+      const page = fullProject[currentPath[0]] as any;
+      if (currentPath[0] === "about") {
         delete page["blank.png"];
         namesList = Object.keys(page);
         return namesList;
       }
 
-      if (splitPath.length > 1 && page[splitPath[1]]) {
-        const contents = page[splitPath[1]];
-        if (splitPath[0] === "archives") {
+      if (currentPath.length > 1 && page[currentPath[1]]) {
+        const contents = page[currentPath[1]];
+        if (currentPath[0] === "archives") {
           delete contents["blank.png"];
           namesList = Object.keys(contents);
           return namesList;
         }
 
-        if (splitPath[0] === "projects" && splitPath.length === 2) {
+        if (currentPath[0] === "projects" && currentPath.length === 2) {
           delete contents["blank.png"];
           namesList = Object.keys(contents);
           return namesList;
         }
 
-        if (splitPath.length > 2 && contents["covers"]) {
+        if (currentPath.length > 2 && contents["covers"]) {
           delete contents["covers"]["blank.png"];
           namesList = Object.keys(contents["covers"]);
           return namesList;
@@ -943,8 +1066,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         }
         const originalPath = "public/assets/" + selectedPath + originalName;
         const newPath = "public/assets/" + selectedPath + imageName;
-        await copyImageOnGithub(originalPath, newPath);
-        await deleteItem(originalPath, true);
+        await renameImageFile(originalPath, newPath);
       }
       await getRepoTree();
     }
@@ -1015,14 +1137,42 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setChangedArchiveImageColorItems({});
     setArchiveImageColorToChange(null);
 
+    let newKey = key.split(".")[0];
+    const lastText = newKey.split("--").pop();
+    if (
+      lastText &&
+      newKey.split("--").length >= 2 &&
+      isColor(lastText) !== null
+    ) {
+      newKey =
+        newKey.slice(0, newKey.lastIndexOf("--")) +
+        "--" +
+        archiveImageColorToChange.replaceAll("#", "") +
+        "." +
+        key.split(".")[1];
+      console.log(newKey);
+    } else {
+      newKey =
+        newKey +
+        "--" +
+        archiveImageColorToChange.replaceAll("#", "") +
+        "." +
+        key.split(".")[1];
+      console.log(newKey);
+    }
 
-    renameFile()
+    const originalPath = "public/assets/" + currentPath.join("/") + "/" + key;
+    const newPath = "public/assets/" + currentPath.join("/") + "/" + newKey;
+    console.log(originalPath, newPath);
+    await renameImageFile(originalPath, newPath);
+    await getRepoTree();
   };
 
   const [changedArchiveImageColorItems, setChangedArchiveImageColorItems] =
     useState<any>({});
   const [archiveImageColorToChange, setArchiveImageColorToChange] =
     useState<any>(null);
+
   const handleImageColorChange = (key: string, newValue: string) => {
     console.log(key, newValue);
     setArchiveImageColorToChange(newValue);
@@ -1063,302 +1213,322 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         } min-h-[40px] justify-center absolute px-[22px]`}
         // style={{ backgroundColor: "red" }}
       >
-        {Object.keys(currentFolder).map((key, index) => {
-          const isSecondaryFolder =
-            typeof currentFolder[key] !== "string" &&
-            ((currentPath[0] === "projects" && key !== "covers") ||
-              currentPath[0] === "archives");
+        {Object.keys(currentFolder)
+          .sort((a, b) => {
+            const indexA = extractBeforeIndex(a);
+            const indexB = extractBeforeIndex(b);
+            const numA = indexA !== null ? Number(indexA) : Infinity; 
+            const numB = indexB !== null ? Number(indexB) : Infinity; 
+            return numA - numB; 
+          })
+          .map((key, index) => {
+            console.log(key)
+            const isSecondaryFolder =
+              typeof currentFolder[key] !== "string" &&
+              ((currentPath[0] === "projects" && key !== "covers") ||
+                currentPath[0] === "archives");
 
-          const isProjectFolder =
-            typeof currentFolder[key] !== "string" &&
-            currentPath[0] === "projects" &&
-            key !== "covers";
+            const isProjectFolder =
+              typeof currentFolder[key] !== "string" &&
+              currentPath[0] === "projects" &&
+              key !== "covers";
 
-          let projectFound = true;
-          const projectItem = getFolderItem(key);
-          if (projectItem === null) {
-            projectFound = false;
-          }
-
-          // Archive Image Coloring Logic
-          let defaultImgColor = "#CCCCCC";
-          if (currentPath.length === 2 && currentPath[0] === "archives") {
-            const imgName = key.split(".")[0];
-            const imgColor = imgName.split("--").pop();
-            if (
-              imgColor &&
-              imgName.split("--").length >= 2 &&
-              isColor(imgColor) !== null
-            ) {
-              defaultImgColor = isColor(imgColor) || "#CCCCCC";
+            let projectFound = true;
+            const projectItem = getFolderItem(key);
+            if (projectItem === null) {
+              projectFound = false;
             }
-          }
 
-          return (
-            <div
-              key={key}
-              style={{ display: key === "blank.png" ? "none" : "all" }}
-              className={`min-w-[150px] flex ${
-                key === "covers" ? "h-[40px]" : ""
-              } ${
-                isSecondaryFolder
-                  ? "flex-col"
-                  : "items-center justify-center w-[calc(33%-1rem)] max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
-              } relative p-2 bg-[#f9f9f9] border border-[#bbb] rounded-lg cursor-pointer`}
-              onClick={() => handleFolderClick(key)}
-            >
-              <>
-                {key !== "about" &&
-                  key !== "archives" &&
-                  key !== "projects" &&
-                  key !== "covers" && (
-                    <>
-                      <button
-                        className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const basePath = `${currentPath.join("/")}/`;
-                          openPopup(key, basePath);
-                        }}
-                      >
-                        <BiSolidPencil
-                          className="ml-[-0.5px]"
-                          color={"black"}
-                          size={13}
-                        />
-                      </button>
+            // Archive Image Coloring Logic
+            let defaultImgColor = "#CCCCCC";
+            if (currentPath.length === 2 && currentPath[0] === "archives") {
+              const imgName = key.split(".")[0];
+              const imgColor = imgName.split("--").pop();
+              if (
+                imgColor &&
+                imgName.split("--").length >= 2 &&
+                isColor(imgColor) !== null
+              ) {
+                defaultImgColor = isColor(imgColor) || "#CCCCCC";
+              }
+            }
 
-                      <button
-                        className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Delete item?`)) {
-                            const fullPath = `${currentPath.join("/")}/${key}`;
-                            handleDeleteItem(fullPath);
-                          }
-                        }}
-                      >
-                        <FaTrash
-                          className="ml-[0px]"
-                          color={"black"}
-                          size={11}
-                        />
-                      </button>
+            console.log(key);
+            console.log(extractBeforeIndex(key));
 
-                      {isProjectFolder && projectFound && (
+            return (
+              <div
+                key={key}
+                style={{ display: key === "blank.png" ? "none" : "all" }}
+                className={`min-w-[150px] flex ${
+                  key === "covers" ? "h-[40px]" : ""
+                } ${
+                  isSecondaryFolder
+                    ? "flex-col"
+                    : "items-center justify-center w-[calc(33%-1rem)] max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
+                } relative p-2 bg-[#f9f9f9] border border-[#bbb] rounded-lg cursor-pointer`}
+                onClick={() => handleFolderClick(key)}
+              >
+                <>
+                  {key !== "about" &&
+                    key !== "archives" &&
+                    key !== "projects" &&
+                    key !== "covers" && (
+                      <>
                         <button
-                          className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                          onClick={async (e) => {
+                          className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
                             e.stopPropagation();
-                            await handleStarChange(key);
-                            await getRepoTree();
+                            const basePath = `${currentPath.join("/")}/`;
+                            openPopup(key, basePath);
                           }}
                         >
-                          {projectItem.home_page ? (
-                            <IoStar
-                              className="mt-[-1px]"
-                              color={"green"}
-                              size={15}
-                            />
-                          ) : (
-                            <IoStarOutline
-                              className="mt-[-1px]"
-                              color={"#888"}
-                              size={15}
-                            />
-                          )}
+                          <BiSolidPencil
+                            className="ml-[-0.5px]"
+                            color={"black"}
+                            size={13}
+                          />
                         </button>
-                      )}
-                    </>
-                  )}
-                {typeof currentFolder[key] === "string" && (
-                  <>
-                    <img
-                      src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
-                      alt={key}
-                      className="w-full h-auto mb-8"
-                    />
-                    <div className="bottom-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
-                      <span className="truncate overflow-hidden text-ellipsis">
-                        {key}
-                      </span>
-                    </div>
 
-                    {currentPath.length > 1 &&
-                      currentPath[0] === "archives" && (
-                        <>
+                        <button
+                          className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Delete item?`)) {
+                              const fullPath = `${currentPath.join(
+                                "/"
+                              )}/${key}`;
+                              handleDeleteItem(fullPath);
+                            }
+                          }}
+                        >
+                          <FaTrash
+                            className="ml-[0px]"
+                            color={"black"}
+                            size={11}
+                          />
+                        </button>
+
+                        {isProjectFolder && projectFound && (
                           <button
                             className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                            style={{ borderRadius: "50%" }}
                             onClick={async (e) => {
                               e.stopPropagation();
+                              await handleStarChange(key);
+                              await getRepoTree();
                             }}
                           >
-                            <div className="w-[25px] h-[25px] rounded-full overflow-hidden">
-                              <ColorPicker
-                                initialColor={defaultImgColor}
-                                primary={true}
-                                onColorChange={(
-                                  primary: boolean,
-                                  newValue: string
-                                ) => handleImageColorChange(key, newValue)}
-                              />
-                            </div>
-
-                            <div
-                              style={{
-                                border: "2px solid white",
-                                pointerEvents: "none",
-                              }}
-                              className="absolute top-0 left-0 w-[23px] h-[23px] rounded-full overflow-hidden"
-                            ></div>
-                            <div
-                              style={{
-                                border: "1px solid #CCCCCC",
-                                pointerEvents: "none",
-                              }}
-                              className="absolute top-[-1px] left-[-1px] w-[25px] h-[25px] rounded-full overflow-hidden"
-                            ></div>
-                          </button>
-
-                          {changedArchiveImageColorItems[key] && (
-                            <button
-                              style={{ border: "1px solid green" }}
-                              className="rounded-full absolute bottom-[-10px] right-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                handleArchiveImageColorChange(key);
-                              }}
-                            >
-                              <FaCheck
+                            {projectItem.home_page ? (
+                              <IoStar
+                                className="mt-[-1px]"
                                 color={"green"}
                                 size={15}
-                                className="ml-[-0.5px]"
                               />
+                            ) : (
+                              <IoStarOutline
+                                className="mt-[-1px]"
+                                color={"#888"}
+                                size={15}
+                              />
+                            )}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  {typeof currentFolder[key] === "string" && (
+                    <>
+                      <img
+                        src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
+                        alt={key}
+                        className="w-full h-auto mb-8"
+                      />
+                      <div className="bottom-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
+                        <span className="truncate overflow-hidden text-ellipsis">
+                          {extractAfterIndex(key)}
+                        </span>
+                      </div>
+
+                      {currentPath.length > 1 &&
+                        currentPath[0] === "archives" && (
+                          <>
+                            <button
+                              className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                              style={{ borderRadius: "50%" }}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <div className="w-[25px] h-[25px] rounded-full overflow-hidden">
+                                <ColorPicker
+                                  initialColor={defaultImgColor}
+                                  primary={true}
+                                  onColorChange={(
+                                    primary: boolean,
+                                    newValue: string
+                                  ) => handleImageColorChange(key, newValue)}
+                                />
+                              </div>
+
+                              <div
+                                style={{
+                                  border: "2px solid white",
+                                  pointerEvents: "none",
+                                }}
+                                className="absolute top-0 left-0 w-[23px] h-[23px] rounded-full overflow-hidden"
+                              ></div>
+                              <div
+                                style={{
+                                  border: "1px solid #CCCCCC",
+                                  pointerEvents: "none",
+                                }}
+                                className="absolute top-[-1px] left-[-1px] w-[25px] h-[25px] rounded-full overflow-hidden"
+                              ></div>
                             </button>
-                          )}
-                        </>
-                      )}
-                  </>
-                )}
-                {typeof currentFolder[key] !== "string" &&
-                  currentPath[0] === "projects" &&
-                  key !== "covers" && (
-                    <div className="h-[200px] w-[auto]">
-                      {!projectFound ? (
-                        <>{key}</>
-                      ) : (
-                        <div
-                          className="flex flex-col"
-                          style={{
-                            wordWrap: "break-word",
-                            whiteSpace: "normal",
-                          }}
-                        >
-                          <p>{unSanitizeTitle(projectItem.title, false)}</p>
-                          <p>
-                            {unSanitizeTitle(projectItem.description, true)}
-                          </p>
-                          <div className="flex flex-row gap-2 mt-[7px]">
-                            <div
-                              onClick={(e: any) => e.stopPropagation()}
-                              className="w-[25px] h-[25px] relative"
-                            >
-                              <ColorPicker
-                                initialColor={projectItem.bg_color}
-                                primary={true}
-                                onColorChange={(
-                                  primary: boolean,
-                                  newValue: string
-                                ) => handleColorChange(key, primary, newValue)}
-                              />
-                            </div>
-                            <div
-                              onClick={(e: any) => e.stopPropagation()}
-                              className="w-[25px] h-[25px] relative"
-                            >
-                              <ColorPicker
-                                initialColor={projectItem.text_color}
-                                primary={false}
-                                onColorChange={(
-                                  primary: boolean,
-                                  newValue: string
-                                ) => handleColorChange(key, primary, newValue)}
-                              />
-                            </div>
 
-                            {changedColorItems[key] && (
+                            {changedArchiveImageColorItems[key] && (
                               <button
-                                className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
-                                style={{
-                                  color: "black",
-                                  border: "1px solid black",
-                                }}
-                                onClick={(e: any) => {
+                                style={{ border: "1px solid green" }}
+                                className="rounded-full absolute bottom-[-10px] right-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+                                onClick={async (e) => {
                                   e.stopPropagation();
-                                  handleProjectColorsChange(key);
+                                  handleArchiveImageColorChange(key);
                                 }}
                               >
-                                Done
+                                <FaCheck
+                                  color={"green"}
+                                  size={15}
+                                  className="ml-[-0.5px]"
+                                />
                               </button>
                             )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                          </>
+                        )}
+                    </>
                   )}
-                {typeof currentFolder[key] !== "string" &&
-                  currentPath[0] === "archives" && (
-                    <div className="h-[200px] w-[auto]">
-                      {!projectFound ? (
-                        <>{key}</>
-                      ) : (
-                        <div>
-                          <p>{unSanitizeTitle(projectItem.title, false)}</p>
-                          <div className="flex flex-row mt-[7px] ">
-                            <div
-                              onClick={(e: any) => e.stopPropagation()}
-                              className="w-[25px] h-[25px] relative"
-                            >
-                              <ColorPicker
-                                initialColor={projectItem.bg_color}
-                                primary={true}
-                                onColorChange={(
-                                  primary: boolean,
-                                  newValue: string
-                                ) => handleColorChange(key, primary, newValue)}
-                              />
-                            </div>
-
-                            {changedColorItems[key] && (
-                              <button
-                                className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
-                                style={{
-                                  color: "black",
-                                  border: "1px solid black",
-                                }}
-                                onClick={(e: any) => {
-                                  e.stopPropagation();
-                                  handleProjectColorsChange(key);
-                                }}
+                  {typeof currentFolder[key] !== "string" &&
+                    currentPath[0] === "projects" &&
+                    key !== "covers" && (
+                      <div className="h-[200px] w-[auto]">
+                        {!projectFound ? (
+                          <>{key}</>
+                        ) : (
+                          <div
+                            className="flex flex-col"
+                            style={{
+                              wordWrap: "break-word",
+                              whiteSpace: "normal",
+                            }}
+                          >
+                            <p>{unSanitizeTitle(projectItem.title, false)}</p>
+                            <p>
+                              {unSanitizeTitle(projectItem.description, true)}
+                            </p>
+                            <div className="flex flex-row gap-2 mt-[7px]">
+                              <div
+                                onClick={(e: any) => e.stopPropagation()}
+                                className="w-[25px] h-[25px] relative"
                               >
-                                Done
-                              </button>
-                            )}
+                                <ColorPicker
+                                  initialColor={projectItem.bg_color}
+                                  primary={true}
+                                  onColorChange={(
+                                    primary: boolean,
+                                    newValue: string
+                                  ) =>
+                                    handleColorChange(key, primary, newValue)
+                                  }
+                                />
+                              </div>
+                              <div
+                                onClick={(e: any) => e.stopPropagation()}
+                                className="w-[25px] h-[25px] relative"
+                              >
+                                <ColorPicker
+                                  initialColor={projectItem.text_color}
+                                  primary={false}
+                                  onColorChange={(
+                                    primary: boolean,
+                                    newValue: string
+                                  ) =>
+                                    handleColorChange(key, primary, newValue)
+                                  }
+                                />
+                              </div>
+
+                              {changedColorItems[key] && (
+                                <button
+                                  className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
+                                  style={{
+                                    color: "black",
+                                    border: "1px solid black",
+                                  }}
+                                  onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    handleProjectColorsChange(key);
+                                  }}
+                                >
+                                  Done
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                {typeof currentFolder[key] !== "string" &&
-                  (currentPath[0] !== "projects" || key === "covers") &&
-                  currentPath[0] !== "archives" && (
-                    <span className="">{key}</span>
-                  )}
-              </>
-            </div>
-          );
-        })}
+                        )}
+                      </div>
+                    )}
+                  {typeof currentFolder[key] !== "string" &&
+                    currentPath[0] === "archives" && (
+                      <div className="h-[200px] w-[auto]">
+                        {!projectFound ? (
+                          <>{key}</>
+                        ) : (
+                          <div>
+                            <p>{unSanitizeTitle(projectItem.title, false)}</p>
+                            <div className="flex flex-row mt-[7px] ">
+                              <div
+                                onClick={(e: any) => e.stopPropagation()}
+                                className="w-[25px] h-[25px] relative"
+                              >
+                                <ColorPicker
+                                  initialColor={projectItem.bg_color}
+                                  primary={true}
+                                  onColorChange={(
+                                    primary: boolean,
+                                    newValue: string
+                                  ) =>
+                                    handleColorChange(key, primary, newValue)
+                                  }
+                                />
+                              </div>
+
+                              {changedColorItems[key] && (
+                                <button
+                                  className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
+                                  style={{
+                                    color: "black",
+                                    border: "1px solid black",
+                                  }}
+                                  onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    handleProjectColorsChange(key);
+                                  }}
+                                >
+                                  Done
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  {typeof currentFolder[key] !== "string" &&
+                    (currentPath[0] !== "projects" || key === "covers") &&
+                    currentPath[0] !== "archives" && (
+                      <span className="">{key}</span>
+                    )}
+                </>
+              </div>
+            );
+          })}
         <Popup
           isOpen={popupOpen}
           onClose={closePopup}
@@ -1473,12 +1643,59 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleFiles = (files: File[]) => {
-    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    const currentfolderContents = collectImgNames();
+    const getHighestIndex = (names: string[]) => {
+      const indices = names.map((name) => parseInt(name.split("--")[0], 10));
+      const validIndices = indices.filter((index) => !isNaN(index));
+      return validIndices.length > 0 ? Math.max(...validIndices) : 100;
+    };
 
+    let highestIndex = 0;
+    if (currentfolderContents.length > 0) {
+      highestIndex = getHighestIndex(currentfolderContents);
+    }
+    let nextIndex = highestIndex + 1;
+
+    const random4Digits = () => {
+      return Math.floor(1000 + Math.random() * 9000);
+    };
+    setLoading(true);
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
     if (imageFiles.length > 0) {
+      const uploadedNames: string[] = [];
       const readerPromises = imageFiles.map((file) => {
         return new Promise<{ name: string; src: string }>((resolve) => {
-          const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
+          const extension = file.type.split("/").pop();
+          if (!extension) return;
+
+          // Remove extension
+          const fullExtension = "." + extension;
+          const newFileName = file.name.endsWith(fullExtension)
+            ? file.name.slice(0, -fullExtension.length)
+            : file.name;
+
+          let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
+
+          // Ensure img has extension
+          if (!sanitizedFileName.endsWith(`.${extension}`)) {
+            sanitizedFileName = `${sanitizedFileName}.${extension}`;
+          }
+
+          // Add index
+          sanitizedFileName = `${nextIndex}--${sanitizedFileName}`;
+
+          // Rename to prevent duplicates in folder and currently uploaded group
+          const newNameSplit = sanitizedFileName.split(".");
+          const newName = newNameSplit.slice(0, -1).join(".");
+
+          if (currentfolderContents.includes(sanitizedFileName)) {
+            sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
+          }
+          while (uploadedNames.includes(sanitizedFileName)) {
+            sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
+          }
+          uploadedNames.push(sanitizedFileName);
+          nextIndex += 1;
 
           const reader = new FileReader();
           reader.onload = (event) => {
@@ -1491,11 +1708,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         });
       });
 
-      Promise.all(readerPromises).then(async (images) => {
-        setUploadPopup(false);
-        await uploadToGitHub(images);
-        await getRepoTree();
-      });
+      Promise.all(readerPromises)
+        .then(async (images) => {
+          setUploadPopup(false);
+          await uploadToGitHub(images);
+          await getRepoTree();
+        })
+        .then(() => {
+          setLoading(false);
+        });
     } else {
       alert("Only image files are allowed!");
     }
