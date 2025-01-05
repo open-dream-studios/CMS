@@ -1268,33 +1268,41 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-
-
   const [folderSwapActive, setFolderSwapActive] = useState(false);
-  const [folderSwapItems, setFolderSwapItems] = useState<swapItemType[]>([null, null]);
+  const [folderSwapItems, setFolderSwapItems] = useState<swapItemType[]>([
+    null,
+    null,
+  ]);
   const handleFolderSwapItems = async () => {
     const currentFolders = collectFolderNames();
-    console.log(currentFolders)
     if (
-      swapItems[0] !== null &&
-      swapItems[1] !== null &&
-      swapItems[0] !== swapItems[1] &&
-      currentFolders.includes(swapItems[0]) &&
-      currentFolders.includes(swapItems[1])
+      folderSwapItems[0] !== null &&
+      folderSwapItems[1] !== null &&
+      folderSwapItems[0] !== folderSwapItems[1] &&
+      currentFolders.includes(folderSwapItems[0]) &&
+      currentFolders.includes(folderSwapItems[1])
     ) {
-      setLoading(true);
-      const basePath = "public/assets/" + currentPath.join("/") + "/";
-      const path1 = basePath + swapItems[0];
-      const path2 = basePath + swapItems[1];
-      console.log(path1, path2)
-      // await handleFolderSwap(path1, path2);
+      const appFileCopy = appFile
+      const index1 = appFileCopy["pages"][currentPath[0]].findIndex(
+        (item: any) => item.id === folderSwapItems[0]
+      );
+      const index2 = appFileCopy["pages"][currentPath[0]].findIndex(
+        (item: any) => item.id === folderSwapItems[1]
+      );
+      if (index1 === -1 || index2 === -1) return
+
+      const storedIndex1 = appFileCopy["pages"][currentPath[0]][index1].index
+      const storedIndex2 = appFileCopy["pages"][currentPath[0]][index2].index
+   
+      appFileCopy["pages"][currentPath[0]][index1].index = storedIndex2
+      appFileCopy["pages"][currentPath[0]][index2].index = storedIndex1
+
+      setAppFile(appFileCopy)
+      await updateAppData()
     }
-    // setFolderSwapActive(false);
-    // setFolderSwapItems([null, null]);
-    setLoading(false);
+    setFolderSwapActive(false);
+    setFolderSwapItems([null, null]);
   };
-
-
 
   const renderContent = () => {
     const currentFolder = getCurrentFolder();
@@ -1317,13 +1325,45 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         // style={{ backgroundColor: "red" }}
       >
         {Object.keys(currentFolder)
+
           .sort((a, b) => {
-            const indexA = extractBeforeIndex(a);
-            const indexB = extractBeforeIndex(b);
-            const numA = indexA !== null ? Number(indexA) : Infinity;
-            const numB = indexB !== null ? Number(indexB) : Infinity;
-            return numA - numB;
+            let indexMap: any = {}
+            if (appFile["pages"] !== undefined) {
+            
+            indexMap = Object.values(appFile["pages"])
+              .flat()
+              .reduce((map: any, item: any) => {
+                map[item.id] = item.index;
+                return map;
+              }, {});
+            }
+
+            // // First sort (your existing logic)
+            // const indexA = extractBeforeIndex(a);
+            // const indexB = extractBeforeIndex(b);
+            // const numA = indexA !== null ? Number(indexA) : Infinity;
+            // const numB = indexB !== null ? Number(indexB) : Infinity;
+
+            // const primarySort = numA - numB;
+
+            // if (primarySort !== 0) {
+            //   return primarySort;
+            // }
+
+            // Second sort (based on the index from JSON)
+            const folderIndexA = indexMap[a] ?? Infinity;
+            const folderIndexB = indexMap[b] ?? Infinity;
+
+            return folderIndexA - folderIndexB;
           })
+
+          // .sort((a, b) => {
+          //   const indexA = extractBeforeIndex(a);
+          //   const indexB = extractBeforeIndex(b);
+          //   const numA = indexA !== null ? Number(indexA) : Infinity;
+          //   const numB = indexB !== null ? Number(indexB) : Infinity;
+          //   return numA - numB;
+          // })
           .map((key, index) => {
             const isSecondaryFolder =
               typeof currentFolder[key] !== "string" &&
