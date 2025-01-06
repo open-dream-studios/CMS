@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArchivesOutputItem, Page } from "../../App";
+import { Page } from "../../App";
 import Slider from "../../Components/Slider/Slider";
 // import ArchivesDisplay from "../../Components/ArchivesDisplay/ArchivesDisplay";
 import "./Archives.css";
@@ -13,6 +13,20 @@ import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 type ArchivesPageProps = {
   navigate: (page: Page) => void;
   slideUpComponent: boolean;
+};
+
+export type ArchivesEntryImage = {
+  title: string;
+  index: number;
+  url: string;
+};
+
+export type ArchivesEntry = {
+  bg_color: string;
+  id: string;
+  index: number;
+  title: string;
+  images: ArchivesEntryImage[];
 };
 
 const Archives: React.FC<ArchivesPageProps> = ({
@@ -33,7 +47,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const playIconRef = useRef<HTMLDivElement>(null);
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
-  const archivesRef = useRef<ArchivesOutputItem[] | null>(null);
+  const archivesRef = useRef<ArchivesEntry[] | null>(null);
   
   const [bgColors, setbgColors] = useState<string[]>([])
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,30 +55,27 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const [arrowSRC, setArrowSRC] = useState<string>("");
 
 
-  // useEffect(() => {
-  //   if (
-  //     projectAssets !== null &&
-  //     projectAssets["archives"] &&
-  //     Array.isArray(projectAssets["archives"]) &&
-  //     projectAssets["archives"].length > 0
-  //   ) {
-  //     const archivesOutput = projectAssets["archives"] as ArchivesOutputItem[]
-  //     archivesRef.current = archivesOutput
-  //     const newbgColors = archivesOutput.map(item => validateColor(item.bg_color))
-  //     setbgColors(newbgColors)
-  //     bgColorRef.current = validateColor(newbgColors[0])
-  //     if (containerRef.current) {
-  //       containerRef.current.style.backgroundColor = validateColor(newbgColors[0])
-  //     }
+  useEffect(() => {
+    const project = projectAssets as any
+    if (
+      project !== null &&
+      project["archives"] &&
+      Array.isArray(project["archives"]) &&
+      project["archives"].length > 0
+    ) {
+      const archivesOutput = project["archives"] as ArchivesEntry[]
+      archivesRef.current = archivesOutput
+      const newbgColors = archivesOutput.map(item => validateColor(item.bg_color))
+      setbgColors(newbgColors)
+      bgColorRef.current = validateColor(newbgColors[0])
+      if (containerRef.current) {
+        containerRef.current.style.backgroundColor = validateColor(newbgColors[0])
+      }
 
-  //     if (projectAssets !== null && projectAssets["icons"] && Object.keys(projectAssets["icons"]).length > 0 && projectAssets["icons"]) {
-  //       const icons = projectAssets["icons"] as Record<string, string>
-  //       if (icons["arrow1.png"]) {
-  //         setArrowSRC(`https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/icons/arrow1.png`)
-  //       }
-  //     }
-  //   }
-  // }, [projectAssets]);
+      setArrowSRC(`https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/icons/arrow1.png`)
+
+    }
+  }, [projectAssets]);
 
   useEffect(() => {
     setTimeout(() => {

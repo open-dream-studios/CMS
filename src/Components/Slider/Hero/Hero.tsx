@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "./hero.css";
+import { ArchivesEntryImage } from "../../../Pages/Archives/Archives";
 
-const Hero = ({images}: {images: string[]}) => {
+const Hero = ({images}: {images: ArchivesEntryImage[]}) => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -12,7 +13,7 @@ const Hero = ({images}: {images: string[]}) => {
     }, 2100);
     return () => clearInterval(interval);
   }, [images]);
-
+  console.log(images)
   return (
     <div className="image-slider">
       {images.map((image, index) => (
@@ -24,7 +25,7 @@ const Hero = ({images}: {images: string[]}) => {
             height: "100%",
           }}
           key={index}
-          src={image}
+          src={image.url}
           alt={`Slide ${index + 1}`}
           className={`slider-image ${currentIndex === index ? "active" : ""}`}
         />

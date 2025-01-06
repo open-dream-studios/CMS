@@ -139,12 +139,6 @@ export type FileTree = {
   [key: string]: string | FileTree | FileTree[] | string[];
 };
 
-export type ArchivesOutputItem = {
-  title: string;
-  bg_color: string;
-  images: string[];
-};
-
 export type Tree = {
   [key: string]: Tree | string[] | string;
 };
