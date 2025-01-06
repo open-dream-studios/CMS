@@ -6,7 +6,7 @@ type StateType = {
 };
 
 const usePreloadedImagesStore = create<StateType>((set) => ({
-  preloadedImages: [false, false, false],
+  preloadedImages: [false, false, false, false],
   setPreloadedImages: (newVal: boolean[]) =>
     set((state) => ({ preloadedImages: newVal })),
 }));

@@ -36,6 +36,7 @@ import axios from "axios";
 import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
+import { GIT_KEYS } from "../../App"
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -54,7 +55,7 @@ export function validateColor(input: string) {
   return "white";
 }
 
-function isColor(input: string) {
+export function isColor(input: string) {
   const isColorName = (color: string) => {
     const testElement = document.createElement("div");
     testElement.style.color = color;
@@ -350,10 +351,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
-  const owner = "JosephGoff";
-  const repo = "js-portfolio";
-  const branch = "master";
-  const token = process.env.REACT_APP_GIT_PAT;
+  
+  const owner = GIT_KEYS.owner
+  const repo = GIT_KEYS.repo
+  const branch = GIT_KEYS.branch
+  const token = GIT_KEYS.token
 
   const renameImageFile = async (oldFilePath: string, newFilePath: string) => {
     const getBlobSha = async () => {
@@ -1475,7 +1477,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
                         {isProjectFolder && projectFound && (
                           <button
-                            className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                            className="absolute bottom-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
                             onClick={async (e) => {
                               e.stopPropagation();
                               await handleStarChange(key);
@@ -1838,8 +1840,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const uploadBlankImageToGitHub = async (folderName: string) => {
+    if (currentPath.length === 0) return
     try {
-      const response = await fetch(`${window.location.origin}/blank.png`);
+      const response = await fetch(`${window.location.origin}/blank.png`)
       if (!response.ok) {
         throw new Error("Failed to fetch the image from the public folder.");
       }
@@ -1855,7 +1858,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             (currentPath[0] === "projects" || currentPath[0] === "archives")
           ) {
             const githubResponse = await fetch(
-              `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${currentPath[0]}/${folderName}/blank.png`,
+              `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${currentPath[0]}/${folderName}/${currentPath[0] === "projects" ? "covers/" : ""}blank.png`,
               {
                 method: "PUT",
                 headers: {

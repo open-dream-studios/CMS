@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -21,7 +21,7 @@ import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
 // import yaml from "js-yaml";
 import axios from "axios";
-import Admin from "./Pages/Admin/Admin";
+import Admin, { isColor } from "./Pages/Admin/Admin";
 import useAppDataFileStore from "./store/useAppDataFileStore";
 
 export interface SlideUpPageProps {
@@ -74,6 +74,10 @@ const preloadImages = (urls: string[]) => {
       });
     })
   );
+};
+
+const random4Digits = () => {
+  return Math.floor(1000 + Math.random() * 9000);
 };
 
 const SlideUpPage: React.FC<SlideUpPageProps> = ({
@@ -177,7 +181,25 @@ export type Tree = {
   [key: string]: Tree | string[] | string;
 };
 
-export const BASE_URL = "https://drive.google.com/uc?id=";
+export type Entry = {
+  id?: string;
+  title: string;
+  url: string;
+  index: number;
+  description?: string;
+  bg_color?: string;
+  text_color?: string;
+  images?: Entry[];
+};
+
+export const GIT_KEYS = {
+  owner: "JosephGoff",
+  repo: "js-portfolio",
+  branch: "master",
+  token: process.env.REACT_APP_GIT_PAT,
+};
+
+export const BASE_URL = `https://raw.githubusercontent.com/${GIT_KEYS.owner}/${GIT_KEYS.repo}/refs/heads/${GIT_KEYS.branch}/public/assets/`;
 
 const App = () => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
@@ -209,12 +231,11 @@ const App = () => {
         try {
           const parsedContent = JSON.parse(fileContent);
           setAppDataFile(parsedContent);
+          return parsedContent;
         } catch (error) {
           console.error("Error parsing JSON content:", error);
         }
       }
-
-      return fileContent;
     } catch (error) {
       console.error("Error fetching file contents:", error);
     }
@@ -226,7 +247,7 @@ const App = () => {
     branch = "master"
   ) => {
     const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
-    const token = process.env.REACT_APP_GIT_PAT;
+    const token = GIT_KEYS.token;
 
     try {
       const response = await fetch(url, {
@@ -258,140 +279,235 @@ const App = () => {
       return null;
     }
   };
-
+  const collectAllImages = useRef<string[][]>([[], [], [], []]);
   const getRepoTree = async () => {
     const fullRepo = await fetchFullRepoTree("JosephGoff", "js-portfolio");
-    if (fullRepo && fullRepo["public"]?.["assets"]) {
-      const { icons, ...filteredProject } = fullRepo["public"]["assets"];
-      const tree: any = {}
-      for (let i=0;i<Object.keys(filteredProject).length;i++) {
-        const newPage = sortPages(Object.keys(filteredProject)[i], filteredProject)
-        tree[Object.keys(filteredProject)[i]] = newPage
-      }
-      console.log(tree);
-      // setProjectAssets(sortedProject);
-    }
+    let appFile = null;
     if (fullRepo["src"]["app.json"]) {
       const appFileURL = fullRepo["src"]["app.json"];
-      await fetchAppFileContents(appFileURL);
+      appFile = await fetchAppFileContents(appFileURL);
+    }
+
+    if (fullRepo && fullRepo["public"]?.["assets"] && appFile !== null) {
+      const { icons, ...filteredProject } = fullRepo["public"]["assets"];
+      const tree: any = {};
+      const pageNames = Object.keys(filteredProject);
+      pageNames.push("home");
+
+      for (let i = 0; i < pageNames.length; i++) {
+        const newPage = sortPages(pageNames[i], filteredProject, appFile);
+        if (newPage !== null) {
+          tree[pageNames[i]] = newPage;
+        }
+      }
+      console.log(tree);
+      setProjectAssets(tree);
     }
   };
 
-  function sortPages(page: any, project: any) {
-    if (Object.keys(project[page]).length > 0) {
-      type Entry = {
-        title: string;
-        subTitle?: string;
-        bg_color?: string;
-        text_color?: string;
-        images: string[];
-        number?: number;
-        img_number?: number;
-      };
+  function sortPages(page: any, project: any, appFile: any) {
+    let result = null;
+    let collectNewImages = false;
+    const collectAllImagesCopy = collectAllImages.current;
 
-      if (page === "about") {
-        const mappedImages: Entry[] = project[page].map((img: any) => {
-          const imgName = img.name.split(".")[0];
-          const number = imgName.split("--")[0];
+    if (page === "about" && Object.keys(project[page]).length > 0) {
+      if (collectAllImagesCopy[1].length === 0) {
+        collectNewImages = true;
+      }
+      const mappedImages: Entry[] = Object.keys(project[page])
+        .filter((item) => item !== "blank.png")
+        .map((img: any) => {
+          const imgName = img.split(".")[0];
+          const index = imgName.split("--")[0];
+          if (collectNewImages) {
+            collectAllImagesCopy[1].push(BASE_URL + page + "/" + img);
+          }
           return {
-            url: BASE_URL + img.id,
-            number: parseInt(number, 10),
+            title: img,
+            url: BASE_URL + page + "/" + img,
+            index: !isNaN(Number(index))
+              ? parseInt(index, 10)
+              : random4Digits(),
           };
         });
-        const sortedImages = mappedImages
-          .sort((a: any, b: any) => a.number - b.number)
-          .map(({ number, ...rest }) => rest);
-        return sortedImages.map((img: any) => img.url);
-      }
-
-
-
-
-
-      // if (page.name === "home") {
-      //   const mappedEntries: Entry[] = page.children.map((folder: any) => {
-      //     const [number, title, subTitle] = folder.name.split("--");
-      //     return {
-      //       title,
-      //       subTitle,
-      //       images: folder.children.map((img: any) => BASE_URL + img.id),
-      //       number: parseInt(number, 10),
-      //     };
-      //   });
-
-      //   const sortedEntries = mappedEntries.sort(
-      //     (a: any, b: any) => a.number - b.number
-      //   );
-      //   return sortedEntries.map(({ number, ...rest }) => rest);
-      // }
-
-      // if (page.name === "projects") {
-      //   const mappedEntries: Entry[] = page.children.map((folder: any) => {
-      //     const [number, title, bg_color, text_color] = folder.name.split("--");
-
-      //     const mappedImages: Entry[] = folder.children.map((img: any) => {
-      //       const imgName = img.name.split(".")[0];
-      //       const img_number = imgName.split("--")[0];
-      //       return {
-      //         url: BASE_URL + img.id,
-      //         img_number: parseInt(img_number, 10),
-      //       };
-      //     });
-
-      //     const sortedImages = mappedImages
-      //       .sort((a: any, b: any) => a.img_number - b.img_number)
-      //       .map(({ img_number, ...rest }) => rest);
-
-      //     return {
-      //       title,
-      //       bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
-      //       text_color: text_color === undefined ? "#000000" : text_color,
-      //       images: sortedImages.map((img: any) => img.url),
-      //       number: parseInt(number, 10),
-      //     };
-      //   });
-
-      //   const sortedEntries = mappedEntries.sort(
-      //     (a: any, b: any) => a.number - b.number
-      //   );
-      //   return sortedEntries.map(({ number, ...rest }) => rest);
-      // }
-
-      // if (page.name === "archives") {
-      //   const mappedEntries: Entry[] = page.children.map((folder: any) => {
-      //     const [number, title, bg_color] = folder.name.split("--");
-
-      //     const mappedImages: Entry[] = folder.children.map((img: any) => {
-      //       const imgName = img.name.split(".")[0];
-      //       const [img_number, img_bg_color] = imgName.split("--");
-      //       return {
-      //         url: BASE_URL + img.id,
-      //         bg_color: img_bg_color === undefined ? "#FFFFFF" : img_bg_color,
-      //         img_number: parseInt(img_number, 10),
-      //       };
-      //     });
-
-      //     const sortedImages = mappedImages
-      //       .sort((a: any, b: any) => a.img_number - b.img_number)
-      //       .map(({ img_number, ...rest }) => rest);
-
-      //     return {
-      //       title,
-      //       bg_color: bg_color === undefined ? "#FFFFFF" : bg_color,
-      //       images: sortedImages,
-      //       number: parseInt(number, 10),
-      //     };
-      //   });
-
-      //   const sortedEntries = mappedEntries.sort(
-      //     (a: any, b: any) => a.number - b.number
-      //   );
-      //   return sortedEntries.map(({ number, ...rest }) => rest);
-      // }
-
-
-      return project[page]
+      const sortedImages = mappedImages.sort(
+        (a: any, b: any) => a.index - b.index
+      );
+      result = sortedImages;
     }
+
+    if (page === "projects" && Object.keys(project[page]).length > 0) {
+      if (collectAllImagesCopy[2].length === 0) {
+        collectNewImages = true;
+      }
+      const mappedEntries: any = Object.keys(project[page])
+        .filter((item) => item !== "blank.png")
+        .map((folder: any) => {
+          const mappedImages: Entry[] = Object.keys(project[page][folder])
+            .filter((item) => item !== "blank.png" && item !== "covers")
+            .map((folderItem: any) => {
+              const imgName = folderItem.split(".")[0];
+              const index = imgName.split("--")[0];
+              if (collectNewImages) {
+                collectAllImagesCopy[2].push(
+                  BASE_URL + page + "/" + folder + "/" + folderItem
+                );
+              }
+              return {
+                title: folderItem,
+                url: BASE_URL + page + "/" + folder + "/" + folderItem,
+                index: !isNaN(Number(index))
+                  ? parseInt(index, 10)
+                  : random4Digits(),
+              };
+            });
+          const sortedImages = mappedImages.sort(
+            (a: any, b: any) => a.index - b.index
+          );
+
+          if (!appFile["pages"][page]) return null;
+          const appFileProjectIndex = appFile["pages"][page].findIndex(
+            (item: any) => item.id === folder
+          );
+          const appFileProject = appFile["pages"][page][appFileProjectIndex];
+          return {
+            title: appFileProject.title,
+            description: appFileProject.description,
+            id: appFileProject.id,
+            bg_color: isColor(appFileProject.bg_color)
+              ? appFileProject.bg_color
+              : "#FFFFFF",
+            text_color: isColor(appFileProject.text_color)
+              ? appFileProject.text_color
+              : "#000000",
+            images: sortedImages,
+            index: appFileProject.index,
+          };
+        });
+      const sortedEntries = mappedEntries.sort(
+        (a: any, b: any) => a.index - b.index
+      );
+      result = sortedEntries;
+    }
+
+    if (page === "archives" && Object.keys(project[page]).length > 0) {
+      if (collectAllImagesCopy[3].length === 0) {
+        collectNewImages = true;
+      }
+      const mappedEntries: any = Object.keys(project[page])
+        .filter((item) => item !== "blank.png")
+        .map((folder: any) => {
+          const mappedImages: Entry[] = Object.keys(project[page][folder])
+            .filter((item) => item !== "blank.png")
+            .map((folderItem: any) => {
+              const imgName = folderItem.split(".")[0];
+              const index = imgName.split("--")[0];
+              if (collectNewImages) {
+                collectAllImagesCopy[3].push(
+                  BASE_URL + page + "/" + folder + "/" + folderItem
+                );
+              }
+              return {
+                title: folderItem,
+                url: BASE_URL + page + "/" + folder + "/" + folderItem,
+                index: !isNaN(Number(index))
+                  ? parseInt(index, 10)
+                  : random4Digits(),
+              };
+            });
+          const sortedImages = mappedImages.sort(
+            (a: any, b: any) => a.index - b.index
+          );
+
+          if (!appFile["pages"][page]) return null;
+          const appFileProjectIndex = appFile["pages"][page].findIndex(
+            (item: any) => item.id === folder
+          );
+          const appFileProject = appFile["pages"][page][appFileProjectIndex];
+          return {
+            title: appFileProject.title,
+            id: appFileProject.id,
+            bg_color: isColor(appFileProject.bg_color)
+              ? appFileProject.bg_color
+              : "#FFFFFF",
+            images: sortedImages,
+            index: appFileProject.index,
+          };
+        });
+      const sortedEntries = mappedEntries.sort(
+        (a: any, b: any) => a.index - b.index
+      );
+      result = sortedEntries;
+    }
+
+    if (page === "home" && Object.keys(project["projects"]).length > 0) {
+      page = "projects";
+      if (collectAllImagesCopy[0].length === 0) {
+        collectNewImages = true;
+      }
+      const mappedEntries: any = Object.keys(project[page])
+        .filter((item) => item !== "blank.png")
+        .map((folder: any) => {
+          let sortedImages = null;
+          if (
+            Object.keys(project[page][folder]["covers"]) !== undefined &&
+            Object.keys(project[page][folder]["covers"]).length > 1
+          ) {
+            const covers = Object.keys(project[page][folder]["covers"]);
+            const mappedImages: Entry[] = covers
+              .filter((item: string) => item !== "blank.png")
+              .map((img: string) => {
+                const imgName = img.split(".")[0];
+                const index = imgName.split("--")[0];
+                if (collectNewImages) {
+                  collectAllImagesCopy[0].push(
+                    BASE_URL + page + "/" + folder + "/covers/" + img
+                  );
+                }
+                return {
+                  title: img,
+                  url: BASE_URL + page + "/" + folder + "/covers/" + img,
+                  index: !isNaN(Number(index))
+                    ? parseInt(index, 10)
+                    : random4Digits(),
+                };
+              });
+
+            sortedImages = mappedImages.sort(
+              (a: any, b: any) => a.index - b.index
+            );
+          }
+
+          if (!appFile["pages"][page] || sortedImages === null) return null;
+          const appFileProjectIndex = appFile["pages"][page].findIndex(
+            (item: any) => item.id === folder
+          );
+          const appFileProject = appFile["pages"][page][appFileProjectIndex];
+          return {
+            title: appFileProject.title,
+            description: appFileProject.description,
+            id: appFileProject.id,
+            bg_color: isColor(appFileProject.bg_color)
+              ? appFileProject.bg_color
+              : "#FFFFFF",
+            text_color: isColor(appFileProject.text_color)
+              ? appFileProject.text_color
+              : "#000000",
+            images: sortedImages,
+            index: appFileProject.index,
+            home_page: appFileProject.home_page,
+          };
+        });
+      const sortedEntries = mappedEntries
+        .filter((item: any) => item !== null)
+        .filter((item: any) => item.home_page === true)
+        .sort((a: any, b: any) => a.index - b.index);
+      result = sortedEntries;
+    }
+
+    console.log(collectAllImagesCopy);
+    collectAllImages.current = collectAllImagesCopy
+    return result;
   }
 
   useEffect(() => {
