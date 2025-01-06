@@ -139,43 +139,11 @@ export type FileTree = {
   [key: string]: string | FileTree | FileTree[] | string[];
 };
 
-export type CoverItem = {
-  title: string;
-  subTitle: string;
-  images: string[];
-};
-
-export type ProjectOutputItem = {
-  title: string;
-  bg_color: string;
-  text_color: string;
-  images: string[];
-  covers: string[];
-};
-
-export type ProjectInputObject = {
-  [key: string]: {
-    covers?: { [key: string]: string };
-    [key: string]: any;
-  };
-};
-
-export type ArchivesInputObject = {
-  [key: string]: { [key: string]: string };
-};
-
 export type ArchivesOutputItem = {
   title: string;
   bg_color: string;
   images: string[];
 };
-
-interface DriveFile {
-  id: string;
-  name: string;
-  mimeType: string;
-  children?: DriveFile[];
-}
 
 export type Tree = {
   [key: string]: Tree | string[] | string;
@@ -320,11 +288,11 @@ const App = () => {
       }
       for (let i = 0; i < pageLoadOrder.length; i++) {
         if (collectAllImages.current[i].length > 0) {
-          const currentPageIndex = pageLoadOrder[i] // 0 = home, 1 = about, 2 = project, 3 = archives
+          const currentPageIndex = pageLoadOrder[i]; // 0 = home, 1 = about, 2 = project, 3 = archives
           await preloadImages(collectAllImages.current[currentPageIndex]);
-          const preloadedImagesCopy = preloadedImages
-          preloadedImagesCopy[currentPageIndex] = true
-          setPreloadedImages(preloadedImagesCopy)
+          const preloadedImagesCopy = preloadedImages;
+          preloadedImagesCopy[currentPageIndex] = true;
+          setPreloadedImages(preloadedImagesCopy);
         }
       }
     }
@@ -362,12 +330,27 @@ const App = () => {
     }
 
     if (page === "projects" && Object.keys(project[page]).length > 0) {
+      const newProjectsList: string[] = [];
       if (collectAllImagesCopy[2].length === 0) {
         collectNewImages = true;
       }
+
+      const indexMap: any =
+        appFile["pages"] === undefined
+          ? null
+          : Object.values(appFile["pages"])
+              .flat()
+              .reduce((map: any, item: any) => {
+                map[item.id] = item.title;
+                return map;
+              }, {});
+
       const mappedEntries: any = Object.keys(project[page])
         .filter((item) => item !== "blank.png")
         .map((folder: any) => {
+          if (indexMap !== null) {
+            newProjectsList.push(indexMap[folder].replaceAll("_",""));
+          }
           const mappedImages: Entry[] = Object.keys(project[page][folder])
             .filter((item) => item !== "blank.png" && item !== "covers")
             .map((folderItem: any) => {
@@ -413,6 +396,7 @@ const App = () => {
         (a: any, b: any) => a.index - b.index
       );
       result = sortedEntries;
+      setProjectsList(newProjectsList);
     }
 
     if (page === "archives" && Object.keys(project[page]).length > 0) {

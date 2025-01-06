@@ -100,45 +100,6 @@ const extractBeforeIndex = (str: string) => {
   return match ? match[1] : null;
 };
 
-export type FileTree = {
-  [key: string]: string | FileTree | FileTree[] | string[];
-};
-
-export type CoverInputObject = {
-  [key: string]: { [key: string]: string };
-};
-
-export type CoverOutputItem = {
-  title: string;
-  subTitle: string;
-  images: string[];
-};
-
-export type ProjectOutputItem = {
-  title: string;
-  bg_color: string;
-  text_color: string;
-  images: string[];
-  covers: string[];
-};
-
-export type ProjectInputObject = {
-  [key: string]: {
-    covers?: { [key: string]: string };
-    [key: string]: any;
-  };
-};
-
-export type ArchivesInputObject = {
-  [key: string]: { [key: string]: string };
-};
-
-export type ArchivesOutputItem = {
-  title: string;
-  bg_color: string;
-  images: string[];
-};
-
 interface PopupProps {
   isOpen: boolean;
   onClose: () => void;

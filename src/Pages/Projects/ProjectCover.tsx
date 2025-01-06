@@ -1,9 +1,9 @@
 import React from "react";
 import useProjectsLayoutOrderState from "../../store/useProjectsLayoutOrderState";
 import useProjectCoversState from "../../store/useProjectCoversState";
-import { ProjectOutputItem } from "../../App";
+import { ProjectEntry } from "./Projects";
 
-const ProjectCover = ({ projectIndex, coversReady }: { projectIndex: number, coversReady: ProjectOutputItem[] | null }) => {
+const ProjectCover = ({ projectIndex, coversReady }: { projectIndex: number, coversReady: ProjectEntry[] | null }) => {
   const { projectsLayoutOrder } = useProjectsLayoutOrderState();
   const { projectCovers } = useProjectCoversState();
 
@@ -26,12 +26,12 @@ const ProjectCover = ({ projectIndex, coversReady }: { projectIndex: number, cov
               bottom: item.top ? "none" : `${item.y}%`,
             }}
           >
-            <img
+            {coversReady !== null && coversReady[projectIndex].images.length > index && <img
               alt=""
               className="image w-[100%] h-[100%]"
               style={{ objectFit: "cover" }}
-              src={coversReady !== null ? coversReady[projectIndex].images[index] : ""}
-            />
+              src={coversReady !== null ? coversReady[projectIndex].images[index].url : ""}
+            />}
           </div>
         );
       })}

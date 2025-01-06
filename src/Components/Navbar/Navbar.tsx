@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Page, ProjectOutputItem } from "../../App";
+import { Page } from "../../App";
 import "./Navbar.css";
 import { useLocation } from "react-router-dom";
 import useCurrentPageState from "../../store/useCurrentPageStore";
@@ -66,7 +66,7 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   //     Array.isArray(projectAssets["projects"]) &&
   //     projectAssets["projects"].length > 0
   //   ) {
-  //     const coversList = projectAssets["projects"] as ProjectOutputItem[];
+  //     const coversList = projectAssets["projects"] as ProjectEntry[];
   //     const newProjectsList = coversList.map((item) =>
   //       item.title.replace("_", "")
   //     );

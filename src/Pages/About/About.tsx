@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { CoverItem, PageProps } from "../../App";
+import { PageProps } from "../../App";
 import useProjectColorsState from "../../store/useProjectColorsStore";
 import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
+import { CoverEntry } from "../Home/Home";
 const About: React.FC<PageProps> = ({ navigate }) => {
   const { projectColors, setProjectColors } = useProjectColorsState();
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
@@ -13,8 +14,8 @@ const About: React.FC<PageProps> = ({ navigate }) => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
 
-  const coversRef = useRef<CoverItem[] | null>(null);
-  const [coversReady, setCoversReady] = useState<CoverItem[] | null>(
+  const coversRef = useRef<CoverEntry[] | null>(null);
+  const [coversReady, setCoversReady] = useState<CoverEntry[] | null>(
     null
   );
 
@@ -26,8 +27,8 @@ const About: React.FC<PageProps> = ({ navigate }) => {
   //     projectAssets["home"].length > 0
   //   ) {
   //     console.log(projectAssets["home"])
-  //     // coversRef.current = projectAssets["home"] as CoverItem[];
-  //     // setCoversReady(projectAssets["home"] as CoverItem[]);
+  //     // coversRef.current = projectAssets["home"] as CoverEntry[];
+  //     // setCoversReady(projectAssets["home"] as CoverEntry[]);
   //   }
   // }, [projectAssets]);
 
@@ -74,7 +75,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           alt=""
           className="w-[100%] h-[100%]"
           style={{ objectFit: "cover" }}
-          src={coversRef.current === null ? "" : coversRef.current[0].images[0]}
+          src={coversRef.current === null ? "" : coversRef.current[0].images[0].url}
         />
         <div
           className="w-[70%] lg:w-[50%] aspect-[1/1] md:aspect-[1.75/1] absolute"

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Home.css";
-import { CoverItem, Entry, Page, Tree, TreeNode } from "../../App";
+import { Page } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
@@ -12,6 +12,23 @@ export interface HomePageProps {
   slideUpComponent: boolean;
 }
 
+export type CoverEntryImage = {
+  title: string;
+  index: number;
+  url: string;
+};
+
+export type CoverEntry = {
+  bg_color: string;
+  description: string;
+  home_page: Boolean;
+  id: string;
+  index: number;
+  text_color: string;
+  title: string;
+  images: CoverEntryImage[];
+};
+
 const Home: React.FC<HomePageProps> = ({
   navigate,
   layoutOrder,
@@ -21,23 +38,6 @@ const Home: React.FC<HomePageProps> = ({
     // id: string;
     url: string;
   }
-
-  type CoverEntryImage = {
-    title: string;
-    index: number;
-    url: string;
-  };
-
-  type CoverEntry = {
-    bg_color: string;
-    description: string;
-    home_page: Boolean;
-    id: string;
-    index: number;
-    text_color: string;
-    title: string;
-    images: CoverEntryImage[];
-  };
 
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();

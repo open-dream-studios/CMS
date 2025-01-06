@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IncomingPage, Page, ProjectOutputItem } from "../../../App";
+import { IncomingPage, Page } from "../../../App";
 import useProjectColorsState from "../../../store/useProjectColorsStore";
 import useSelectedProjectState from "../../../store/useSelectedProjectStore";
 import useSelectedProjectNameState from "../../../store/useSelectedProjectNameStore";
@@ -12,6 +12,7 @@ import useProjectAssetsStore from "../../../store/useProjectAssetsStore";
 import usePreloadedImagesStore from "../../../store/usePreloadedImagesStore";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
+import { ProjectEntry } from "../Projects";
 
 export interface ProjectsPageProps {
   navigate: (page: Page) => void;
@@ -52,24 +53,29 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
 
   const [projectsList, setProjectsList] = useState<string[]>([]);
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
-  const coversRef = useRef<ProjectOutputItem[] | null>(null);
+  const coversRef = useRef<ProjectEntry[] | null>(null);
   const [firstPageLoad, setFirstPageLoad] = useState(false);
 
-  // useEffect(() => {
-  //   if (
-  //     projectAssets !== null &&
-  //     projectAssets["projects"] &&
-  //     Array.isArray(projectAssets["projects"]) &&
-  //     projectAssets["projects"].length > 0
-  //   ) {
-  //     const coversList = projectAssets["projects"] as ProjectOutputItem[];
-  //     const newProjectsList = coversList.map((item) =>
-  //       item.title.replace("_", "")
-  //     );
-  //     setProjectsList(newProjectsList);
-  //     coversRef.current = coversList;
-  //   }
-  // }, [projectAssets]);
+  useEffect(()=>{console.log("###EDS")},[])
+  useEffect(() => {
+    const project = projectAssets as any
+    console.log(project)
+    if (
+      project !== null &&
+      project["projects"] &&
+      Array.isArray(project["projects"]) &&
+      project["projects"].length > 0
+    ) {
+      console.log(project["projects"])
+      const coversList = project["projects"] as ProjectEntry[];
+      const newProjectsList = coversList.map((item) =>
+        item.title.replace("_", "")
+      );
+      setProjectsList(newProjectsList);
+      coversRef.current = coversList;
+      console.log(coversList)
+    }
+  }, [projectAssets]);
 
   useEffect(() => {
     if (slideUpComponent) {
@@ -220,9 +226,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                 resolve({
                   width: img.naturalWidth,
                   height: img.naturalHeight,
-                  src: item,
+                  src: item.url,
                 });
-              img.src = item;
+              img.src = item.url;
             });
           })
         );
@@ -242,9 +248,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                 resolve({
                   width: img.naturalWidth,
                   height: img.naturalHeight,
-                  src: item,
+                  src: item.url,
                 });
-              img.src = item;
+              img.src = item.url;
             });
           })
         );

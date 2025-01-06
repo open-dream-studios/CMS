@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IncomingPage, Page, ProjectOutputItem } from "../../App";
+import { IncomingPage, Page } from "../../App";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Projects.css";
 import useProjectColorsState from "../../store/useProjectColorsStore";
@@ -16,6 +16,23 @@ export interface ProjectsPageProps {
   currentPage: boolean;
   animate: boolean;
 }
+
+export type ProjectEntryImage = {
+  title: string;
+  index: number;
+  url: string;
+};
+
+export type ProjectEntry = {
+  bg_color: string;
+  text_color: string;
+  description: string;
+  id: string;
+  index: number;
+  title: string;
+  images: ProjectEntryImage[];
+};
+
 
 const Projects: React.FC<ProjectsPageProps> = ({
   navigate,
@@ -39,27 +56,28 @@ const Projects: React.FC<ProjectsPageProps> = ({
 
   const [projectsList, setProjectsList] = useState<string[]>([]);
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
-  const coversRef = useRef<ProjectOutputItem[] | null>(null);
-  const [coversReady, setCoversReady] = useState<ProjectOutputItem[] | null>(
+  const coversRef = useRef<ProjectEntry[] | null>(null);
+  const [coversReady, setCoversReady] = useState<ProjectEntry[] | null>(
     null
   );
 
-  // useEffect(() => {
-  //   if (
-  //     projectAssets !== null &&
-  //     projectAssets["projects"] &&
-  //     Array.isArray(projectAssets["projects"]) &&
-  //     projectAssets["projects"].length > 0
-  //   ) {
-  //     const coversList = projectAssets["projects"] as ProjectOutputItem[];
-  //     const newProjectsList = coversList.map((item) =>
-  //       item.title.replace("_", "")
-  //     );
-  //     setProjectsList(newProjectsList);
-  //     coversRef.current = coversList;
-  //     setCoversReady(coversList);
-  //   }
-  // }, [projectAssets]);
+  useEffect(() => {
+    const projects = projectAssets as any
+    if (
+      projects !== null &&
+      projects["projects"] &&
+      Array.isArray(projects["projects"]) &&
+      projects["projects"].length > 0
+    ) {
+      const coversList = projects["projects"] as ProjectEntry[];
+      const newProjectsList = coversList.map((item) =>
+        item.title.replace("_", "")
+      );
+      setProjectsList(newProjectsList);
+      coversRef.current = coversList;
+      setCoversReady(coversList);
+    }
+  }, [projectAssets]);
 
   useEffect(() => {
     if (animate === true) {
@@ -91,6 +109,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
       const currentProj = selectedProject;
       const projectColorsCopy = projectColors;
       projectColorsCopy[2] = [item.bg_color, item.text_color];
+
       if (selectedProjectName[1] !== null) {
         projectColorsCopy[0] = [
           coversReady[currentProj ? currentProj : 0].bg_color,
