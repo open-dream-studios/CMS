@@ -8,6 +8,7 @@ import useCurrentNavColorState from "../../store/useCurrentNavColorStore";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 import useSelectedArchiveGroupStore from "../../store/useSelectedArchiveGroupStore";
+import { ProjectEntry } from "../../Pages/Projects/Projects";
 
 interface PageProps {
   navigate: (page: Page) => void;
@@ -59,20 +60,21 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
     }
   }, [selectedArchiveGroup]);
 
-  // useEffect(() => {
-  //   if (
-  //     projectAssets !== null &&
-  //     projectAssets["projects"] &&
-  //     Array.isArray(projectAssets["projects"]) &&
-  //     projectAssets["projects"].length > 0
-  //   ) {
-  //     const coversList = projectAssets["projects"] as ProjectEntry[];
-  //     const newProjectsList = coversList.map((item) =>
-  //       item.title.replace("_", "")
-  //     );
-  //     setProjectsList(newProjectsList);
-  //   }
-  // }, [projectAssets]);
+  useEffect(() => {
+    const projects = projectAssets as any
+    if (
+      projects !== null &&
+      projects["projects"] &&
+      Array.isArray(projects["projects"]) &&
+      projects["projects"].length > 0
+    ) {
+      const coversList = projects["projects"] as ProjectEntry[];
+      const newProjectsList = coversList.map((item) =>
+        item.title.replace("_", "")
+      );
+      setProjectsList(newProjectsList);
+    }
+  }, [projectAssets]);
 
   function showText() {
     setTimeout(() => {

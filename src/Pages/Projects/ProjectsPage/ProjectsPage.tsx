@@ -56,24 +56,20 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const coversRef = useRef<ProjectEntry[] | null>(null);
   const [firstPageLoad, setFirstPageLoad] = useState(false);
 
-  useEffect(()=>{console.log("###EDS")},[])
   useEffect(() => {
     const project = projectAssets as any
-    console.log(project)
     if (
       project !== null &&
       project["projects"] &&
       Array.isArray(project["projects"]) &&
       project["projects"].length > 0
     ) {
-      console.log(project["projects"])
       const coversList = project["projects"] as ProjectEntry[];
       const newProjectsList = coversList.map((item) =>
         item.title.replace("_", "")
       );
       setProjectsList(newProjectsList);
       coversRef.current = coversList;
-      console.log(coversList)
     }
   }, [projectAssets]);
 

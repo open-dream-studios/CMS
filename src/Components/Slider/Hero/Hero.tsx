@@ -13,7 +13,7 @@ const Hero = ({images}: {images: ArchivesEntryImage[]}) => {
     }, 2100);
     return () => clearInterval(interval);
   }, [images]);
-  console.log(images)
+
   return (
     <div className="image-slider">
       {images.map((image, index) => (

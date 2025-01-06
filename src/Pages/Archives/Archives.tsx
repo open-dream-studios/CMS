@@ -9,6 +9,7 @@ import { IoPlayCircleOutline } from "react-icons/io5";
 import useSelectedArchiveGroupStore from "../../store/useSelectedArchiveGroupStore";
 import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
+import { isColor } from "../Admin/Admin";
 
 type ArchivesPageProps = {
   navigate: (page: Page) => void;
@@ -48,32 +49,37 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
   const archivesRef = useRef<ArchivesEntry[] | null>(null);
-  
-  const [bgColors, setbgColors] = useState<string[]>([])
+
+  const [bgColors, setbgColors] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const displayContainerRef = useRef<HTMLDivElement>(null);
   const bgColorRef = useRef("white");
   const [arrowSRC, setArrowSRC] = useState<string>("");
 
-
   useEffect(() => {
-    const project = projectAssets as any
+    const project = projectAssets as any;
     if (
       project !== null &&
       project["archives"] &&
       Array.isArray(project["archives"]) &&
       project["archives"].length > 0
     ) {
-      const archivesOutput = project["archives"] as ArchivesEntry[]
-      archivesRef.current = archivesOutput
-      const newbgColors = archivesOutput.map(item => validateColor(item.bg_color))
-      setbgColors(newbgColors)
-      bgColorRef.current = validateColor(newbgColors[0])
+      const archivesOutput = project["archives"] as ArchivesEntry[];
+      archivesRef.current = archivesOutput;
+      const newbgColors = archivesOutput.map((item) =>
+        validateColor(item.bg_color)
+      );
+      setbgColors(newbgColors);
+      bgColorRef.current = validateColor(newbgColors[0]);
       if (containerRef.current) {
-        containerRef.current.style.backgroundColor = validateColor(newbgColors[0])
+        containerRef.current.style.backgroundColor = validateColor(
+          newbgColors[0]
+        );
       }
 
-      setArrowSRC(`https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/icons/arrow1.png`)
-
+      setArrowSRC(
+        `https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/icons/arrow1.png`
+      );
     }
   }, [projectAssets]);
 
@@ -94,19 +100,19 @@ const Archives: React.FC<ArchivesPageProps> = ({
     // };
   }, []);
 
-  // Custom scroll function for any target position
   const duration = 1200;
-  const customScroll = (targetY: any) => {
-    const startY = window.pageYOffset;
+
+  const customScroll = (container: HTMLElement, targetY: number) => {
+    const startY = container.scrollTop;
     const distance = targetY - startY;
     const startTime = performance.now();
 
-    const scroll = (currentTime: any) => {
+    const scroll = (currentTime: number) => {
       const timeElapsed = currentTime - startTime;
       const progress = Math.min(timeElapsed / duration, 1); // Ensure it doesn't exceed 1
       const ease = easeInOutCubic(progress); // Apply easing
 
-      window.scrollTo(0, startY + distance * ease); // Scroll to the appropriate Y position
+      container.scrollTop = startY + distance * ease; // Scroll to the appropriate Y position
 
       if (progress < 1) {
         requestAnimationFrame(scroll); // Continue scrolling until done
@@ -117,14 +123,41 @@ const Archives: React.FC<ArchivesPageProps> = ({
   };
 
   // Easing function for smooth acceleration and deceleration
-  const easeInOutCubic = (t: any) => {
+  const easeInOutCubic = (t: number) => {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   };
 
+  // // Custom scroll function for any target position
+  // const duration = 1200;
+  // const customScroll = (targetY: any) => {
+  //   const startY = window.pageYOffset;
+  //   const distance = targetY - startY;
+  //   const startTime = performance.now();
+
+  //   const scroll = (currentTime: any) => {
+  //     const timeElapsed = currentTime - startTime;
+  //     const progress = Math.min(timeElapsed / duration, 1); // Ensure it doesn't exceed 1
+  //     const ease = easeInOutCubic(progress); // Apply easing
+
+  //     window.scrollTo(0, startY + distance * ease); // Scroll to the appropriate Y position
+
+  //     if (progress < 1) {
+  //       requestAnimationFrame(scroll); // Continue scrolling until done
+  //     }
+  //   };
+
+  //   requestAnimationFrame(scroll);
+  // };
+
+  // // Easing function for smooth acceleration and deceleration
+  // const easeInOutCubic = (t: any) => {
+  //   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  // };
+
   // Scroll Down function (1.2 seconds long)
-  const scrollDown = () => {
-    customScroll(window.innerHeight); // Scroll down to the viewport height
-  };
+  // const scrollDown = () => {
+  //   customScroll(window.innerHeight); // Scroll down to the viewport height
+  // };
 
   const handleArchiveGroupClick = (item: number) => {
     setSelectedArchiveGroup(item);
@@ -138,10 +171,10 @@ const Archives: React.FC<ArchivesPageProps> = ({
   };
 
   const handleCloseArchiveGroup = () => {
-    setSelectedArchiveGroup(null);
     setImageDisplayOpen(false);
 
     setTimeout(() => {
+      setSelectedArchiveGroup(null);
       if (closeIconRef.current && playIconRef.current) {
         closeIconRef.current.style.opacity = "0";
         playIconRef.current.style.opacity = "0";
@@ -185,7 +218,8 @@ const Archives: React.FC<ArchivesPageProps> = ({
         (scrollTop - currentPage * totalPageHeight) / screenHeight;
 
       // Calculate interpolated color between the current and the next page
-      const currentColor = bgColors[currentPage] || bgColors[bgColors.length - 1];
+      const currentColor =
+        bgColors[currentPage] || bgColors[bgColors.length - 1];
       const nextColor = bgColors[nextPage] || bgColors[bgColors.length - 1];
       const interpolatedColor = interpolateColor(
         currentColor,
@@ -238,6 +272,16 @@ const Archives: React.FC<ArchivesPageProps> = ({
     return [parseInt(rgb[0], 10), parseInt(rgb[1], 10), parseInt(rgb[2], 10)];
   };
 
+  const extractImgColor = (imgName: string) => {
+    if (imgName.split("--").length > 1) {
+      const color = imgName.split("--").pop() || "white";
+      if (isColor(color)) {
+        return validateColor(color);
+      }
+    }
+    return "#FFFFFF";
+  };
+
   return (
     <div className="w-[100%] h-[100vh]">
       <div
@@ -281,7 +325,9 @@ const Archives: React.FC<ArchivesPageProps> = ({
               <div
                 style={{ border: "1px solid white" }}
                 className="cursor-pointer absolute left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
-                onClick={() => {handleArchiveGroupClick(index)}}
+                onClick={() => {
+                  handleArchiveGroupClick(index);
+                }}
               >
                 <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex lg:items-center mt-[] lg:mt-0">
                   <div
@@ -335,29 +381,82 @@ const Archives: React.FC<ArchivesPageProps> = ({
                 className="absolute select-none right-[calc(20px+1vw)] md:right-[calc(20px+2vw)] lg:right-[calc(10px+7vw)] w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] top-[50%] aspect-[1/1.4] z-[105]"
                 style={{ transform: "translateY(-50%)" }}
               >
-                <Hero images={archivesRef.current === null ? [] : archivesRef.current[index].images}/>
+                <Hero
+                  images={
+                    archivesRef.current === null
+                      ? []
+                      : archivesRef.current[index].images
+                  }
+                />
               </div>
             </div>
           ))}
       </div>
 
       <div
-        className={`fixed z-[999] min-h-[500px] top-0 left-0 flex w-[100vw] h-[100vh] items-start justify-center flex-col pl-[20px]`}
+        ref={displayContainerRef}
+        className={`fixed z-[998] h-[100vh] top-0 left-0 w-[100vw] overflow-auto`}
         style={{
-          backgroundColor: currentDisplayBG,
+          transition: "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
+          transform: imageDisplayOpen ? "translateY(0)" : "translateY(100%)",
+          overscrollBehavior: "none",
+        }}
+      >
+        <div className="w-[100vw] min-h-[100vh] flex flex-col overflow-hidden">
+          {archivesRef.current !== null &&
+            selectedArchiveGroup !== null &&
+            archivesRef.current[selectedArchiveGroup].images.map(
+              (image: any, index) => {
+                return (
+                  <div
+                    key={index}
+                    className="w-[100vw] h-[100vh] flex justify-center items-center sticky top-0"
+                    style={{
+                      opacity: 1,
+                      backgroundColor: extractImgColor(
+                        image.title.split(".")[0]
+                      ),
+                    }}
+                    onClick={() => {
+                      if (displayContainerRef.current) {
+                        customScroll(
+                          displayContainerRef.current,
+                          (index + 1) * window.innerHeight
+                        );
+                      }
+                    }}
+                  >
+                    <div className="w-[80%] h-[80%] flex items-center justify-center">
+                      <img
+                        alt=""
+                        style={{ objectFit: "contain" }}
+                        className="h-[100%] w-[100%]"
+                        src={image.url}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+            )}
+        </div>
+      </div>
+
+      <div
+        className="z-[999] fixed w-[100%] h-[100vh] top-0 left-0 pointer-events-none"
+        style={{
           transition: "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
           transform: imageDisplayOpen ? "translateY(0)" : "translateY(100%)",
         }}
       >
         <div
-          className="absolute top-[25px] right-[27px] cursor-pointer hover-dim5"
+          className="absolute top-[25px] right-[27px] cursor-pointer hover-dim5 pointer-events-auto"
           onClick={() => {
             handleCloseArchiveGroup();
           }}
           style={{ transition: "opacity 1s ease-in-out", opacity: 0 }}
           ref={closeIconRef}
         >
-          <div className="relative h-[34px] w-[35px] flex hover-dim5">
+          <div className="relative h-[34px] w-[35px] flex hover-dim5 pointer-events-auto">
             <div
               className="nav-transition h-[3px] w-[42px] select-none absolute top-[16px] left-0"
               style={{

@@ -605,6 +605,7 @@ const App = () => {
         setSittingProject(true);
       } else {
         setSittingProject(false);
+        setSelectedProjectName([null, null, null])
       }
       setCachedCurrent(newVal);
       setCanSelectPage(true);

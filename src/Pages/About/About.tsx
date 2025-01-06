@@ -69,6 +69,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
       style={{
         backgroundColor: "white",
       }}
+      onClick={()=>{console.log(46)}}
     >
       <div className="w-[100%] h-[100%] px-[calc(3vw+15px)] py-[calc(1vh+30px)] flex justify-center">
         <img
