@@ -300,8 +300,33 @@ const App = () => {
           tree[pageNames[i]] = newPage;
         }
       }
-      console.log(tree);
       setProjectAssets(tree);
+      let startingPreloadIndex = 0;
+      if (location.pathname.startsWith("/about")) {
+        startingPreloadIndex = 1;
+      }
+      if (location.pathname.startsWith("/projects")) {
+        startingPreloadIndex = 2;
+      }
+      if (location.pathname.startsWith("/archives")) {
+        startingPreloadIndex = 3;
+      }
+      const pageLoadOrder = [];
+      pageLoadOrder.push(startingPreloadIndex);
+      for (let i = 0; i < 4; i++) {
+        if (i !== startingPreloadIndex) {
+          pageLoadOrder.push(i);
+        }
+      }
+      for (let i = 0; i < pageLoadOrder.length; i++) {
+        if (collectAllImages.current[i].length > 0) {
+          const currentPageIndex = pageLoadOrder[i] // 0 = home, 1 = about, 2 = project, 3 = archives
+          await preloadImages(collectAllImages.current[currentPageIndex]);
+          const preloadedImagesCopy = preloadedImages
+          preloadedImagesCopy[currentPageIndex] = true
+          setPreloadedImages(preloadedImagesCopy)
+        }
+      }
     }
   };
 
@@ -504,9 +529,7 @@ const App = () => {
         .sort((a: any, b: any) => a.index - b.index);
       result = sortedEntries;
     }
-
-    console.log(collectAllImagesCopy);
-    collectAllImages.current = collectAllImagesCopy
+    collectAllImages.current = collectAllImagesCopy;
     return result;
   }
 
