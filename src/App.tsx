@@ -567,6 +567,8 @@ const App = () => {
   const navigate = (page: Page) => {
     if (page === currentPage || !canSelectPage) return;
 
+
+    // Set the nav color
     if (page.startsWith("archives")) {
       setTimeout(() => {
         setCurrentNavColor("white");
@@ -574,6 +576,10 @@ const App = () => {
     } else {
       setCurrentNavColor("black");
     }
+
+
+
+
     const newVal = currentPage;
     if (
       page.startsWith("projects/") &&
