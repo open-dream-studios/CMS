@@ -155,7 +155,7 @@ const Slider = () => {
         </div>
       )}
 
-      <Hero images={[]}/>
+      <Hero setCurrentHeroImgUrl={()=>{}} images={[]} haltSlider={false}/>
     </>
   );
 }

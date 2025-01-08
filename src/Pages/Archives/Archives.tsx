@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { RefObject, useEffect, useRef, useState } from "react";
 import { Page } from "../../App";
 import Slider from "../../Components/Slider/Slider";
 // import ArchivesDisplay from "../../Components/ArchivesDisplay/ArchivesDisplay";
@@ -53,8 +53,15 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const [bgColors, setbgColors] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const displayContainerRef = useRef<HTMLDivElement>(null);
+  const displayContainerButtons = useRef<HTMLDivElement>(null);
   const bgColorRef = useRef("white");
   const [arrowSRC, setArrowSRC] = useState<string>("");
+
+  const archivesRootDiv = useRef<HTMLDivElement | null>(null);
+  const imageSliderDiv = useRef<HTMLDivElement | null>(null);
+  const [removeContainer, setRemoveContainer] = useState<boolean>(false);
+  const [currentHeroImg, setCurrentHeroImg] = useState<number>(0);
+  const [revealGallery, setRevealGallery] = useState<boolean>(false);
 
   useEffect(() => {
     const project = projectAssets as any;
@@ -88,86 +95,89 @@ const Archives: React.FC<ArchivesPageProps> = ({
       if (!slideUpComponent) {
         setSlideOpen(false);
       }
+      if (archivesRootDiv.current) {
+        archivesRootDiv.current.style.overflow = "";
+      }
     }, 1000);
 
     setIsRevealing1(true);
     setIsVisible(true);
     setDropdown1Display(true);
-
-    // document.body.style.overflow = "hidden";
-    // return () => {
-    //   document.body.style.overflow = "auto";
-    // };
   }, []);
 
-  const duration = 1200;
+  useEffect(() => {
+    if (archivesRootDiv.current) {
+      archivesRootDiv.current.style.overflow = "hidden";
+    }
+  }, [archivesRootDiv]);
 
-  const customScroll = (container: HTMLElement, targetY: number) => {
-    const startY = container.scrollTop;
-    const distance = targetY - startY;
+  const smoothScrollTo = (targetPosition: number, duration: number) => {
+    const startPosition = window.scrollY;
+    const distance = targetPosition - startPosition;
     const startTime = performance.now();
 
-    const scroll = (currentTime: number) => {
-      const timeElapsed = currentTime - startTime;
-      const progress = Math.min(timeElapsed / duration, 1); // Ensure it doesn't exceed 1
-      const ease = easeInOutCubic(progress); // Apply easing
+    function animateScroll(currentTime: number) {
+      const elapsedTime = currentTime - startTime;
+      const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
+      const ease = easeInOutQuad(progress); // Apply easing function
 
-      container.scrollTop = startY + distance * ease; // Scroll to the appropriate Y position
+      window.scrollTo(0, startPosition + distance * ease);
 
       if (progress < 1) {
-        requestAnimationFrame(scroll); // Continue scrolling until done
+        requestAnimationFrame(animateScroll);
       }
-    };
+    }
 
-    requestAnimationFrame(scroll);
+    function easeInOutQuad(t: any) {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    requestAnimationFrame(animateScroll);
   };
 
-  // Easing function for smooth acceleration and deceleration
-  const easeInOutCubic = (t: number) => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const handleArchiveGroupClick = (index: number) => {
+    if (containerRef.current && archivesRef.current) {
+      if (imageSliderDiv.current) {
+        imageSliderDiv.current.style.transition =
+          "1s cubic-bezier(0.645, 0.045, 0.355, 1)";
+      }
+      smoothScrollTo(
+        ((containerRef.current.clientHeight - window.innerHeight) /
+          (Object.keys(archivesRef.current).length - 1)) *
+          index,
+        1000
+      );
+      setTimeout(() => {
+        handleOpenArchive(index);
+      }, 500);
+    }
   };
 
-  // // Custom scroll function for any target position
-  // const duration = 1200;
-  // const customScroll = (targetY: any) => {
-  //   const startY = window.pageYOffset;
-  //   const distance = targetY - startY;
-  //   const startTime = performance.now();
-
-  //   const scroll = (currentTime: any) => {
-  //     const timeElapsed = currentTime - startTime;
-  //     const progress = Math.min(timeElapsed / duration, 1); // Ensure it doesn't exceed 1
-  //     const ease = easeInOutCubic(progress); // Apply easing
-
-  //     window.scrollTo(0, startY + distance * ease); // Scroll to the appropriate Y position
-
-  //     if (progress < 1) {
-  //       requestAnimationFrame(scroll); // Continue scrolling until done
-  //     }
-  //   };
-
-  //   requestAnimationFrame(scroll);
-  // };
-
-  // // Easing function for smooth acceleration and deceleration
-  // const easeInOutCubic = (t: any) => {
-  //   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  // };
-
-  // Scroll Down function (1.2 seconds long)
-  // const scrollDown = () => {
-  //   customScroll(window.innerHeight); // Scroll down to the viewport height
-  // };
-
-  const handleArchiveGroupClick = (item: number) => {
-    setSelectedArchiveGroup(item);
-    setImageDisplayOpen(true);
+  const handleOpenArchive = (index: number) => {
+    setSelectedArchiveGroup(index);
     setTimeout(() => {
-      if (closeIconRef.current && playIconRef.current) {
-        closeIconRef.current.style.opacity = "1";
-        playIconRef.current.style.opacity = "1";
-      }
-    }, 300);
+      setRemoveContainer(true);
+      setTimeout(() => {
+        setRevealGallery(true);
+
+        setImageDisplayOpen(true);
+
+        // setTimeout(() => {
+        //   if (displayContainerRef.current) {
+        //     displayContainerRef.current.style.width = "100%";
+        //     displayContainerRef.current.style.transition =
+        //       "width 1s cubic-bezier(0.645, 0.045, 0.355, 1)";
+        //   }
+        // }, 300);
+
+        setTimeout(() => {
+          if (closeIconRef.current && playIconRef.current) {
+            closeIconRef.current.style.opacity = "1";
+            playIconRef.current.style.opacity = "1";
+          }
+        }, 300);
+      }, 200);
+    }, 1000);
   };
 
   const handleCloseArchiveGroup = () => {
@@ -283,7 +293,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
   };
 
   return (
-    <div className="w-[100%] h-[100vh]">
+    <div ref={archivesRootDiv} className="w-[100%] h-[100vh]">
       <div
         className={`absolute z-[300] flex w-[100vw] h-[100vh] items-center justify-center pl-[20px]`}
         style={{
@@ -314,95 +324,208 @@ const Archives: React.FC<ArchivesPageProps> = ({
         )}
       </div>
 
-      <div ref={containerRef}>
-        {archivesRef.current !== null &&
-          archivesRef.current.map((item, index) => (
-            <div
-              key={index}
-              style={{ marginBottom: "20vh" }}
-              className="relative w-[100%] h-[100vh] flex items-center justify-center"
-            >
+      {!removeContainer && (
+        <div ref={containerRef}>
+          {archivesRef.current !== null &&
+            archivesRef.current.map((item, index) => (
               <div
-                style={{ border: "1px solid white" }}
-                className="cursor-pointer absolute left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
+                key={index}
+                style={{ marginBottom: "20vh" }}
+                className="cursor-pointer relative w-[100%] h-[100vh] flex items-center justify-center"
                 onClick={() => {
                   handleArchiveGroupClick(index);
                 }}
               >
-                <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex lg:items-center mt-[] lg:mt-0">
-                  <div
-                    className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
-                    style={{
-                      border: "1px solid white",
-                      color: "white",
-                      fontWeight: "700",
-                    }}
-                  >
-                    <div className="absolute kayonest text-[calc(20px+10vw)]">
-                      {item.title}
-                    </div>
-
-                    <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
-                      <p>BEHANDLET EGETRAE</p>
-                      <p className="ml-[100px]">
-                        MUNDVANDSDRIVENDE KAFFERISTNING
-                      </p>
-                      <p>MINIMALISTISK INERIOR</p>
-                    </div>
-                  </div>
-
-                  <div
-                    onMouseEnter={() => setBorderRadius("30px")}
-                    onMouseLeave={() => setBorderRadius("50%")}
-                    className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
-                  >
+                <div
+                  style={{ border: "1px solid white" }}
+                  className="absolute left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
+                >
+                  <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex items-center">
                     <div
-                      className="w-[100%] flex items-center justify-center cursor-pointer"
+                      className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
                       style={{
                         border: "1px solid white",
-                        borderRadius: borderRadius,
-                        height:
-                          borderRadius === "50%" ? "calc(70px + 5vw)" : "50px",
-                        transition:
-                          "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                        color: "white",
+                        fontWeight: "700",
                       }}
                     >
-                      <img
-                        className="w-[45%] select-none"
-                        src={arrowSRC}
-                        alt="arrow"
-                      />
+                      <div className="absolute kayonest text-[calc(20px+10vw)]">
+                        {item.title}
+                      </div>
+
+                      <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
+                        <p>BEHANDLET EGETRAE</p>
+                        <p className="ml-[100px]">
+                          MUNDVANDSDRIVENDE KAFFERISTNING
+                        </p>
+                        <p>MINIMALISTISK INERIOR</p>
+                      </div>
+                    </div>
+
+                    <div
+                      onMouseEnter={() => setBorderRadius("30px")}
+                      onMouseLeave={() => setBorderRadius("50%")}
+                      className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
+                    >
+                      <div
+                        className="w-[100%] flex items-center justify-center cursor-pointer"
+                        style={{
+                          border: "1px solid white",
+                          borderRadius: borderRadius,
+                          height:
+                            borderRadius === "50%"
+                              ? "calc(70px + 5vw)"
+                              : "50px",
+                          transition:
+                            "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                        }}
+                      >
+                        <img
+                          className="w-[45%] select-none"
+                          src={arrowSRC}
+                          alt="arrow"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
+                <div className="absolute select-none top-0 right-0 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))] h-[100vh] z-[105] flex items-center">
+                  <div
+                    ref={imageSliderDiv}
+                    style={{
+                      transition: "1s ease",
+                    }}
+                    className={`${
+                      selectedArchiveGroup !== null
+                        ? "w-[100%] h-[100%]"
+                        : "w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] h-[calc((100px+50vw))*1.4] md:h-[calc((300px+25vw)*1.4)] lg:h-[calc((80px+29vw)*1.4)]"
+                    }`}
+                  >
+                    <Hero
+                      setCurrentHeroImgUrl={(index: number) => {
+                        setCurrentHeroImg(index);
+                      }}
+                      images={
+                        archivesRef.current === null
+                          ? []
+                          : archivesRef.current[index].images
+                      }
+                      haltSlider={selectedArchiveGroup !== null}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {archivesRef.current !== null && selectedArchiveGroup !== null && (
+        <>
+          <div
+            style={{
+              backgroundColor:
+                archivesRef.current[selectedArchiveGroup].bg_color,
+            }}
+            className="cursor-pointer relative w-[100%] h-[100vh] flex items-center justify-center"
+          >
+            <div
+              style={{ border: "1px solid white" }}
+              className="absolute left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
+            >
+              <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex items-center">
+                <div
+                  className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
+                  style={{
+                    border: "1px solid white",
+                    color: "white",
+                    fontWeight: "700",
+                  }}
+                >
+                  <div className="absolute kayonest text-[calc(20px+10vw)]">
+                    {archivesRef.current[selectedArchiveGroup].title}
+                  </div>
+
+                  <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
+                    <p>BEHANDLET EGETRAE</p>
+                    <p className="ml-[100px]">
+                      MUNDVANDSDRIVENDE KAFFERISTNING
+                    </p>
+                    <p>MINIMALISTISK INERIOR</p>
+                  </div>
+                </div>
+
+                <div
+                  onMouseEnter={() => setBorderRadius("30px")}
+                  onMouseLeave={() => setBorderRadius("50%")}
+                  className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
+                >
+                  <div
+                    className="w-[100%] flex items-center justify-center cursor-pointer"
+                    style={{
+                      border: "1px solid white",
+                      borderRadius: borderRadius,
+                      height:
+                        borderRadius === "50%" ? "calc(70px + 5vw)" : "50px",
+                      transition:
+                        "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                    }}
+                  >
+                    <img
+                      className="w-[45%] select-none"
+                      src={arrowSRC}
+                      alt="arrow"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute select-none top-0 right-0 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))] h-[100vh] z-[105] flex items-center">
               <div
-                className="absolute select-none right-[calc(20px+1vw)] md:right-[calc(20px+2vw)] lg:right-[calc(10px+7vw)] w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] top-[50%] aspect-[1/1.4] z-[105]"
-                style={{ transform: "translateY(-50%)" }}
+                ref={imageSliderDiv}
+                style={{
+                  transition: "1s ease",
+                }}
+                className={`${
+                  selectedArchiveGroup !== null
+                    ? "w-[100%] h-[100%]"
+                    : "w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] h-[calc((100px+50vw))*1.4] md:h-[calc((300px+25vw)*1.4)] lg:h-[calc((80px+29vw)*1.4)]"
+                }`}
               >
-                <Hero
-                  images={
-                    archivesRef.current === null
-                      ? []
-                      : archivesRef.current[index].images
+                <img
+                  alt=""
+                  style={{ objectFit: "cover" }}
+                  className="h-[100%] w-[100%]"
+                  src={
+                    archivesRef.current[selectedArchiveGroup].images[
+                      currentHeroImg
+                    ].url
                   }
                 />
               </div>
             </div>
-          ))}
-      </div>
+          </div>
+
+          {/* {revealGallery && (
+            <div
+              className="w-[100%] min-h-[100%]"
+            ></div>
+          )} */}
+        </>
+      )}
 
       <div
         ref={displayContainerRef}
-        className={`fixed z-[998] h-[100vh] top-0 left-0 w-[100vw] overflow-auto`}
+        className={`absolute z-[998] top-0 right-0 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))] h-[100vh]`}
         style={{
           transition: "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
           transform: imageDisplayOpen ? "translateY(0)" : "translateY(100%)",
           overscrollBehavior: "none",
+          backgroundColor: "white",
         }}
       >
-        <div className="w-[100vw] min-h-[100vh] flex flex-col overflow-hidden">
+        {/* <div className="w-[100vw] min-h-[100vh] flex flex-col overflow-hidden">
           {archivesRef.current !== null &&
             selectedArchiveGroup !== null &&
             archivesRef.current[selectedArchiveGroup].images.map(
@@ -418,12 +541,12 @@ const Archives: React.FC<ArchivesPageProps> = ({
                       ),
                     }}
                     onClick={() => {
-                      if (displayContainerRef.current) {
-                        customScroll(
-                          displayContainerRef.current,
-                          (index + 1) * window.innerHeight
-                        );
-                      }
+                      // if (displayContainerRef.current) {
+                      //   customScroll(
+                      //     displayContainerRef.current,
+                      //     (index + 1) * window.innerHeight
+                      //   );
+                      // }
                     }}
                   >
                     <div className="w-[80%] h-[80%] flex items-center justify-center">
@@ -438,14 +561,16 @@ const Archives: React.FC<ArchivesPageProps> = ({
                 );
               }
             )}
-        </div>
+        </div> */}
       </div>
 
-      <div
+      {/* <div
+        ref={displayContainerButtons}
         className="z-[999] fixed w-[100%] h-[100vh] top-0 left-0 pointer-events-none"
         style={{
-          transition: "transform 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
-          transform: imageDisplayOpen ? "translateY(0)" : "translateY(100%)",
+          opacity: 0,
+          transition: "opacity 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
+          // transform: imageDisplayOpen ? "translateY(0)" : "translateY(100%)",
         }}
       >
         <div
@@ -487,7 +612,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
             className="hover-dim5"
           />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
