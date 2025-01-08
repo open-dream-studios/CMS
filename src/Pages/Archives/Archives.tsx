@@ -163,24 +163,24 @@ const Archives: React.FC<ArchivesPageProps> = ({
     setTimeout(() => {
       setRemoveContainer(true);
       setHideArrowButton(true);
+      setTimeout(() => {
+        setImageDisplayOpen(true);
+
+        // setTimeout(() => {
+        //   if (displayContainerRef.current) {
+        //     displayContainerRef.current.style.width = "100%";
+        //     displayContainerRef.current.style.transition =
+        //       "width 1s cubic-bezier(0.645, 0.045, 0.355, 1)";
+        //   }
+        // }, 300);
+
         setTimeout(() => {
-          setImageDisplayOpen(true);
-
-          // setTimeout(() => {
-          //   if (displayContainerRef.current) {
-          //     displayContainerRef.current.style.width = "100%";
-          //     displayContainerRef.current.style.transition =
-          //       "width 1s cubic-bezier(0.645, 0.045, 0.355, 1)";
-          //   }
-          // }, 300);
-
-          setTimeout(() => {
-            if (container2ImageDiv.current) {
-              container2ImageDiv.current.style.transition = "none";
-            }
-            setRevealGallery(true);
-          }, 1000);
-        }, 200);
+          if (container2ImageDiv.current) {
+            container2ImageDiv.current.style.transition = "none";
+          }
+          setRevealGallery(true);
+        }, 1000);
+      }, 200);
     }, 1000);
   };
 
@@ -303,7 +303,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
   return (
     <div ref={archivesRootDiv} className="w-[100%] h-[100vh]">
       <div
-        className={`absolute z-[300] flex w-[100vw] h-[100vh] items-center justify-center pl-[20px]`}
+        className={`select-none absolute z-[300] flex w-[100vw] h-[100vh] items-center justify-center pl-[20px]`}
         style={{
           backgroundColor: "white",
           transition: "transform 1.6s cubic-bezier(0.5, 0, 0.1, 1)",
@@ -503,15 +503,16 @@ const Archives: React.FC<ArchivesPageProps> = ({
                   pointerEvents: "none",
 
                   // opacity: revealGallery ? 1 : 0,
-                  // transition:
-                  //   "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                  // transition: "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
                 }}
-                className="w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] z-[112] h-[100%] absolute left-0 top-0 select-none pl-[calc(30px+3vw)] flex items-center"
+                className={`${
+                  revealGallery ? "lg:flex hidden" : "flex"
+                } w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] z-[112] h-[100%] absolute left-0 top-0 select-none pl-[calc(30px+3vw)] items-center`}
               >
                 <div
-                  className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
+                  className={`relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col`}
                   style={{
-                    transition: "1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                    // transition: "1s cubic-bezier(0.645, 0.045, 0.355, 1)",
                     color: "white",
                     fontWeight: "700",
                     marginLeft: "2px",
@@ -565,9 +566,11 @@ const Archives: React.FC<ArchivesPageProps> = ({
             >
               <div
                 ref={container2ImageDiv}
+                style={{transition: "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)"}}
                 className={`absolute top-0 left-0 select-none
                 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))]
-              h-[100vh] flex items-center`}
+              h-[100vh]  ${hideArrowButton ? "opacity-0 lg:opacity-100" : "opacity-100"}
+               ${revealGallery ? "lg:flex hidden" : "flex"} items-center`}
               >
                 <div
                   style={{
@@ -660,8 +663,10 @@ const Archives: React.FC<ArchivesPageProps> = ({
                     transition:
                       "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
                   }}
+                  //     className="absolute right-0 h-[100%]
+                  // w-[calc(100vw-(100px+50vw+(20px+1vw)))] md:w-[calc(100vw-(300px+25vw+(20px+2vw)))] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))]"
                   className="absolute right-0 h-[100%]
-              w-[calc(100vw-(100px+50vw+(20px+1vw)))] md:w-[calc(100vw-(300px+25vw+(20px+2vw)))] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))]"
+              w-[100%] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))]"
                 >
                   <MUIGrid
                     images={archivesRef.current[selectedArchiveGroup].images}
