@@ -10,6 +10,7 @@ import useSelectedArchiveGroupStore from "../../store/useSelectedArchiveGroupSto
 import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 import { isColor } from "../Admin/Admin";
+import MUIGrid from "./MUIGrid";
 
 type ArchivesPageProps = {
   navigate: (page: Page) => void;
@@ -62,6 +63,11 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const [removeContainer, setRemoveContainer] = useState<boolean>(false);
   const [currentHeroImg, setCurrentHeroImg] = useState<number>(0);
   const [revealGallery, setRevealGallery] = useState<boolean>(false);
+  const container2ImageDiv = useRef<HTMLDivElement | null>(null);
+  const [galleryButtonHover, setGalleryButtonHover] = useState<number>(0);
+  const [startingShowGallery, setStartingShowGallery] =
+    useState<boolean>(false);
+  const [hideArrowButton, setHideArrowButton] = useState<boolean>(false);
 
   useEffect(() => {
     const project = projectAssets as any;
@@ -137,16 +143,14 @@ const Archives: React.FC<ArchivesPageProps> = ({
 
   const handleArchiveGroupClick = (index: number) => {
     if (containerRef.current && archivesRef.current) {
-      if (imageSliderDiv.current) {
-        imageSliderDiv.current.style.transition =
-          "1s cubic-bezier(0.645, 0.045, 0.355, 1)";
-      }
+      setStartingShowGallery(true);
       smoothScrollTo(
         ((containerRef.current.clientHeight - window.innerHeight) /
           (Object.keys(archivesRef.current).length - 1)) *
           index,
         1000
       );
+
       setTimeout(() => {
         handleOpenArchive(index);
       }, 500);
@@ -155,28 +159,28 @@ const Archives: React.FC<ArchivesPageProps> = ({
 
   const handleOpenArchive = (index: number) => {
     setSelectedArchiveGroup(index);
+
     setTimeout(() => {
       setRemoveContainer(true);
-      setTimeout(() => {
-        setRevealGallery(true);
-
-        setImageDisplayOpen(true);
-
-        // setTimeout(() => {
-        //   if (displayContainerRef.current) {
-        //     displayContainerRef.current.style.width = "100%";
-        //     displayContainerRef.current.style.transition =
-        //       "width 1s cubic-bezier(0.645, 0.045, 0.355, 1)";
-        //   }
-        // }, 300);
-
+      setHideArrowButton(true);
         setTimeout(() => {
-          if (closeIconRef.current && playIconRef.current) {
-            closeIconRef.current.style.opacity = "1";
-            playIconRef.current.style.opacity = "1";
-          }
-        }, 300);
-      }, 200);
+          setImageDisplayOpen(true);
+
+          // setTimeout(() => {
+          //   if (displayContainerRef.current) {
+          //     displayContainerRef.current.style.width = "100%";
+          //     displayContainerRef.current.style.transition =
+          //       "width 1s cubic-bezier(0.645, 0.045, 0.355, 1)";
+          //   }
+          // }, 300);
+
+          setTimeout(() => {
+            if (container2ImageDiv.current) {
+              container2ImageDiv.current.style.transition = "none";
+            }
+            setRevealGallery(true);
+          }, 1000);
+        }, 200);
     }, 1000);
   };
 
@@ -292,6 +296,10 @@ const Archives: React.FC<ArchivesPageProps> = ({
     return "#FFFFFF";
   };
 
+  const handleGalleryButtonClick = (direction: number) => {
+    console.log(direction);
+  };
+
   return (
     <div ref={archivesRootDiv} className="w-[100%] h-[100vh]">
       <div
@@ -394,12 +402,14 @@ const Archives: React.FC<ArchivesPageProps> = ({
                   <div
                     ref={imageSliderDiv}
                     style={{
-                      transition: "1s ease",
+                      transition: startingShowGallery
+                        ? "1s cubic-bezier(0.645, 0.045, 0.355, 1)"
+                        : "none",
                     }}
                     className={`${
                       selectedArchiveGroup !== null
                         ? "w-[100%] h-[100%]"
-                        : "w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] h-[calc((100px+50vw))*1.4] md:h-[calc((300px+25vw)*1.4)] lg:h-[calc((80px+29vw)*1.4)]"
+                        : "w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] h-[calc((100px+50vw)*1.4)] md:h-[calc((300px+25vw)*1.4)] lg:h-[calc((80px+29vw)*1.4)]"
                     }`}
                   >
                     <Hero
@@ -427,17 +437,23 @@ const Archives: React.FC<ArchivesPageProps> = ({
               backgroundColor:
                 archivesRef.current[selectedArchiveGroup].bg_color,
             }}
-            className="cursor-pointer relative w-[100%] h-[100vh] flex items-center justify-center"
+            className="relative w-[100%] h-[100vh] flex items-center justify-center"
           >
             <div
-              style={{ border: "1px solid white" }}
-              className="absolute left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
+              style={{
+                transition: "1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                border: "1px solid white",
+                opacity: revealGallery ? 0 : 1,
+                display: revealGallery ? "none" : "all",
+              }}
+              className="absolute z-[110] left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh]"
             >
               <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex items-center">
                 <div
                   className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
                   style={{
                     border: "1px solid white",
+                    transition: "1s cubic-bezier(0.645, 0.045, 0.355, 1)",
                     color: "white",
                     fontWeight: "700",
                   }}
@@ -455,7 +471,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                   </div>
                 </div>
 
-                <div
+                {/* <div
                   onMouseEnter={() => setBorderRadius("30px")}
                   onMouseLeave={() => setBorderRadius("50%")}
                   className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
@@ -477,45 +493,187 @@ const Archives: React.FC<ArchivesPageProps> = ({
                       alt="arrow"
                     />
                   </div>
+                </div> */}
+              </div>
+            </div>
+
+            {startingShowGallery && (
+              <div
+                style={{
+                  pointerEvents: "none",
+
+                  // opacity: revealGallery ? 1 : 0,
+                  // transition:
+                  //   "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                }}
+                className="w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] z-[112] h-[100%] absolute left-0 top-0 select-none pl-[calc(30px+3vw)] flex items-center"
+              >
+                <div
+                  className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
+                  style={{
+                    transition: "1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                    color: "white",
+                    fontWeight: "700",
+                    marginLeft: "2px",
+                  }}
+                >
+                  <div className="absolute kayonest text-[calc(20px+10vw)]">
+                    {archivesRef.current[selectedArchiveGroup].title}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    opacity: hideArrowButton ? "0" : "1",
+                    transition: "1s ease",
+                  }}
+                  onMouseEnter={() => setBorderRadius("30px")}
+                  onMouseLeave={() => setBorderRadius("50%")}
+                  className=" mt-[1px] absolute right-[1px] top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
+                >
+                  <div
+                    className="w-[100%] flex items-center justify-center cursor-pointer"
+                    style={{
+                      border: "1px solid white",
+                      borderRadius: borderRadius,
+                      height:
+                        borderRadius === "50%" ? "calc(70px + 5vw)" : "50px",
+                      transition:
+                        "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                    }}
+                  >
+                    <img
+                      className="w-[45%] select-none"
+                      src={arrowSRC}
+                      alt="arrow"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div className="absolute select-none top-0 right-0 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))] h-[100vh] z-[105] flex items-center">
+            <div
+              style={{
+                transition: "width 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                backgroundColor: "white",
+              }}
+              className={`z-[111] absolute right-0 h-[100%] top-0 ${
+                imageDisplayOpen
+                  ? "w-[100%]"
+                  : "w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))]"
+              } h-[100%]`}
+            >
               <div
-                ref={imageSliderDiv}
-                style={{
-                  transition: "1s ease",
-                }}
-                className={`${
-                  selectedArchiveGroup !== null
-                    ? "w-[100%] h-[100%]"
-                    : "w-[calc(100px+50vw)] md:w-[calc(300px+25vw)] lg:w-[calc(80px+29vw)] h-[calc((100px+50vw))*1.4] md:h-[calc((300px+25vw)*1.4)] lg:h-[calc((80px+29vw)*1.4)]"
-                }`}
+                ref={container2ImageDiv}
+                className={`absolute top-0 left-0 select-none
+                w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))]
+              h-[100vh] flex items-center`}
               >
-                <img
-                  alt=""
-                  style={{ objectFit: "cover" }}
-                  className="h-[100%] w-[100%]"
-                  src={
-                    archivesRef.current[selectedArchiveGroup].images[
-                      currentHeroImg
-                    ].url
-                  }
-                />
+                <div
+                  style={{
+                    transition: "1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                  }}
+                  className="relative w-[100%] h-[100%]"
+                >
+                  <img
+                    alt=""
+                    style={{ objectFit: "cover" }}
+                    className="h-[100%] w-[100%]"
+                    src={
+                      archivesRef.current[selectedArchiveGroup].images[
+                        currentHeroImg
+                      ].url
+                    }
+                  />
+
+                  {imageDisplayOpen && (
+                    <div
+                      style={{
+                        opacity: revealGallery ? 1 : 0,
+                        transition:
+                          "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                        borderRadius: "30px",
+                      }}
+                      className="absolute z-[110] bottom-[28px] left-[50px] w-[calc(52px+5vw)] flex items-center justify-center"
+                    >
+                      <div
+                        onMouseEnter={() => setGalleryButtonHover(-1)}
+                        onMouseLeave={() => setGalleryButtonHover(0)}
+                        onClick={() => handleGalleryButtonClick(-1)}
+                        className="w-[100%] flex items-center justify-center cursor-pointer"
+                        style={{
+                          border: "0.5px solid white",
+                          borderRadius: "30px",
+                          height: "42px",
+                          transform: "rotate(180deg)",
+                          transition:
+                            "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                        }}
+                      >
+                        <img
+                          className="w-[40%] select-none"
+                          src={arrowSRC}
+                          alt="arrow"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {imageDisplayOpen && (
+                    <div
+                      style={{
+                        opacity: revealGallery ? 1 : 0,
+                        transition:
+                          "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                        borderRadius: "30px",
+                      }}
+                      className="absolute z-[110] bottom-[28px] right-[50px] w-[calc(52px+5vw)] flex items-center justify-center"
+                    >
+                      <div
+                        onMouseEnter={() => setGalleryButtonHover(1)}
+                        onMouseLeave={() => setGalleryButtonHover(0)}
+                        onClick={() => handleGalleryButtonClick(1)}
+                        className="w-[100%] flex items-center justify-center cursor-pointer"
+                        style={{
+                          border: "0.5px solid white",
+                          borderRadius: "30px",
+                          height: "42px",
+                          transition:
+                            "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                        }}
+                      >
+                        <img
+                          className="w-[40%] select-none"
+                          src={arrowSRC}
+                          alt="arrow"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {imageDisplayOpen && (
+                <div
+                  style={{
+                    opacity: revealGallery ? "1" : "0",
+                    transition:
+                      "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                  }}
+                  className="absolute right-0 h-[100%]
+              w-[calc(100vw-(100px+50vw+(20px+1vw)))] md:w-[calc(100vw-(300px+25vw+(20px+2vw)))] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))]"
+                >
+                  <MUIGrid
+                    images={archivesRef.current[selectedArchiveGroup].images}
+                  />
+                </div>
+              )}
             </div>
           </div>
-
-          {/* {revealGallery && (
-            <div
-              className="w-[100%] min-h-[100%]"
-            ></div>
-          )} */}
         </>
       )}
 
-      <div
+      {/* <div
         ref={displayContainerRef}
         className={`absolute z-[998] top-0 right-0 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))] h-[100vh]`}
         style={{
@@ -525,7 +683,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
           backgroundColor: "white",
         }}
       >
-        {/* <div className="w-[100vw] min-h-[100vh] flex flex-col overflow-hidden">
+        <div className="w-[100vw] min-h-[100vh] flex flex-col overflow-hidden">
           {archivesRef.current !== null &&
             selectedArchiveGroup !== null &&
             archivesRef.current[selectedArchiveGroup].images.map(
@@ -561,8 +719,8 @@ const Archives: React.FC<ArchivesPageProps> = ({
                 );
               }
             )}
-        </div> */}
-      </div>
+        </div>
+      </div> */}
 
       {/* <div
         ref={displayContainerButtons}
@@ -570,7 +728,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
         style={{
           opacity: 0,
           transition: "opacity 0.7s cubic-bezier(0.5, 0, 0.1, 1)",
-          // transform: imageDisplayOpen ? "translateY(0)" : "translateY(100%)",
+          transform: imageDisplayOpen ? "translateY(0)" : "translateY(40%)",
         }}
       >
         <div
