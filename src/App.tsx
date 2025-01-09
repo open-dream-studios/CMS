@@ -8,7 +8,7 @@ import Projects from "./Pages/Projects/Projects";
 import Navbar from "./Components/Navbar/Navbar";
 import Archives from "./Pages/Archives/Archives";
 import ProjectsPage from "./Pages/Projects/ProjectsPage/ProjectsPage";
-import useProjectColorsState from "./store/useProjectColorsStore";
+import useProjectColorsState, { ProjectColors } from "./store/useProjectColorsStore";
 import useCurrentPageState from "./store/useCurrentPageStore";
 import useCurrentNavColorState from "./store/useCurrentNavColorStore";
 import useSelectedProjectNameState from "./store/useSelectedProjectNameStore";
@@ -552,6 +552,29 @@ const App = () => {
   //     setCurrentPage(path as Page);
   //   }
   // }, [currentPage, location, projectsList]);
+
+    useEffect(() => {
+    const path = location.pathname.replace("/", "") || "home";
+    if (
+      path !== currentPage && 
+
+        (path.startsWith("projects/") &&
+          projectsList.includes(path.split("/")[1]) &&
+          path.split("/").length === 2)
+    ) {
+      setCurrentPage(path as Page);
+      const projectIndex = projectsList.findIndex((item) => item === path.split("/")[1])
+      const project = projectAssets as any
+      if (projectIndex !== -1 && project && project !== null && project["projects"]) {
+        setSelectedProject(projectIndex)
+        setSelectedProjectName([null, projectIndex, null])
+        const newColor1 = project["projects"][projectIndex].bg_color || "white"
+        const newColor2 = project["projects"][projectIndex].text_color || "white"
+        const newColors = [["white", "white"],[newColor1, newColor2],["white", "white"]] as ProjectColors
+        setProjectColors(newColors)
+      }
+    }
+  }, [location, projectsList, projectAssets]);
 
   const [disableTransition, setDisableTransition] = useState(false);
   const [cachedCurrent, setCachedCurrent] = useState<Page>("home");

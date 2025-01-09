@@ -125,6 +125,9 @@ const Archives: React.FC<ArchivesPageProps> = ({
     setIsRevealing1(true);
     setIsVisible(true);
     setDropdown1Display(true);
+    setTimeout(()=>{
+      setCurrentNavColor("white")
+    },2000)
   }, []);
 
   useEffect(() => {
@@ -181,6 +184,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
       setHideArrowButton(true);
       setTimeout(() => {
         setImageDisplayOpen(true);
+        setCurrentNavColor("black")
 
         setTimeout(
           () => {

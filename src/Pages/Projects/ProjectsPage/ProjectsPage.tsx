@@ -250,7 +250,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
             });
           })
         );
-        console.log(dimensions)
+
         setImageDimensions(dimensions);
         setIncomingImageDimensions(dimensions);
       }

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-type ProjectColors = [
+export type ProjectColors = [
   [string, string],
   [string, string],
   [string, string]
