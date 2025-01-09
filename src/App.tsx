@@ -560,7 +560,7 @@ const App = () => {
     if (page === currentPage || !canSelectPage) return;
 
 
-    // Set the nav color
+    // NAV
     if (page.startsWith("archives")) {
       setTimeout(() => {
         setCurrentNavColor("white");
@@ -568,6 +568,9 @@ const App = () => {
     } else {
       setCurrentNavColor("black");
     }
+
+    // Archives
+    setSelectedArchiveGroup(null)
 
 
 
