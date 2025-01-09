@@ -48,17 +48,17 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const [projectsList, setProjectsList] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (navRef.current) {
-      if (selectedArchiveGroup == null) {
-        navRef.current.style.opacity = "1";
-        navRef.current.style.pointerEvents = "all";
-      } else {
-        navRef.current.style.opacity = "0";
-        navRef.current.style.pointerEvents = "none";
-      }
-    }
-  }, [selectedArchiveGroup]);
+  // useEffect(() => {
+  //   if (navRef.current) {
+  //     if (selectedArchiveGroup == null) {
+  //       navRef.current.style.opacity = "1";
+  //       navRef.current.style.pointerEvents = "all";
+  //     } else {
+  //       navRef.current.style.opacity = "0";
+  //       navRef.current.style.pointerEvents = "none";
+  //     }
+  //   }
+  // }, [selectedArchiveGroup]);
 
   useEffect(() => {
     const projects = projectAssets as any

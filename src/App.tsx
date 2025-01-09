@@ -19,8 +19,6 @@ import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "./store/useProjectAssetsStore";
 import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
 import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
-// import yaml from "js-yaml";
-import axios from "axios";
 import Admin, { isColor } from "./Pages/Admin/Admin";
 import useAppDataFileStore from "./store/useAppDataFileStore";
 
@@ -30,12 +28,6 @@ export interface SlideUpPageProps {
   full: boolean;
   zIdx: number;
   nextColor: string;
-}
-
-interface ImageDimension {
-  width: number;
-  height: number;
-  src: string;
 }
 
 export interface SlideUpProjectPageProps {

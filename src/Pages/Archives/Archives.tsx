@@ -55,11 +55,10 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const displayContainerRef = useRef<HTMLDivElement>(null);
   const displayContainerButtons = useRef<HTMLDivElement>(null);
-  const bgColorRef = useRef("white");
+  // const bgColorRef = useRef("white");
   const [arrowSRC, setArrowSRC] = useState<string>("");
 
   const archivesRootDiv = useRef<HTMLDivElement | null>(null);
-  const imageSliderDiv = useRef<HTMLDivElement | null>(null);
   const [removeContainer, setRemoveContainer] = useState<boolean>(false);
   const [currentHeroImg, setCurrentHeroImg] = useState<number>(0);
   const [revealGallery, setRevealGallery] = useState<boolean>(false);
@@ -68,6 +67,11 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const [startingShowGallery, setStartingShowGallery] =
     useState<boolean>(false);
   const [hideArrowButton, setHideArrowButton] = useState<boolean>(false);
+  const cardTitleRef1 = useRef<(HTMLDivElement | null)[]>([]);
+  const cardBorderRef1 = useRef<(HTMLDivElement | null)[]>([]);
+  const cardSubTitleRef1 = useRef<(HTMLDivElement | null)[]>([]);
+  const [showTitleText, setShowTitleText] = useState<boolean>(true);
+  const [finalTitleTouch, setFinalTitleTouch] = useState<boolean>(false);
 
   useEffect(() => {
     const project = projectAssets as any;
@@ -83,7 +87,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
         validateColor(item.bg_color)
       );
       setbgColors(newbgColors);
-      bgColorRef.current = validateColor(newbgColors[0]);
+      // bgColorRef.current = validateColor(newbgColors[0]);
       if (containerRef.current) {
         containerRef.current.style.backgroundColor = validateColor(
           newbgColors[0]
@@ -166,20 +170,25 @@ const Archives: React.FC<ArchivesPageProps> = ({
       setTimeout(() => {
         setImageDisplayOpen(true);
 
-        // setTimeout(() => {
-        //   if (displayContainerRef.current) {
-        //     displayContainerRef.current.style.width = "100%";
-        //     displayContainerRef.current.style.transition =
-        //       "width 1s cubic-bezier(0.645, 0.045, 0.355, 1)";
-        //   }
-        // }, 300);
+        setTimeout(
+          () => {
+            setShowTitleText(false);
+          },
+          window.innerWidth <= 1048 ? 1000 : 500
+        );
 
-        setTimeout(() => {
-          if (container2ImageDiv.current) {
-            container2ImageDiv.current.style.transition = "none";
-          }
-          setRevealGallery(true);
-        }, 1000);
+        setTimeout(
+          () => {
+            if (container2ImageDiv.current) {
+              container2ImageDiv.current.style.transition = "none";
+            }
+            setRevealGallery(true);
+            setTimeout(() => {
+              setFinalTitleTouch(true);
+            }, 500);
+          },
+          window.innerWidth <= 1048 ? 1600 : 1000
+        );
       }, 200);
     }, 1000);
   };
@@ -214,6 +223,27 @@ const Archives: React.FC<ArchivesPageProps> = ({
   }
 
   useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.style.backgroundColor = bgColors[0];
+    }
+    if (cardTitleRef1.current) {
+      cardTitleRef1.current.forEach((ref) => {
+        if (ref) ref.style.color = bgColors[0];
+      });
+    }
+    if (cardSubTitleRef1.current) {
+      cardSubTitleRef1.current.forEach((ref) => {
+        if (ref) ref.style.color = bgColors[0];
+      });
+    }
+    if (cardBorderRef1.current) {
+      cardBorderRef1.current.forEach((ref) => {
+        if (ref) ref.style.border = `3px solid ${bgColors[0]}`;
+      });
+    }
+  }, [bgColors]);
+
+  useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
 
@@ -242,8 +272,23 @@ const Archives: React.FC<ArchivesPageProps> = ({
       );
 
       // Apply the background color
-      bgColorRef.current = interpolatedColor;
+      // bgColorRef.current = interpolatedColor;
       containerRef.current.style.backgroundColor = interpolatedColor;
+      if (cardTitleRef1.current) {
+        cardTitleRef1.current.forEach((ref) => {
+          if (ref) ref.style.color = interpolatedColor;
+        });
+      }
+      if (cardSubTitleRef1.current) {
+        cardSubTitleRef1.current.forEach((ref) => {
+          if (ref) ref.style.color = interpolatedColor;
+        });
+      }
+      if (cardBorderRef1.current) {
+        cardBorderRef1.current.forEach((ref) => {
+          if (ref) ref.style.border = `3px solid ${interpolatedColor}`;
+        });
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -297,7 +342,20 @@ const Archives: React.FC<ArchivesPageProps> = ({
   };
 
   const handleGalleryButtonClick = (direction: number) => {
-    console.log(direction);
+    if (archivesRef.current && selectedArchiveGroup !== null) {
+      const nextIndex =
+        direction === 1
+          ? selectedArchiveGroup === archivesRef.current.length - 1
+            ? 0
+            : selectedArchiveGroup + 1
+          : selectedArchiveGroup === 0
+          ? archivesRef.current.length - 1
+          : selectedArchiveGroup - 1;
+      if (nextIndex <= archivesRef.current.length - 1) {
+        setCurrentHeroImg(0);
+        setSelectedArchiveGroup(nextIndex);
+      }
+    }
   };
 
   return (
@@ -348,25 +406,67 @@ const Archives: React.FC<ArchivesPageProps> = ({
                   style={{ border: "1px solid white" }}
                   className="absolute left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh] z-[106]"
                 >
-                  <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex items-center">
+                  <div className="w-[100%] h-[100%] relative select-none pl-[calc(20px+2.5vw)] items-center flex">
                     <div
-                      className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
+                      className="relative flex lg:w-[100%] w-[600%] pr-[calc(20px+1vw)] lg:pr-[calc(10px+0.5vw)] pl-[calc(20px+1vw)] lg:pl-[calc(10px+0.5vw)] 
+                      h-[auto] py-[calc((18px+0.5vw)+30px+1.8vw+28px)]
+                      flex-col
+                      bg-white lg:bg-inherit"
                       style={{
                         border: "1px solid white",
                         color: "white",
                         fontWeight: "700",
                       }}
                     >
-                      <div className="absolute kayonest text-[calc(20px+10vw)]">
-                        {item.title}
+                      <div
+                        ref={(el) => (cardBorderRef1.current[index] = el)}
+                        style={{ border: `3px solid ${bgColors[index]}` }}
+                        className="lg:hidden z-[108] w-[calc(100%-10px)] h-[calc(100%-10px)] absolute top-[5px] left-[5px]"
+                      ></div>
+
+                      <div
+                        className={`min-w-[40vw] z-[109] kayonest w-full break-words whitespace-normal overflow-visible leading-[calc((clamp(1rem,10vw+20px,10vw+20px)))]`}
+                        style={{
+                          fontSize: "clamp(1rem, 10vw + 20px, 10vw + 20px)",
+                          maxWidth: "100%",
+                        }}
+                      >
+                        <div className="hidden lg:flex">
+                          {item.title.replaceAll("_", " ")}
+                        </div>
+                        <div
+                          ref={(el) => (cardTitleRef1.current[index] = el)}
+                          className="flex lg:hidden"
+                          style={{ color: bgColors[index] }}
+                        >
+                          {item.title.replaceAll("_", " ")}
+                        </div>
                       </div>
 
-                      <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
-                        <p>BEHANDLET EGETRAE</p>
-                        <p className="ml-[100px]">
-                          MUNDVANDSDRIVENDE KAFFERISTNING
-                        </p>
-                        <p>MINIMALISTISK INERIOR</p>
+                      <div
+                        style={{
+                          color: "white",
+                        }}
+                        className="z-[109] px-[calc(10px+0.3vw)] absolute bottom-[calc(18px+0.5vw)] text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] "
+                      >
+                        <div className="hidden lg:flex flex-col">
+                          <p>BEHANDLET EGETRAE</p>
+                          <p className="ml-[100px]">
+                            MUNDVANDSDRIVENDE KAFFERISTNING
+                          </p>
+                          <p>MINIMALISTISK INERIOR</p>
+                        </div>
+                        <div
+                          ref={(el) => (cardSubTitleRef1.current[index] = el)}
+                          className="flex lg:hidden flex-col"
+                          style={{ color: bgColors[index] }}
+                        >
+                          <p>BEHANDLET EGETRAE</p>
+                          <p className="ml-[100px]">
+                            MUNDVANDSDRIVENDE KAFFERISTNING
+                          </p>
+                          <p>MINIMALISTISK INERIOR</p>
+                        </div>
                       </div>
                     </div>
 
@@ -400,7 +500,6 @@ const Archives: React.FC<ArchivesPageProps> = ({
 
                 <div className="absolute select-none top-0 right-0 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))] h-[100vh] z-[105] flex items-center">
                   <div
-                    ref={imageSliderDiv}
                     style={{
                       transition: startingShowGallery
                         ? "1s cubic-bezier(0.645, 0.045, 0.355, 1)"
@@ -448,81 +547,142 @@ const Archives: React.FC<ArchivesPageProps> = ({
               }}
               className="absolute z-[110] left-0 top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh]"
             >
-              <div className="w-[100%] h-[100%] relative select-none pl-[calc(30px+3vw)] flex items-center">
+              <div className="w-[100%] h-[100%] relative select-none pl-[calc(20px+2.5vw)] flex items-center">
                 <div
-                  className="relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col"
+                  className="relative flex justify-center lg:w-[100%] w-[600%] pr-[calc(20px+1vw)] lg:pr-[calc(10px+0.5vw)]  pl-[calc(20px+1vw)] lg:pl-[calc(10px+0.5vw)] 
+                      h-[auto] py-[calc((18px+0.5vw)+30px+1.8vw+28px)]
+                      flex-col
+                      bg-white lg:bg-inherit"
                   style={{
                     border: "1px solid white",
-                    transition: "1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                    transition:
+                      "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
                     color: "white",
                     fontWeight: "700",
+                    opacity: hideArrowButton ? "0" : "1",
                   }}
                 >
-                  <div className="absolute kayonest text-[calc(20px+10vw)]">
-                    {archivesRef.current[selectedArchiveGroup].title}
-                  </div>
-
-                  <div className="absolute bottom-0 text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] ">
-                    <p>BEHANDLET EGETRAE</p>
-                    <p className="ml-[100px]">
-                      MUNDVANDSDRIVENDE KAFFERISTNING
-                    </p>
-                    <p>MINIMALISTISK INERIOR</p>
-                  </div>
-                </div>
-
-                {/* <div
-                  onMouseEnter={() => setBorderRadius("30px")}
-                  onMouseLeave={() => setBorderRadius("50%")}
-                  className="absolute right-0 top-[75vh] mr-[-22px] w-[calc(70px+5vw)] h-[calc(70px+5vw)] flex items-center justify-center"
-                >
                   <div
-                    className="w-[100%] flex items-center justify-center cursor-pointer"
                     style={{
-                      border: "1px solid white",
-                      borderRadius: borderRadius,
-                      height:
-                        borderRadius === "50%" ? "calc(70px + 5vw)" : "50px",
-                      transition:
-                        "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                      border: `3px solid ${bgColors[selectedArchiveGroup]}`,
+                    }}
+                    className="lg:hidden z-[108] w-[calc(100%-10px)] h-[calc(100%-10px)] absolute top-[5px] left-[5px]"
+                  ></div>
+
+                  <div
+                    className={`min-w-[40vw] z-[109] kayonest w-full break-words whitespace-normal overflow-visible leading-[calc((clamp(1rem,10vw+20px,10vw+20px)))]`}
+                    style={{
+                      fontSize: "clamp(1rem, 10vw + 20px, 10vw + 20px)",
+                      maxWidth: "100%",
                     }}
                   >
-                    <img
-                      className="w-[45%] select-none"
-                      src={arrowSRC}
-                      alt="arrow"
-                    />
+                    <div className="hidden lg:flex">
+                      {archivesRef.current[
+                        selectedArchiveGroup
+                      ].title.replaceAll("_", " ")}
+                    </div>
+                    <div
+                      className="flex lg:hidden"
+                      style={{ color: bgColors[selectedArchiveGroup] }}
+                    >
+                      {archivesRef.current[
+                        selectedArchiveGroup
+                      ].title.replaceAll("_", " ")}
+                    </div>
                   </div>
-                </div> */}
+
+                  <div
+                    style={{
+                      color: "white",
+                    }}
+                    className="z-[109] px-[calc(10px+0.3vw)] absolute bottom-[calc(18px+0.5vw)] text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] "
+                  >
+                    <div className="hidden lg:flex flex-col">
+                      <p>BEHANDLET EGETRAE</p>
+                      <p className="ml-[100px]">
+                        MUNDVANDSDRIVENDE KAFFERISTNING
+                      </p>
+                      <p>MINIMALISTISK INERIOR</p>
+                    </div>
+                    <div
+                      className="flex lg:hidden flex-col"
+                      style={{ color: bgColors[selectedArchiveGroup] }}
+                    >
+                      <p>BEHANDLET EGETRAE</p>
+                      <p className="ml-[100px]">
+                        MUNDVANDSDRIVENDE KAFFERISTNING
+                      </p>
+                      <p>MINIMALISTISK INERIOR</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {startingShowGallery && (
               <div
+                style={{ pointerEvents: "none" }}
+                className="absolute z-[113] left-[2px] top-[0] w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] h-[100vh]"
+              >
+                <div className="w-[100%] h-[100%] relative select-none pl-[calc(20px+2.5vw)] flex items-center">
+                  <div
+                    className={`${finalTitleTouch ? "lg:flex hidden" : ""}   ${!showTitleText ? "lg:opacity-100 opacity-0" : ""} relative flex justify-center lg:w-[100%] w-[600%] pr-[calc(20px+1vw)] lg:pr-[calc(10px+0.5vw)]  pl-[calc(20px+1vw)] lg:pl-[calc(10px+0.5vw)] 
+                      h-[auto] py-[calc((18px+0.5vw)+30px+1.8vw+28px)]
+                      flex-col
+                      bg-red`}
+                    style={{
+                      transition:
+                        "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                      color: "white",
+                      fontWeight: "700",
+                    }}
+                  >
+                    <div
+                      className={`
+                      max-w-[calc(80px+29vw+(10px+7vw)-2px-(30px+3vw))] h-[auto]
+                      z-[109] kayonest leading-[calc((clamp(1rem,10vw+20px,10vw+20px)))]`}
+                      style={{
+                        fontSize: "clamp(1rem, 10vw + 20px, 10vw + 20px)",
+                        wordBreak: finalTitleTouch ? "break-word" : "normal",
+                      }}
+                    >
+                      <div className="hidden lg:flex">
+                        {archivesRef.current[
+                          selectedArchiveGroup
+                        ].title.replaceAll("_", " ")}
+                      </div>
+                      <div
+                        className="flex lg:hidden"
+                        style={{ color: bgColors[selectedArchiveGroup] }}
+                      >
+                        {archivesRef.current[
+                          selectedArchiveGroup
+                        ].title.replaceAll("_", " ")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {startingShowGallery && (
+              <div
                 style={{
                   pointerEvents: "none",
-
+                  backgroundColor:
+                    hideArrowButton &&
+                    window.innerWidth <= 1024 &&
+                    !revealGallery
+                      ? "white"
+                      : "transparent",
                   // opacity: revealGallery ? 1 : 0,
-                  // transition: "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                  transition:
+                    "background-color 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
                 }}
                 className={`${
                   revealGallery ? "lg:flex hidden" : "flex"
                 } w-[calc(100vw-(51vw+120px))] md:w-[calc(100vw-(27vw+320px))] lg:w-[calc(100vw-(36vw+90px))] z-[112] h-[100%] absolute left-0 top-0 select-none pl-[calc(30px+3vw)] items-center`}
               >
-                <div
-                  className={`relative flex justify-center w-[100%] h-[calc(120px+16vw)] md:h-[calc(120px+16vw)] flex-col`}
-                  style={{
-                    // transition: "1s cubic-bezier(0.645, 0.045, 0.355, 1)",
-                    color: "white",
-                    fontWeight: "700",
-                    marginLeft: "2px",
-                  }}
-                >
-                  <div className="absolute kayonest text-[calc(20px+10vw)]">
-                    {archivesRef.current[selectedArchiveGroup].title}
-                  </div>
-                </div>
-
                 <div
                   style={{
                     opacity: hideArrowButton ? "0" : "1",
@@ -558,7 +718,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                 transition: "width 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
                 backgroundColor: "white",
               }}
-              className={`z-[111] absolute right-0 h-[100%] top-0 ${
+              className={`lg:z-[111] z-[109] absolute right-0 h-[100%] top-0 ${
                 imageDisplayOpen
                   ? "w-[100%]"
                   : "w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))]"
@@ -566,10 +726,14 @@ const Archives: React.FC<ArchivesPageProps> = ({
             >
               <div
                 ref={container2ImageDiv}
-                style={{transition: "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)"}}
+                style={{
+                  transition: "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+                }}
                 className={`absolute top-0 left-0 select-none
                 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))]
-              h-[100vh]  ${hideArrowButton ? "opacity-0 lg:opacity-100" : "opacity-100"}
+              h-[100vh]  ${
+                hideArrowButton ? "opacity-0 lg:opacity-100" : "opacity-100"
+              }
                ${revealGallery ? "lg:flex hidden" : "flex"} items-center`}
               >
                 <div
@@ -586,6 +750,10 @@ const Archives: React.FC<ArchivesPageProps> = ({
                       archivesRef.current[selectedArchiveGroup].images[
                         currentHeroImg
                       ].url
+                        ? archivesRef.current[selectedArchiveGroup].images[
+                            currentHeroImg
+                          ].url
+                        : ""
                     }
                   />
 
@@ -666,10 +834,15 @@ const Archives: React.FC<ArchivesPageProps> = ({
                   //     className="absolute right-0 h-[100%]
                   // w-[calc(100vw-(100px+50vw+(20px+1vw)))] md:w-[calc(100vw-(300px+25vw+(20px+2vw)))] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))]"
                   className="absolute right-0 h-[100%]
-              w-[100%] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))]"
+              w-[100%] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))] mt-[calc(20px+0.5vw)]"
                 >
                   <MUIGrid
                     images={archivesRef.current[selectedArchiveGroup].images}
+                    currentHeroImg={
+                      archivesRef.current[selectedArchiveGroup].images[
+                        currentHeroImg
+                      ].url
+                    }
                   />
                 </div>
               )}
