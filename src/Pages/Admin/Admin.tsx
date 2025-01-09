@@ -36,7 +36,7 @@ import axios from "axios";
 import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
-import { GIT_KEYS } from "../../App"
+import { GIT_KEYS } from "../../App";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -105,9 +105,12 @@ interface PopupProps {
   onClose: () => void;
   title: string;
   desc: string;
+  desc2: string;
+  desc3: string;
   popupExtention: string;
-  onRename: (newTitle: string, newDesc: string) => void;
+  onRename: (newTitle: string, newDesc: string, newDesc2: string, newDesc3: string) => void;
   popupTrigger: number;
+  currentPath: string[];
 }
 
 const Popup: React.FC<PopupProps> = ({
@@ -115,12 +118,17 @@ const Popup: React.FC<PopupProps> = ({
   onClose,
   title,
   desc,
+  desc2,
+  desc3,
   popupExtention,
   onRename,
   popupTrigger,
+  currentPath
 }) => {
   const [newTitle, setNewTitle] = useState(title);
   const [newDesc, setNewDesc] = useState(desc);
+  const [newDesc2, setNewDesc2] = useState(desc2);
+  const [newDesc3, setNewDesc3] = useState(desc3);
 
   useEffect(() => {
     setNewTitle(title);
@@ -129,7 +137,12 @@ const Popup: React.FC<PopupProps> = ({
 
   const handleRename = () => {
     if (newTitle.trim() !== "") {
-      onRename(sanitizeTitle(newTitle), sanitizeTitle(newDesc));
+      onRename(
+        sanitizeTitle(newTitle),
+        sanitizeTitle(newDesc),
+        sanitizeTitle(newDesc2),
+        sanitizeTitle(newDesc3)
+      );
       onClose();
     }
   };
@@ -191,7 +204,7 @@ const Popup: React.FC<PopupProps> = ({
             }
           }}
         />
-        {desc !== "" && (
+        {(currentPath[0] === "archives" || currentPath[0] === "project") && (
           <>
             <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
               Description
@@ -214,6 +227,72 @@ const Popup: React.FC<PopupProps> = ({
                     .every((item) => isValidFileNameChar(item))
                 ) {
                   setNewDesc(e.target.value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleRename();
+                }
+              }}
+            />
+          </>
+        )}
+        {(currentPath[0] === "archives" || currentPath[0] === "project") && (
+          <>
+            <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
+              Description Line 2
+            </p>
+            <textarea
+              className="py-1 px-2"
+              style={{
+                width: "100%",
+                height: "90px",
+                resize: "none",
+                overflowY: "auto",
+                border: "1px solid #CCC",
+                borderRadius: "3px",
+              }}
+              value={newDesc2}
+              onChange={(e) => {
+                if (
+                  e.target.value
+                    .split("")
+                    .every((item) => isValidFileNameChar(item))
+                ) {
+                  setNewDesc2(e.target.value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleRename();
+                }
+              }}
+            />
+          </>
+        )}
+        {(currentPath[0] === "archives" || currentPath[0] === "project") && (
+          <>
+            <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
+              Description Line 3
+            </p>
+            <textarea
+              className="py-1 px-2"
+              style={{
+                width: "100%",
+                height: "90px",
+                resize: "none",
+                overflowY: "auto",
+                border: "1px solid #CCC",
+                borderRadius: "3px",
+              }}
+              value={newDesc3}
+              onChange={(e) => {
+                if (
+                  e.target.value
+                    .split("")
+                    .every((item) => isValidFileNameChar(item))
+                ) {
+                  setNewDesc3(e.target.value);
                 }
               }}
               onKeyDown={(e) => {
@@ -312,11 +391,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
-  
-  const owner = GIT_KEYS.owner
-  const repo = GIT_KEYS.repo
-  const branch = GIT_KEYS.branch
-  const token = GIT_KEYS.token
+
+  const owner = GIT_KEYS.owner;
+  const repo = GIT_KEYS.repo;
+  const branch = GIT_KEYS.branch;
+  const token = GIT_KEYS.token;
 
   const renameImageFile = async (oldFilePath: string, newFilePath: string) => {
     const getBlobSha = async () => {
@@ -659,6 +738,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [popupKey, setPopupKey] = useState("");
   const [popupTitle, setPopupTitle] = useState("");
   const [popupDesc, setPopupDesc] = useState("");
+  const [popupDesc2, setPopupDesc2] = useState("");
+  const [popupDesc3, setPopupDesc3] = useState("");
   const [popupTrigger, setPopupTrigger] = useState(0);
   const [popupExtention, setPopupExtention] = useState("");
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
@@ -679,6 +760,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       setPopupTitle(slicedImgName);
       setPopupKey(imgName);
       setPopupDesc("");
+      setPopupDesc2("");
+      setPopupDesc3("");
     } else {
       const projectItem = getFolderItem(name);
       if (projectItem === null) return;
@@ -687,6 +770,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       setPopupTitle(unSanitizeTitle(projectItem.title, false));
       if (currentPath[0] === "projects") {
         setPopupDesc(unSanitizeTitle(projectItem.description, true));
+      } else if (currentPath[0] === "archives") {
+        console.log(projectItem)
+        // setPopupDesc(unSanitizeTitle(projectItem.description, true));
+        // setPopupDesc2(unSanitizeTitle(projectItem.description2, true));
+        // setPopupDesc3(unSanitizeTitle(projectItem.description3, true));
       } else {
         setPopupDesc("");
       }
@@ -1010,7 +1098,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     return namesList;
   };
 
-  const handleRename = async (newTitle: string, newDesc: string) => {
+  const handleRename = async (newTitle: string, newDesc: string, newDesc2: string, newDesc3: string) => {
     if (popupExtention === "") {
       const projectItem = getFolderItem(popupKey);
       const pageName =
@@ -1744,9 +1832,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           onClose={closePopup}
           title={popupTitle}
           desc={popupDesc}
+          desc2={popupDesc2}
+          desc3={popupDesc3}
           popupExtention={popupExtention}
           onRename={handleRename}
           popupTrigger={popupTrigger}
+          currentPath={currentPath}
         />
       </div>
     );
@@ -1801,9 +1892,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const uploadBlankImageToGitHub = async (folderName: string) => {
-    if (currentPath.length === 0) return
+    if (currentPath.length === 0) return;
     try {
-      const response = await fetch(`${window.location.origin}/blank.png`)
+      const response = await fetch(`${window.location.origin}/blank.png`);
       if (!response.ok) {
         throw new Error("Failed to fetch the image from the public folder.");
       }
@@ -1819,7 +1910,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             (currentPath[0] === "projects" || currentPath[0] === "archives")
           ) {
             const githubResponse = await fetch(
-              `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${currentPath[0]}/${folderName}/${currentPath[0] === "projects" ? "covers/" : ""}blank.png`,
+              `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${
+                currentPath[0]
+              }/${folderName}/${
+                currentPath[0] === "projects" ? "covers/" : ""
+              }blank.png`,
               {
                 method: "PUT",
                 headers: {
@@ -2004,6 +2099,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           id: nextTitle,
           title: sanitizeTitle(folderName),
           bg_color: "white",
+          description: "BEHANDLET_EGETRAE",
+          description2: "MUNDVANDSDRIVENDE_KAFFERISTNING",
+          description3: "MINIMALISTISK_INERIOR",
         });
       }
       setAppFile(appFileCopy);
@@ -2083,8 +2181,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             currentPath.length > 0 ? "ml-[100px]" : "ml-[26px]"
           } font-[500] text-[20px]`}
         >
-          <div className="mt-[1px] cursor-pointer" onClick={()=>{handleBackTextClick(0)}}>Project Dashboard</div>
-          <div className="ml-[30px] flex flex-row mt-[1px] cursor-pointer"  onClick={()=>{handleBackTextClick(1)}}>
+          <div
+            className="mt-[1px] cursor-pointer"
+            onClick={() => {
+              handleBackTextClick(0);
+            }}
+          >
+            Project Dashboard
+          </div>
+          <div
+            className="ml-[30px] flex flex-row mt-[1px] cursor-pointer"
+            onClick={() => {
+              handleBackTextClick(1);
+            }}
+          >
             {currentPath.length > 0 && (
               <>
                 <p style={{ color: "#AAAAAA" }}>{currentPath[0]}</p>
@@ -2097,7 +2207,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             )}
           </div>
 
-          <div className="flex flex-row mt-[1px] cursor-pointer"  onClick={()=>{handleBackTextClick(2)}}>
+          <div
+            className="flex flex-row mt-[1px] cursor-pointer"
+            onClick={() => {
+              handleBackTextClick(2);
+            }}
+          >
             {currentPath.length > 1 &&
               Object.keys(reducedAppFile).length > 0 &&
               reducedAppFile[currentPath[1]] && (

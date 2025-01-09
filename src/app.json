@@ -34,25 +34,37 @@
         "id": "a1",
         "index": 0,
         "title": "lifestyle",
-        "bg_color": "#013559"
+        "bg_color": "#013559",
+        "description": "BEHANDLET_EGETRAE",
+        "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
+        "description3": "MINIMALISTISK_INERIOR"
       },
       {
         "id": "a2",
         "index": 2,
         "title": "earth",
-        "bg_color": "lightgreen"
+        "bg_color": "lightgreen",
+        "description": "BEHANDLET_EGETRAE",
+        "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
+        "description3": "MINIMALISTISK_INERIOR"
       },
       {
         "id": "a3",
         "index": 1,
         "title": "travel",
-        "bg_color": "lightblue"
+        "bg_color": "lightblue",
+        "description": "BEHANDLET_EGETRAE",
+        "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
+        "description3": "MINIMALISTISK_INERIOR"
       },
       {
         "id": "a4",
         "index": 3,
         "title": "people",
-        "bg_color": "pink"
+        "bg_color": "pink",
+        "description": "BEHANDLET_EGETRAE",
+        "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
+        "description3": "MINIMALISTISK_INERIOR"
       }
     ]
   }
