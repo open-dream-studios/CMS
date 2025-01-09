@@ -80,6 +80,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const [finalTitleTouch, setFinalTitleTouch] = useState<boolean>(false);
   const [switchPage, setSwitchPage] = useState<boolean>(false);
   const [showArchivesNavBar, setShowArchivesNavBar] = useState<boolean>(false);
+  const archivesNavBar = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const project = projectAssets as any;
@@ -384,6 +385,10 @@ const Archives: React.FC<ArchivesPageProps> = ({
 
   const handleImageClick = (url: any) => {
     setFullscreenImage(url);
+    if (archivesNavBar.current) {
+      archivesNavBar.current.style.transition = "none"
+      setShowArchivesNavBar(true)
+    }
   };
 
   const handleCloseFullscreen = () => {
@@ -405,7 +410,8 @@ const Archives: React.FC<ArchivesPageProps> = ({
       )}
 
       {revealGallery && (
-        <div
+        <div 
+          ref={archivesNavBar}
           className="z-[201] absolute top-0 left-0 w-[100vw] lg:h-[80px] h-[76px]"
           style={{
             pointerEvents: "none",
