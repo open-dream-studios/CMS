@@ -808,7 +808,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                         ? archivesRef.current[selectedArchiveGroup].images[
                             currentHeroImg
                           ].url
-                        : ""
+                        : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/a2/3--lightblue.png?w=248&fit=crop&auto=format&dpr=2"
                     }
                   />
 
@@ -921,96 +921,95 @@ const Archives: React.FC<ArchivesPageProps> = ({
                         ))}
                     </ImageList>
 
-                    <div className="w-[100%] h-[auto] mt-[140px] relative flex items-center justify-center sm:flex-row flex-col">
-                      <div className="sm:w-[50%] w-[100%] flex justify-center items-center flex-col">
-                        <div className="mollie text-[25px]" style={{color: "black"}}>Next Project</div>
-                        <div
-                          className={`mb-[50px] mt-[-10px]
-                      max-w-[80%] h-[auto]
-                      z-[109] kayonest leading-[100px] text-[100px]`}
-                          style={{
-                            wordBreak: finalTitleTouch
-                              ? "break-word"
-                              : "normal",
-                            color: "black",
-                          }}
-                        >
-                          {archivesRef.current[
-                            selectedArchiveGroup ===
-                            archivesRef.current.length - 1
-                              ? 0
-                              : selectedArchiveGroup + 1
-                          ].title.replaceAll("_", " ")}
-                        </div>
-                      </div>
-
-
-                      <div className="absolute left-[0vw] sm:w-[50%] w-[100%] h-[250px]" 
-                      // style={{backgroundColor: "red"}} 
-                      >
-                      <div className="w-[100%] h-[100%] flex relative ">
-                        <div
-                          style={{
-                            borderRadius: "30px",
-                          }}
-                          className="absolute z-[110] bottom-[28px] left-[50px] w-[calc(52px+5vw)] flex items-center justify-center"
-                        >
+                    <div className="lg:hidden w-[100%] h-[auto] mt-[140px] relative flex items-center justify-center sm:flex-row flex-col">
+                      <div className="sm:w-[50%] w-[100%] ">
+                        <div className="flex justify-center items-center flex-col">
                           <div
-                            onMouseEnter={() => setGalleryButtonHover(-1)}
-                            onMouseLeave={() => setGalleryButtonHover(0)}
-                            onClick={() => handleGalleryButtonClick(-1)}
-                            className="border sm:border-black border-white w-[100%] flex items-center justify-center cursor-pointer"
+                            className="mollie text-[25px] mb-[7px]"
+                            style={{ color: "black" }}
+                          >
+                            Next Up
+                          </div>
+                          <div
+                            className={`mb-[29px] text-center
+                      sm:max-w-[80%] max-w-[calc(100%-10vw-104px-20px)] h-[auto]
+                    kayonest leading-[calc(30px+5vw)] text-[calc(30px+5vw)]`}
                             style={{
-                              // border: "0.5px solid white",
-                              borderRadius: "30px",
-                              height: "42px",
-                              transform: "rotate(180deg)",
-                              transition:
-                                "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                              color: "black",
+                              wordBreak: "break-word",
                             }}
                           >
-                            <img
-                              className="w-[40%] select-none"
-                              src={arrowSRC}
-                              alt="arrow"
-                            />
+                            {archivesRef.current[
+                              selectedArchiveGroup ===
+                              archivesRef.current.length - 1
+                                ? 0
+                                : selectedArchiveGroup + 1
+                            ].title.replaceAll("_", " ")}
                           </div>
                         </div>
 
-                        <div
-                          style={{
-                            borderRadius: "30px",
-                          }}
-                          className="absolute z-[110] bottom-[28px] right-[50px] w-[calc(52px+5vw)] flex items-center justify-center"
-                        >
+                        <div className="w-[100%] h-[50px] flex absolute sm:mt-0 mt-[-80px] sm:relative">
                           <div
-                            onMouseEnter={() => setGalleryButtonHover(1)}
-                            onMouseLeave={() => setGalleryButtonHover(0)}
-                            onClick={() => handleGalleryButtonClick(1)}
-                            className="border sm:border-black border-white w-[100%] flex items-center justify-center cursor-pointer"
                             style={{
-
                               borderRadius: "30px",
-                              height: "42px",
-                              transition:
-                                "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
                             }}
+                            className="absolute z-[110] left-0 sm:left-[30px] w-[calc(52px+5vw)] flex items-center justify-center"
                           >
-                            <img
-                              className="w-[40%] select-none"
-                              src={arrowSRC}
-                              alt="arrow"
-                            />
+                            <div
+                              onMouseEnter={() => setGalleryButtonHover(-1)}
+                              onMouseLeave={() => setGalleryButtonHover(0)}
+                              onClick={() => handleGalleryButtonClick(-1)}
+                              className="border border-black w-[100%] flex items-center justify-center cursor-pointer"
+                              style={{
+                                borderRadius: "30px",
+                                height: "42px",
+                                transform: "rotate(180deg)",
+                                transition:
+                                  "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                              }}
+                            >
+                              <img
+                                className="w-[40%] select-none"
+                                src={arrowBlackSRC}
+                                alt="arrow"
+                              />
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              borderRadius: "30px",
+                            }}
+                            className="absolute z-[110] right-0 sm:right-[30px] w-[calc(52px+5vw)] flex items-center justify-center"
+                          >
+                            <div
+                              onMouseEnter={() => setGalleryButtonHover(1)}
+                              onMouseLeave={() => setGalleryButtonHover(0)}
+                              onClick={() => handleGalleryButtonClick(1)}
+                              className="border border-black w-[100%] flex items-center justify-center cursor-pointer"
+                              style={{
+                                borderRadius: "30px",
+                                height: "42px",
+                                transition:
+                                  "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                              }}
+                            >
+                              <img
+                                className="w-[40%] select-none"
+                                src={arrowBlackSRC}
+                                alt="arrow"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
                       </div>
 
                       <div className="sm:w-[50%] w-[100%] h-[250px] flex justify-center relative ">
                         <img
+                          onClick={() => handleGalleryButtonClick(1)}
                           alt=""
                           style={{ objectFit: "cover" }}
-                          className="h-[100%] w-[100%]"
+                          className="cursor-pointer h-[100%] w-[100%]"
                           src={
                             archivesRef.current &&
                             archivesRef.current[
@@ -1043,7 +1042,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                                     ? 0
                                     : selectedArchiveGroup + 1
                                 ].images[currentHeroImg].url
-                              : ""
+                              : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/a2/3--lightblue.png?w=248&fit=crop&auto=format&dpr=2"
                           }
                         />
                       </div>
