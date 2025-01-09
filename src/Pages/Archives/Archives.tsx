@@ -91,7 +91,6 @@ const Archives: React.FC<ArchivesPageProps> = ({
     ) {
       const archivesOutput = project["archives"] as ArchivesEntry[];
       archivesRef.current = archivesOutput;
-      console.log(archivesOutput)
       const newbgColors = archivesOutput.map((item) =>
         validateColor(item.bg_color)
       );
@@ -381,11 +380,21 @@ const Archives: React.FC<ArchivesPageProps> = ({
     }, 1100);
   };
 
+  const [fullscreenImage, setFullscreenImage] = useState(null);
+
+  const handleImageClick = (url: any) => {
+    setFullscreenImage(url);
+  };
+
+  const handleCloseFullscreen = () => {
+    setFullscreenImage(null);
+  };
+
   return (
     <div ref={archivesRootDiv} className="w-[100%] h-[100vh]">
       {revealGallery && (
         <div
-          className="z-[200] absolute top-0 left-0 w-[100vw] h-[100vh]"
+          className="z-[201] absolute top-0 left-0 w-[100vw] h-[100vh]"
           style={{
             pointerEvents: "none",
             opacity: switchPage ? 1 : 0,
@@ -397,7 +406,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
 
       {revealGallery && (
         <div
-          className="z-[200] absolute top-0 left-0 w-[100vw] lg:h-[80px] h-[74px]"
+          className="z-[201] absolute top-0 left-0 w-[100vw] lg:h-[80px] h-[76px]"
           style={{
             pointerEvents: "none",
             // opacity: showArchivesNavBar ? 1 : 0,
@@ -440,6 +449,227 @@ const Archives: React.FC<ArchivesPageProps> = ({
           </div>
         )}
       </div>
+
+      {imageDisplayOpen &&
+        selectedArchiveGroup !== null &&
+        archivesRef.current && (
+          <div
+            style={{
+              opacity: revealGallery ? "1" : "0",
+              transition: "opacity 1s cubic-bezier(0.645, 0.045, 0.355, 1)",
+            }}
+            //     className="absolute right-0 h-[100%]
+            // w-[calc(100vw-(100px+50vw+(20px+1vw)))] md:w-[calc(100vw-(300px+25vw+(20px+2vw)))] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))]"
+            className="z-[200] absolute right-0 h-[100%]
+              w-[100%] lg:w-[calc(100vw-(80px+29vw+(10px+7vw)))] pt-[calc(20px+0.5vw)]"
+          >
+            <Box
+              className="w-[100%] h-[100%] p-[calc(30px+2vw)]"
+              sx={{ overflowY: "scroll" }}
+              onScroll={() => {
+                if (finalTitleTouch && !showArchivesNavBar) {
+                  setShowArchivesNavBar(true);
+                }
+              }}
+            >
+              <div>
+                {fullscreenImage && (
+                  <div
+                    onClick={handleCloseFullscreen}
+                    style={{
+                      paddingTop: "90px",
+                      paddingBottom: "10px",
+                      position: "fixed",
+                      top: 0,
+                      left: 0,
+                      width: "100vw",
+                      height: "100vh",
+                      backgroundColor: "rgba(0, 0, 0, 0.8)",
+                      zIndex: 1000,
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <img
+                      src={fullscreenImage}
+                      alt="Fullscreen"
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "100%",
+                        transition: "transform 0.3s ease-in-out",
+                        transform: fullscreenImage ? "scale(1)" : "scale(0)",
+                      }}
+                    />
+                  </div>
+                )}
+                <ImageList variant="masonry" cols={3} gap={22}>
+                  {archivesRef.current?.[selectedArchiveGroup]?.images
+                    ?.filter(
+                      (item) =>
+                        item.url !==
+                        archivesRef.current?.[selectedArchiveGroup]?.images?.[
+                          currentHeroImg
+                        ]?.url
+                    )
+                    .map((item) => (
+                      <ImageListItem
+                        key={item.url}
+                        sx={{ overflow: "hidden", position: "relative" }}
+                        onClick={() => handleImageClick(item.url)}
+                      >
+                        <div
+                          className="image-scale"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            overflow: "hidden",
+                            position: "relative",
+                          }}
+                        >
+                          <img
+                            className="cursor-pointer"
+                            srcSet={`${item.url}?w=248&fit=crop&auto=format&dpr=2 2x`}
+                            src={`${item.url}?w=248&fit=crop&auto=format`}
+                            alt={item.title}
+                            loading="lazy"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              transition: "transform 0.3s ease-in-out",
+                            }}
+                          />
+                        </div>
+                      </ImageListItem>
+                    ))}
+                </ImageList>
+              </div>
+
+              <div className="lg:hidden w-[100%] h-[auto] mt-[140px] relative flex items-center justify-center sm:flex-row flex-col">
+                <div className="sm:w-[50%] w-[100%] ">
+                  <div className="flex justify-center items-center flex-col">
+                    <div
+                      className="mollie text-[25px] mb-[7px]"
+                      style={{ color: "black" }}
+                    >
+                      Next Up
+                    </div>
+                    <div
+                      className={`mb-[29px] text-center
+                      sm:max-w-[80%] max-w-[calc(100%-10vw-104px-20px)] h-[auto]
+                    kayonest leading-[calc(30px+5vw)] text-[calc(30px+5vw)]`}
+                      style={{
+                        color: "black",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {archivesRef.current[
+                        selectedArchiveGroup === archivesRef.current.length - 1
+                          ? 0
+                          : selectedArchiveGroup + 1
+                      ].title.replaceAll("_", " ")}
+                    </div>
+                  </div>
+
+                  <div className="w-[100%] h-[50px] flex absolute sm:mt-0 mt-[-80px] sm:relative">
+                    <div
+                      style={{
+                        borderRadius: "30px",
+                      }}
+                      className="absolute z-[110] left-0 sm:left-[30px] w-[calc(52px+5vw)] flex items-center justify-center"
+                    >
+                      <div
+                        onMouseEnter={() => setGalleryButtonHover(-1)}
+                        onMouseLeave={() => setGalleryButtonHover(0)}
+                        onClick={() => handleGalleryButtonClick(-1)}
+                        className="border border-black w-[100%] flex items-center justify-center cursor-pointer"
+                        style={{
+                          borderRadius: "30px",
+                          height: "42px",
+                          transform: "rotate(180deg)",
+                          transition:
+                            "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                        }}
+                      >
+                        <img
+                          className="w-[40%] select-none"
+                          src={arrowBlackSRC}
+                          alt="arrow"
+                        />
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        borderRadius: "30px",
+                      }}
+                      className="absolute z-[110] right-0 sm:right-[30px] w-[calc(52px+5vw)] flex items-center justify-center"
+                    >
+                      <div
+                        onMouseEnter={() => setGalleryButtonHover(1)}
+                        onMouseLeave={() => setGalleryButtonHover(0)}
+                        onClick={() => handleGalleryButtonClick(1)}
+                        className="border border-black w-[100%] flex items-center justify-center cursor-pointer"
+                        style={{
+                          borderRadius: "30px",
+                          height: "42px",
+                          transition:
+                            "border-radius 0.2s cubic-bezier(0.15, 0.55, 0.2, 1), height 0.2s cubic-bezier(0.15, 0.55, 0.2, 1)",
+                        }}
+                      >
+                        <img
+                          className="w-[40%] select-none"
+                          src={arrowBlackSRC}
+                          alt="arrow"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="image-scale sm:w-[50%] w-[100%] h-[250px] flex justify-center relative ">
+                  <img
+                    onClick={() => handleGalleryButtonClick(1)}
+                    alt=""
+                    style={{ objectFit: "cover" }}
+                    className="cursor-pointer h-[100%] w-[100%]"
+                    src={
+                      archivesRef.current &&
+                      archivesRef.current[
+                        selectedArchiveGroup === archivesRef.current.length - 1
+                          ? 0
+                          : selectedArchiveGroup + 1
+                      ] &&
+                      archivesRef.current[
+                        selectedArchiveGroup === archivesRef.current.length - 1
+                          ? 0
+                          : selectedArchiveGroup + 1
+                      ].images &&
+                      archivesRef.current[
+                        selectedArchiveGroup === archivesRef.current.length - 1
+                          ? 0
+                          : selectedArchiveGroup + 1
+                      ].images[currentHeroImg] &&
+                      archivesRef.current[
+                        selectedArchiveGroup === archivesRef.current.length - 1
+                          ? 0
+                          : selectedArchiveGroup + 1
+                      ].images[currentHeroImg].url
+                        ? archivesRef.current[
+                            selectedArchiveGroup ===
+                            archivesRef.current.length - 1
+                              ? 0
+                              : selectedArchiveGroup + 1
+                          ].images[currentHeroImg].url
+                        : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/a2/3--lightblue.png?w=248&fit=crop&auto=format&dpr=2"
+                    }
+                  />
+                </div>
+              </div>
+            </Box>
+          </div>
+        )}
 
       {!removeContainer && (
         <div ref={containerRef}>
@@ -520,29 +750,16 @@ const Archives: React.FC<ArchivesPageProps> = ({
                           style={{ color: bgColors[index] }}
                         >
                           {archivesRef.current !== null && (
-                            <p>
-                              {
-                                archivesRef.current[index]
-                                  .description
-                              }
-                            </p>
+                            <p>{archivesRef.current[index].description}</p>
                           )}
 
                           {archivesRef.current !== null && (
                             <p className="ml-[100px]">
-                              {
-                                archivesRef.current[index]
-                                  .description2
-                              }
+                              {archivesRef.current[index].description2}
                             </p>
                           )}
                           {archivesRef.current !== null && (
-                            <p>
-                              {
-                                archivesRef.current[index]
-                                  .description3
-                              }
-                            </p>
+                            <p>{archivesRef.current[index].description3}</p>
                           )}
                         </div>
                       </div>
@@ -950,7 +1167,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                 </div>
               </div>
 
-              {imageDisplayOpen && (
+              {/* {imageDisplayOpen && (
                 <div
                   style={{
                     opacity: revealGallery ? "1" : "0",
@@ -1120,7 +1337,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                     </div>
                   </Box>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </>
