@@ -108,7 +108,12 @@ interface PopupProps {
   desc2: string;
   desc3: string;
   popupExtention: string;
-  onRename: (newTitle: string, newDesc: string, newDesc2: string, newDesc3: string) => void;
+  onRename: (
+    newTitle: string,
+    newDesc: string,
+    newDesc2: string,
+    newDesc3: string
+  ) => void;
   popupTrigger: number;
   currentPath: string[];
 }
@@ -123,7 +128,7 @@ const Popup: React.FC<PopupProps> = ({
   popupExtention,
   onRename,
   popupTrigger,
-  currentPath
+  currentPath,
 }) => {
   const [newTitle, setNewTitle] = useState(title);
   const [newDesc, setNewDesc] = useState(desc);
@@ -133,15 +138,17 @@ const Popup: React.FC<PopupProps> = ({
   useEffect(() => {
     setNewTitle(title);
     setNewDesc(desc);
-  }, [title, desc, popupTrigger]);
+    setNewDesc2(desc2);
+    setNewDesc3(desc3);
+  }, [title, desc, desc2, desc3, popupTrigger]);
 
   const handleRename = () => {
     if (newTitle.trim() !== "") {
       onRename(
         sanitizeTitle(newTitle),
-        sanitizeTitle(newDesc),
-        sanitizeTitle(newDesc2),
-        sanitizeTitle(newDesc3)
+        sanitizeTitle(currentPath[0] === "archives" && currentPath.length === 1 ? newDesc.toUpperCase() : newDesc),
+        sanitizeTitle(newDesc2.toUpperCase()),
+        sanitizeTitle(newDesc3.toUpperCase())
       );
       onClose();
     }
@@ -204,7 +211,7 @@ const Popup: React.FC<PopupProps> = ({
             }
           }}
         />
-        {(currentPath[0] === "archives" || currentPath[0] === "project") && (
+        {((currentPath[0] === "archives" && currentPath.length === 1) || currentPath[0] === "project") && (
           <>
             <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
               Description
@@ -237,7 +244,7 @@ const Popup: React.FC<PopupProps> = ({
             />
           </>
         )}
-        {(currentPath[0] === "archives" || currentPath[0] === "project") && (
+        {((currentPath[0] === "archives" && currentPath.length === 1) || currentPath[0] === "project") && (
           <>
             <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
               Description Line 2
@@ -270,7 +277,7 @@ const Popup: React.FC<PopupProps> = ({
             />
           </>
         )}
-        {(currentPath[0] === "archives" || currentPath[0] === "project") && (
+        {((currentPath[0] === "archives" && currentPath.length === 1) || currentPath[0] === "project") && (
           <>
             <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
               Description Line 3
@@ -770,11 +777,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       setPopupTitle(unSanitizeTitle(projectItem.title, false));
       if (currentPath[0] === "projects") {
         setPopupDesc(unSanitizeTitle(projectItem.description, true));
-      } else if (currentPath[0] === "archives") {
-        console.log(projectItem)
-        // setPopupDesc(unSanitizeTitle(projectItem.description, true));
-        // setPopupDesc2(unSanitizeTitle(projectItem.description2, true));
-        // setPopupDesc3(unSanitizeTitle(projectItem.description3, true));
+      } else if (currentPath[0] === "archives" && currentPath.length === 1) {
+        setPopupDesc(unSanitizeTitle(projectItem.description.toUpperCase(), true));
+        setPopupDesc2(unSanitizeTitle(projectItem.description2.toUpperCase(), true));
+        setPopupDesc3(unSanitizeTitle(projectItem.description3.toUpperCase(), true));
       } else {
         setPopupDesc("");
       }
@@ -1098,7 +1104,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     return namesList;
   };
 
-  const handleRename = async (newTitle: string, newDesc: string, newDesc2: string, newDesc3: string) => {
+  const handleRename = async (
+    newTitle: string,
+    newDesc: string,
+    newDesc2: string,
+    newDesc3: string
+  ) => {
     if (popupExtention === "") {
       const projectItem = getFolderItem(popupKey);
       const pageName =
@@ -1115,8 +1126,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const folderNames = folderContents.map(
         (item, index) => appFile["pages"][pageName][index].title
       );
-      console.log(folderNames);
-      if (folderNames.includes(newTitle)) {
+      console.log(newTitle, appFile["pages"][pageName][index].title)
+      if (folderNames.includes(newTitle) && newTitle !== appFile["pages"][pageName][index].title) {
         alert("That name is already being used in this folder");
         return;
       }
@@ -1124,6 +1135,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       appFileCopy["pages"][pageName][index].title = newTitle;
       if (pageName === "projects") {
         appFileCopy["pages"][pageName][index].description = newDesc;
+      }
+      if (pageName === "archives") {
+        appFileCopy["pages"][pageName][index].description = newDesc;
+        appFileCopy["pages"][pageName][index].description2 = newDesc2;
+        appFileCopy["pages"][pageName][index].description3 = newDesc3;
       }
       setAppFile(appFileCopy);
       await updateAppData();

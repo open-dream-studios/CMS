@@ -421,6 +421,9 @@ const App = () => {
           const appFileProject = appFile["pages"][page][appFileProjectIndex];
           return {
             title: appFileProject.title,
+            description: appFileProject.description.replaceAll("_"," ").toUpperCase(),
+            description2: appFileProject.description2.replaceAll("_"," ").toUpperCase(),
+            description3: appFileProject.description3.replaceAll("_"," ").toUpperCase(),
             id: appFileProject.id,
             bg_color: isColor(appFileProject.bg_color)
               ? appFileProject.bg_color

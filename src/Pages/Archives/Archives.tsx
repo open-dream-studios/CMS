@@ -30,6 +30,9 @@ export type ArchivesEntry = {
   id: string;
   index: number;
   title: string;
+  description: string;
+  description2: string;
+  description3: string;
   images: ArchivesEntryImage[];
 };
 
@@ -88,6 +91,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
     ) {
       const archivesOutput = project["archives"] as ArchivesEntry[];
       archivesRef.current = archivesOutput;
+      console.log(archivesOutput)
       const newbgColors = archivesOutput.map((item) =>
         validateColor(item.bg_color)
       );
@@ -497,22 +501,49 @@ const Archives: React.FC<ArchivesPageProps> = ({
                         className="z-[109] px-[calc(10px+0.3vw)] absolute bottom-[calc(18px+0.5vw)] text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] "
                       >
                         <div className="hidden lg:flex flex-col">
-                          <p>BEHANDLET EGETRAE</p>
-                          <p className="ml-[100px]">
-                            MUNDVANDSDRIVENDE KAFFERISTNING
-                          </p>
-                          <p>MINIMALISTISK INERIOR</p>
+                          {archivesRef.current !== null && (
+                            <p>{archivesRef.current[index].description}</p>
+                          )}
+
+                          {archivesRef.current !== null && (
+                            <p className="ml-[100px]">
+                              {archivesRef.current[index].description2}
+                            </p>
+                          )}
+                          {archivesRef.current !== null && (
+                            <p>{archivesRef.current[index].description3}</p>
+                          )}
                         </div>
                         <div
                           ref={(el) => (cardSubTitleRef1.current[index] = el)}
                           className="flex lg:hidden flex-col"
                           style={{ color: bgColors[index] }}
                         >
-                          <p>BEHANDLET EGETRAE</p>
-                          <p className="ml-[100px]">
-                            MUNDVANDSDRIVENDE KAFFERISTNING
-                          </p>
-                          <p>MINIMALISTISK INERIOR</p>
+                          {archivesRef.current !== null && (
+                            <p>
+                              {
+                                archivesRef.current[index]
+                                  .description
+                              }
+                            </p>
+                          )}
+
+                          {archivesRef.current !== null && (
+                            <p className="ml-[100px]">
+                              {
+                                archivesRef.current[index]
+                                  .description2
+                              }
+                            </p>
+                          )}
+                          {archivesRef.current !== null && (
+                            <p>
+                              {
+                                archivesRef.current[index]
+                                  .description3
+                              }
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -645,21 +676,61 @@ const Archives: React.FC<ArchivesPageProps> = ({
                     className="z-[109] px-[calc(10px+0.3vw)] absolute bottom-[calc(18px+0.5vw)] text-[calc(8px+0.3vw)] leading-[calc(10px+0.6vw)] "
                   >
                     <div className="hidden lg:flex flex-col">
-                      <p>BEHANDLET EGETRAE</p>
-                      <p className="ml-[100px]">
-                        MUNDVANDSDRIVENDE KAFFERISTNING
-                      </p>
-                      <p>MINIMALISTISK INERIOR</p>
+                      {archivesRef.current !== null && (
+                        <p>
+                          {
+                            archivesRef.current[selectedArchiveGroup]
+                              .description
+                          }
+                        </p>
+                      )}
+
+                      {archivesRef.current !== null && (
+                        <p className="ml-[100px]">
+                          {
+                            archivesRef.current[selectedArchiveGroup]
+                              .description2
+                          }
+                        </p>
+                      )}
+                      {archivesRef.current !== null && (
+                        <p>
+                          {
+                            archivesRef.current[selectedArchiveGroup]
+                              .description3
+                          }
+                        </p>
+                      )}
                     </div>
                     <div
                       className="flex lg:hidden flex-col"
                       style={{ color: bgColors[selectedArchiveGroup] }}
                     >
-                      <p>BEHANDLET EGETRAE</p>
-                      <p className="ml-[100px]">
-                        MUNDVANDSDRIVENDE KAFFERISTNING
-                      </p>
-                      <p>MINIMALISTISK INERIOR</p>
+                      {archivesRef.current !== null && (
+                        <p>
+                          {
+                            archivesRef.current[selectedArchiveGroup]
+                              .description
+                          }
+                        </p>
+                      )}
+
+                      {archivesRef.current !== null && (
+                        <p className="ml-[100px]">
+                          {
+                            archivesRef.current[selectedArchiveGroup]
+                              .description2
+                          }
+                        </p>
+                      )}
+                      {archivesRef.current !== null && (
+                        <p>
+                          {
+                            archivesRef.current[selectedArchiveGroup]
+                              .description3
+                          }
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
