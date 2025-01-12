@@ -190,3 +190,80 @@ code {
 .seraphinem {
   font-family: 'Seraphinem', sans-serif;
 }
+
+
+/* ABOUT - JESS SHULMAN */
+
+/* poppins */
+/* @font-face {
+  font-family: 'poppins';
+  src: url('/public/fonts/poppins/poppins.medium.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.poppins {
+  font-family: 'Poppins', sans-serif;
+}  */
+
+/* poppins semibold */
+@font-face {
+  font-family: 'poppins';
+  src: url('/public/fonts/poppins/poppins.semibold.ttf') format('opentype');
+}
+
+.poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* manrope bold */
+@font-face {
+  font-family: 'manrope';
+  src: url('/public/fonts/manrope/manrope.bold.otf') format('opentype');
+}
+
+.manrope {
+  font-family: 'Manrope', sans-serif;
+}
+
+/* manrope md */
+@font-face {
+  font-family: 'manrope2';
+  src: url('/public/fonts/manrope-md/manrope.medium.otf') format('opentype');
+}
+
+.manrope-md {
+  font-family: 'Manrope2', sans-serif;
+}
+
+/* ROBOTO */
+@font-face {
+  font-family: 'roboto';
+  src: url('/public/fonts/roboto/roboto-condensed.bold.ttf') format('opentype');
+}
+
+.roboto {
+  font-family: 'Roboto', sans-serif;
+}
+
+
+/* Hey, I'm Jess */
+@font-face {
+  font-family: 'baskara';
+  src: url('/public/fonts/baskara/baskara.regular.otf') format('opentype');
+}
+
+.baskara {
+  font-family: 'Baskara', sans-serif;
+}
+
+@font-face {
+  font-family: 'bestfriend';
+  src: url('/public/fonts/bestfriend/bestfriend-signature.regular.ttf') format('opentype');
+}
+
+.bestfriend {
+  font-family: 'Bestfriend', sans-serif;
+}
+
+
