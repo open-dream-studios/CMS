@@ -6,6 +6,118 @@ import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore
 import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
 import { CoverEntry } from "../Home/Home";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "./About.css";
+
+// Use Share URL, but replace end with /formResponse
+// To get entries, click ... prefill form, then prefill tabs, submit, and copy link to get entries
+// Enable responses in responses => enable email
+
+const ContactForm2 = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+
+  const handleChange = (e: any) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e: any) => {
+    e.preventDefault();
+
+    const formURL =
+      "https://docs.google.com/forms/d/e/1FAIpQLSefgkOVmZsuBuglgw9YzEoX8FJ1wdEs1hGIU9_womrnLO6xDQ/formResponse";
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("entry.1601100610", formData.name);
+    formDataToSend.append("entry.1899991606", formData.email);
+    formDataToSend.append("entry.193734573", formData.message);
+
+    fetch(formURL, {
+      method: "POST",
+      body: formDataToSend,
+    })
+      .then((response) => {
+        toast.success("Form submitted successfully!");
+      })
+      .catch((error) => {
+        toast.success("Form submitted successfully!");
+      });
+  };
+
+  return (
+    <div className="w-[100%] h-[100%] bg-[#EEEEEE] py-[calc(2vw+15px)] px-[calc(2vw+15px)] md:pl-0 flex flex-col items-center justify-center">
+      <form
+        onSubmit={handleSubmit}
+        className="relative h-[100%] flex flex-col w-[100%] items-center justify-center bg-white "
+      >
+        <p className="baskara text-[calc(3.5vw+30px)] text-[#323232]">
+          Send a Message
+        </p>
+        <div className="abygaer w-[80%] text-center">
+          <textarea
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            placeholder=""
+            required
+            className="abygaer w-[100%] py-[10px] text-center min-h-[160px] resize-none border-none outline-none"
+            style={{
+              borderBottom: "1px solid #999999",
+              borderTop: "1px solid #999999",
+            }}
+          />
+        </div>
+
+        <div className="flex flex-row mt-[15px] w-[80%]">
+          <div className="w-[50%] flex flex-row">
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              style={{ borderBottom: "1px solid #999999" }}
+              placeholder="Name"
+              required
+              className="pl-[1px] pb-[3px] w-[100%] abygaer text-[calc(0.5vw+10px)] border-none outline-none"
+            />
+          </div>
+          <div className="w-[50%] pl-[calc(1vw+10px)] flex flex-row">
+            <input
+              type="text"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              style={{ borderBottom: "1px solid #999999" }}
+              placeholder="Email"
+              required
+              inputMode="text"
+              autoComplete="off"
+              className="pl-[1px] pb-[3px] w-[100%] abygaer border-none outline-none text-[calc(0.5vw+10px)]"
+            />
+          </div>
+        </div>
+        <button
+          className="flex flex-row items-center gap-[10px] priestacy cursor-pointer mt-[25px] pl-[30px] pr-[25px] text-[#BBBBBB] text-[calc((0.5vw+10px)*1.4)] leading-[calc((0.5vw+10px)*1.5)]"
+          style={{ borderRadius: "24px", border: "1px solid #DDDDDD" }}
+          type="submit"
+        >
+          <div className="mt-[9px] mb-[13px]"> send</div>{" "}
+          <img src="assets/icons/arrow1-grey.png" alt="" className="w-[30px]" />
+        </button>
+        <img
+          src="assets/about/contact-flower.png"
+          alt=""
+          className="absolute bottom-0 right-[3%] opacity-[72%] w-[20%] sm:w-[25%] aspect-[1/1]"
+        />
+      </form>
+    </div>
+  );
+};
+
 const About: React.FC<PageProps> = ({ navigate }) => {
   const { projectColors, setProjectColors } = useProjectColorsState();
   const { selectedProject, setSelectedProject } = useSelectedProjectState();
@@ -61,18 +173,46 @@ const About: React.FC<PageProps> = ({ navigate }) => {
     // }}
   }
 
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const [translateY, setTranslateY] = useState(0);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (imgRef.current) {
+        const scrollY = window.scrollY;
+        const imgTop = imgRef.current.getBoundingClientRect().top + scrollY;
+        if (scrollY > imgTop - window.innerHeight) {
+          const scrollFactor = (scrollY - (imgTop - window.innerHeight)) * 0.05;
+          setTranslateY(scrollFactor);
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   return (
-    <div className="w-[100%] mt-[57px] lg:mt-[78px]">
+    <div className="w-[100%] mt-[56px] md:mt-[72px] lg:mt-[78px]">
       <div
-        className="relative w-[100%] h-[calc(100vh-57px)] lg:h-[calc(100vh-78px)]"
-        style={{ borderTop: "1px solid black" }}
-      >
+        style={{ borderBottom: "1px solid black" }}
+        className="fixed z-[300] top-0 left-0 w-[100%] bg-white h-[56px] md:h-[72px] lg:h-[78px]"
+      ></div>
+      <div className="relative w-[100%] h-[calc(100vh-56px)] md:h-[calc(100vh-72px)] lg:h-[calc(100vh-78px)]">
         <img
+          style={{}}
           alt=""
           src="assets/about/about-flower1.png"
           className="w-[calc(150px+10vw)] absolute top-[0] left-[0]"
         />
-        <p className="manrope text-[#323232] absolute bottom-[15px] text-[calc(7vw+50px)] tracking-[-0.5vw] leading-[calc(6vw+45px)] left-[27px]">
+        <p
+          style={{ fontWeight: "bold" }}
+          className="abygaer text-[#323232] absolute bottom-[15px] text-[calc(7vw+50px)] leading-[calc(6vw+45px)] left-[27px]"
+        >
           JESS <br /> SHULMAN
         </p>
         <p className="manrope text-[#323232] absolute bottom-[calc(7vw+80px)] md:bottom-[15px] text-[calc(10px+0.5vw)] tracking-[-0.05vw] leading-[calc(12px+0.6vw)]  right-[27px] text-right">
@@ -100,8 +240,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           </div>
         </div>
       </div>
-
-      <div className="w-[100%] mt-[110px] flex flex-col items-center justify-center px-[calc(20px+2vw)]">
+      <div className="w-[100%] mt-[110px] flex flex-col items-center justify-center px-[calc(15px+2vw)]">
         <div
           className="w-[100%] flex relative justify-center"
           style={{ borderTop: "0.5px solid #bbbbbb" }}
@@ -111,6 +250,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           </p>
 
           <img
+            style={{}}
             alt=""
             src="assets/about/about-img1.png"
             className="h-[calc(30vw+90px)] lg:h-[calc(10vw+150px)] aspect-[1/1.34] object-cover mt-[17px]"
@@ -128,9 +268,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             And my main inspiration is you.
           </p>
 
-          <div
-            className="manrope-md flex:1 lg:mt-[27px] mt-[35px] ml-[calc(50%-(((30vw+90px)/1.34))*0.5)] lg:ml-[calc(50%-(((10vw+150px)/1.34))*0.5)] flex flex-col lg:flex-row gap-[calc(1vw+18px)] lg:gap-0 text-[calc((12px+0.4vw)*0.1.2)] leading-[calc((12px+0.4vw)*1.55)] lg:text-[calc((12px+0.4vw)*0.81)] lg:leading-[calc((12px+0.4vw)*1.26)]"
-          >
+          <div className="manrope-md flex:1 lg:mt-[27px] mt-[35px] ml-[calc(50%-(((30vw+90px)/1.34))*0.5)] lg:ml-[calc(50%-(((10vw+150px)/1.34))*0.5)] flex flex-col lg:flex-row gap-[calc(1vw+18px)] lg:gap-0 text-[calc((12px+0.4vw)*0.1.2)] leading-[calc((12px+0.4vw)*1.55)] lg:text-[calc((12px+0.4vw)*0.81)] lg:leading-[calc((12px+0.4vw)*1.26)]">
             <div className="w-[80%] lg:w-[42%] mr-[5%] text-left">
               I like to work with people and create something from zero what is
               going to stay forever on the human body. I do freehand and
@@ -144,83 +282,336 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
           </div>
         </div>
+      </div>
+      <div className="w-[100%] flex flex-col items-center justify-center px-[calc(15px+2vw)]">
+        <div
+          className="w-[100%] flex relative flex-col"
+          style={{ borderBottom: "0.5px solid #bbbbbb" }}
+        >
+          <p className="manrope-md absolute right-0 top-[15px] text-[calc((12px+0.4vw)*0.64)]">
+            PORTFOLIO
+          </p>
+          <div className="w-[100%] h-[auto] flex flex-col lg:flex-row gap-[1%] mt-[15px]">
+            <div className="w-[66%] lg:w-[41%] aspect-[1/1.3]">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="flex-row flex lg:hidden mt-[55px] w-[100%]">
+              <div className="w-[32%] aspect-[1/1.3] ml-[34%]">
+                <img
+                  style={{}}
+                  alt=""
+                  src="assets/about/about-img2.png"
+                  className="w-[100%] aspect-[1/1.3] object-cover"
+                />
+              </div>
+              <div className="w-[32%] aspect-[1/1.3] ml-[2%]">
+                <img
+                  style={{}}
+                  alt=""
+                  src="assets/about/about-img2.png"
+                  className="w-[100%] aspect-[1/1.3] object-cover"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="w-[100%] relative">
+            <p className="w-[100%] text-left lg:text-right manrope text-[#C9C7C5] text-[calc((12px+0.4vw)*7)] leading-[calc((12px+0.4vw)*8)]">
+              SENSITIVELY
+            </p>
+            <p className="absolute left-[calc((12px+0.4vw)*11.5)] lg:right-[calc((12px+0.4vw)*5.5)] lg:top-[calc((12px+0.4vw)*1.8)] top-[calc((12px+0.4vw)*2.2)] text-left lg:text-right bestfriend text-[#323232] text-[calc((12px+0.4vw)*7)] leading-[calc((12px+0.4vw)*8)]">
+              about you
+            </p>
+          </div>
+          <div className="w-[100%] h-[auto] flex flex-row gap-[1%] mt-[50px]">
+            <div className="w-[16%] mr-[25%] aspect-[1/1.3] lg:block hidden">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[16%] aspect-[1/1.3] lg:block hidden">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="lg:w-[41%] w-[66%] aspect-[1/1.3]">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="lg:w-[41%] ml-[1%] w-[32%] aspect-[1/1.3] block lg:hidden">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+          </div>
+          <div className="w-[100%] h-[auto] flex flex-row gap-[1%] mt-[100px] lg:mt-[28px]">
+            <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className=" w-[24%] mr-[17%] aspect-[1/1.3] hidden lg:block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className=" w-[32%] lg:w-[24%] aspect-[1/1.3]">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className=" w-[32%] lg:w-[24%] ml-[35%] aspect-[1/1.3] block lg:hidden">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+          </div>
+          <div className="w-[100%] mt-[60px] lg:mt-[10px] mb-[70px] relative flex flex-col gap-[3px] justify-center items-center">
+            <img
+              style={{}}
+              alt=""
+              className="w-[80px]"
+              src="assets/about/about-plant2.png"
+            />
+            <div className="w-[calc((12px+0.4vw)*24)] text-center flex">
+              <p className="manrope-md text-[#323232] text-[calc((12px+0.4vw)*0.8)] leading-[calc((16px+0.6vw)*0.75)]">
+                THE PROCESS FOR ME IS ALWAYS LIKE WE DANCE FEELING EACH OTHER
+                AND THAT TIME COMES SOMETHING UNIQUE FOR YOU AND FOR ME.
+              </p>
+            </div>
+          </div>
+          <div className="w-[100%] h-[auto] flex flex-row gap-[1%] mb-[70px] lg:mb-0">
+            <div className="w-[50%] lg:w-[41%] mr-[17%] lg:mr-[25%] aspect-[1/1.3]">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[16%] aspect-[1/1.3] lg:block hidden">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[32%] lg:w-[16%] aspect-[1/1.3]">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+          </div>
+          <div className="w-[100%] h-[auto] flex flex-col lg:flex-row gap-[1%] mt-[28px] mb-[120px]">
+            <div className="w-[16%] mr-[25%] aspect-[1/1.3] hidden lg:block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[41%] aspect-[1/1.3] hidden lg:block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+            <div className="w-[100%] lg:hidden flex flex-row mb-[80px]">
+              <div className="w-[32%] ml-[34%] mr-[2%] aspect-[1/1.3]">
+                <img
+                  style={{}}
+                  alt=""
+                  src="assets/about/about-img2.png"
+                  className="w-[100%] aspect-[1/1.3] object-cover"
+                />
+              </div>
+              <div className="w-[32%] aspect-[1/1.3]">
+                <img
+                  style={{}}
+                  alt=""
+                  src="assets/about/about-img2.png"
+                  className="w-[100%] aspect-[1/1.3] object-cover"
+                />
+              </div>
+            </div>
+            <div className="w-[67%] mb-[60px] aspect-[1/1.3] lg:hidden block">
+              <img
+                style={{}}
+                alt=""
+                src="assets/about/about-img2.png"
+                className="w-[100%] aspect-[1/1.3] object-cover"
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          className="w-[100%] relative flex flex-row"
+          style={{ borderBottom: "0.5px solid #bbbbbb" }}
+        >
+          <p className="manrope-md absolute right-0 top-[15px] text-[calc((12px+0.4vw)*0.64)]">
+            MY APPROACH
+          </p>
+          <div className="z-[200] absolute right-0 h-[100%] w-[15%] mr-[calc(-2vw-15px)] hidden lg:flex items-center">
+            <img
+              style={{}}
+              alt=""
+              src="assets/about/about-plant2.png"
+              className="w-[100%] object-contain"
+            />
+          </div>
 
-        <div className="w-[100%] h-[1000px] bg-white"></div>
+          <div className="z-[201] hidden sm:flex w-[33%] lg:w-[40%] py-[10%] h-[auto] bg-white lg:bg-[#F0EFED] items-center lg:justify-center">
+            <img
+              style={{}}
+              className="hidden lg:block w-[40%]"
+              alt=""
+              src="assets/about/about-img1.png"
+            />
+            <img
+              style={{}}
+              className="lg:hidden block w-[90%] ml-[calc(-2vw-15px)]"
+              alt=""
+              src="assets/about/about-plant2.png"
+            />
+          </div>
+          <div className="w-[100%] sm:w-[67%] lg:w-[60%] lg:pl-[8%] flex flex-col sm:text-left text-center justify-end">
+            <div className="lg:pl-[30px] py-[30px] pt-[60px] lg-pt-[30px] baskara w-[100%]flex-1 flex-col flex justify-center text-[calc((12px+0.4vw)*6)] leading-[calc((12px+0.4vw)*5)] sm:text-[calc((12px+0.4vw)*7)] sm:leading-[calc((12px+0.4vw)*4.5)]">
+              <p className="text-[#323232]">Care and</p>
+              <p className="ml-[calc((12px+0.4vw)*10)] sm:ml-[calc((12px+0.4vw)*5)] text-[#A9524F]">
+                attention for you
+              </p>
+            </div>
+
+            <div className="sm:text-left text-center sm:items-left items-center manrope-md flex mt-[calc(13px+1vw)]  pb-[calc(13px+5vw)] sm:flex-row flex-col gap-[40px] sm:gap-[calc(1vw+18px)] text-[calc((12px+0.4vw)*0.8)] leading-[calc((12px+0.4vw)*1.3)] sm:text-[calc((12px+0.4vw)*1)] sm:leading-[calc((12px+0.4vw)*1.55)] lg:text-[calc((12px+0.4vw)*0.81)] lg:leading-[calc((12px+0.4vw)*1.26)]">
+              <div className="text-[#323232] w-[50%]">
+                <span>TRUST</span>
+                <div className="h-[10px]"></div>
+                Trust to the artist starts with trust in the world. My aim is to
+                inspire faith in yourself, the future, and life itself through
+                tattoos.
+              </div>
+              <div className="text-[#323232] w-[50%]">
+                <span>FREEDOM</span>
+                <div className="h-[10px]"></div>I want to deliver a message
+                through my art that you are free and free always and everywhere.
+                The choice is always yours.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="w-[100%] mb-[30px] flex relative justify-center h-[auto] px-[calc(2vw+15px)]">
+        <div className="z-[201] px-[calc(2vw+15px)] manrope absolute w-[100%] bottom-[25px] text-[#C9C7C5] text-[calc((12px+0.4vw)*7)] leading-[calc((12px+0.4vw)*6.3)]">
+          <p className="text-left">LET'S VIBE</p>
+          <p className="text-right lg:text-center">TOGETHER</p>
+        </div>
+        <img
+          ref={imgRef}
+          style={{
+            transform: `translateY(-${translateY}px)`,
+            // transition: "transform 0.1s linear",
+          }}
+          alt=""
+          src="assets/about/about-img2.png"
+          className="z-[202] my-[calc(200px)] h-[calc(200px+2vw)] aspect-[1.5/1] object-cover"
+        />
+        <div className="absolute right-0 h-[100%] w-[30%] flex items-center">
+          <img
+            style={{}}
+            alt=""
+            src="assets/about/about-plant2.png"
+            className="z-[200] h-[calc(200px+2vw)] aspect-[1.5/1] object-cover"
+          />
+        </div>
+      </div>
+      <ToastContainer position="bottom-center" />
+      <div
+        style={{ borderTop: "0.5px solid #bbbbbb" }}
+        className="flex flex-row mx-[calc(2vw+15px)] py-[40px]"
+      >
+        <div className="md:flex hidden w-[calc((96vw-30px)*0.5)] h-[calc((96vw-30px)*0.65)] bg-[#EEEEEE] relative p-[4vw]">
+          <img
+            alt=""
+            style={{}}
+            className="w-[100%] h-[100%] object-cover"
+            src="assets/about/contact.png"
+          />
+          <div className="absolute top-0 left-0 w-[100%] h-[100%] opacity-[0%] bg-white"></div>
+        </div>
+        <div className="w-[100%] md:w-[calc((96vw-30px)*0.5)] h-[calc((96vw-30px))] md:h-[calc((96vw-30px)*0.65)]">
+          <ContactForm2 />
+        </div>
       </div>
     </div>
   );
 };
-
-//  <div className="w-[100%] h-[100%] px-[calc(3vw+15px)] py-[calc(1vh+30px)] flex justify-center">
-//         <img
-//           alt=""
-//           className="w-[100%] h-[100%]"
-//           style={{ objectFit: "cover" }}
-//           src={coversRef.current === null ? "" : coversRef.current[0].images[0].url}
-//         />
-//         <div
-//           className="w-[70%] lg:w-[50%] aspect-[1/1] md:aspect-[1.75/1] absolute"
-//           style={{
-//             backgroundColor: "white",
-//             marginTop: "50px",
-//             transform: "translateY(-50%}",
-//           }}
-//         ></div>
-//       </div>
-
-//       <div className="w-[100%] h-[auto] px-[calc(3vw+15px)] py-[calc(1vh+30px)] flex flex-col md:flex-row gap-[20px] md:gap-0">
-//         <div
-//           className="w-[100%] md:w-[50%] klivora text-[calc(5vw+30px)] leading-[calc(5vw+30px)]"
-//           style={{ backgroundColor: "green" }}
-//         >
-//           Overview
-//         </div>
-//         <div
-//           className="w-[100%] md:w-[50%] flex flex-col gap-[20px]"
-//           style={{ backgroundColor: "green" }}
-//         >
-//           <p>
-//             Situated in the heart of the rice fields of Minamioguni, the "Take
-//             no Kuma" cafe looks as if it is floating atop the paddy water. The
-//             cafe opened in 2023 in an area blessed with pristine water springing
-//             from Mt. Aso and renowned for hot springs. Oguni cedar milled by
-//             Anai Wood Factory is used throughout the cafe, from the columns and
-//             beams to the roof tiles, allowing you to appreciate the beauty of
-//             wooden constructions. Furthermore, the tableware and dishes also
-//             incorporate our wood products.
-//           </p>
-
-//           <p style={{ textDecoration: "underline" }}>Visit site</p>
-//         </div>
-//       </div>
-
-//       <div className="relative w-[100%] px-[calc(3vw+15px)] py-[calc(1vh+30px)] flex flex-col md:flex-row gap-[20px] md:gap-0">
-//         <div
-//           className="absolute w-[100%] md:w-[calc(50%-(3vw+15px))] md:mr-[5%] aspect-[1/1.3]"
-//            style={{backgroundColor: "green"}}
-//         >
-//           {/* <img
-//             alt=""
-//             className="w-[100%] h-[100%]"
-//             style={{ objectFit: "contain" }}
-//             src={
-//               coversRef.current === null ? "" : coversRef.current[0].images[0]
-//             }
-//           /> */}
-//         </div>
-//         <div
-//           className="absolute md:ml-[100%] w-[50%] aspect-[1/1.3]"
-//           style={{backgroundColor: "green"}}
-//         >
-//           {/* <img
-//             alt=""
-//             className="w-[100%] h-[100%]"
-//             style={{ objectFit: "cover" }}
-//             src={
-//               coversRef.current === null ? "" : coversRef.current[0].images[0]
-//             }
-//           /> */}
-//         </div>
-//       </div>
 
 export default About;

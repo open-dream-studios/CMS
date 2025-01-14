@@ -247,7 +247,7 @@ code {
 }
 
 
-/* Hey, I'm Jess */
+/* Handwriting */
 @font-face {
   font-family: 'baskara';
   src: url('/public/fonts/baskara/baskara.regular.otf') format('opentype');
@@ -264,6 +264,26 @@ code {
 
 .bestfriend {
   font-family: 'Bestfriend', sans-serif;
+}
+
+/* modernline */
+@font-face {
+  font-family: 'modernline';
+  src: url('/public/fonts/modernline/modernline.otf') format('opentype');
+}
+
+.modernline {
+  font-family: 'Modernline', sans-serif;
+}
+
+/* priestacy */
+@font-face {
+  font-family: 'priestacy';
+  src: url('/public/fonts/priestacy/Priestacy.otf') format('opentype');
+}
+
+.priestacy {
+  font-family: 'priestacy', sans-serif;
 }
 
 

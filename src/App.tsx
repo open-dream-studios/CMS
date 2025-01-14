@@ -593,6 +593,9 @@ const App = () => {
       }, 2000);
     } else {
       setCurrentNavColor("black");
+      setTimeout(() => {
+        setCurrentNavColor("black");
+      }, 2000);
     }
 
     // Archives
