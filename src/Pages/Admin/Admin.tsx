@@ -1902,7 +1902,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                         />
                       </button>
 
-                      {currentPath.length > 1 &&
+                      {/* {currentPath.length > 1 &&
                         currentPath[0] === "archives" && (
                           <>
                             <button
@@ -1956,7 +1956,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                               </button>
                             )}
                           </>
-                        )}
+                        )} */}
                     </>
                   )}
                   {typeof currentFolder[key] !== "string" &&

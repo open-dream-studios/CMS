@@ -165,7 +165,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   // FULL REPOSITORY & APP FILE
-  const fetchAppFileContents = async (blobUrl: string) => {
+    const fetchAppFileContents = async (blobUrl: string) => {
     try {
       const response = await fetch(blobUrl, {
         headers: {
@@ -179,13 +179,18 @@ const App = () => {
       }
 
       const data = await response.json();
-      const fileContent = atob(data.content);
 
-      if (fileContent) {
+      // Correctly decode Base64 content into UTF-8
+      const base64Content = data.content;
+      const decodedContent = new TextDecoder("utf-8").decode(
+        Uint8Array.from(atob(base64Content), (char) => char.charCodeAt(0))
+      );
+
+      if (decodedContent) {
         try {
-          const parsedContent = JSON.parse(fileContent);
-          setAppDataFile(parsedContent);
-          return parsedContent;
+          const parsedContent = JSON.parse(decodedContent);
+          setAppDataFile(parsedContent);  
+          return parsedContent
         } catch (error) {
           console.error("Error parsing JSON content:", error);
         }

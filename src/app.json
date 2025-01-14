@@ -1,45 +1,53 @@
 {
   "pages": {
     "about": {
-      "section1": {
-        "text1": "I FEEL YOUR ENERGY AND TRANSFER IT TO THE MOST EXPENSIVE CANVAS IN THE WORLD –",
-        "text2": "your body",
-        "text3": "SEND REQUEST",
-        "text4": "CREATIVE DESIGNER /",
-        "text5": "PHOTOGRAPHER",
-        "text6": "BASED IN NEW JERSEY"
+      "sections": {
+        "section1": {
+          "text1": "I FEEL YOUR ENERGY AND TRANSFER IT TO THE MOST EXPENSIVE CANVAS IN THE WORLD –",
+          "text2": "your body",
+          "text3": "SEND REQUEST",
+          "text4": "CREATIVE DESIGNER /",
+          "text5": "PHOTOGRAPHER",
+          "text6": "BASED IN NEW JERSEY"
+        },
+        "section2": {
+          "text1": "ABOUT ME",
+          "text2": "Hey, I'm Jess!",
+          "text3": "And my main inspiration is you.",
+          "text4": "I like to work with people and create something from zero what is going to stay forever on the human body. I do freehand and freestyle tattoos - it's about freedom and feeling.",
+          "text5": "Everyone has their own special energy's which i read in our first 15 min when we meet: how you smile, how you speak, how you feel yourself. There comes an image in my head where i already can see the future design for your project."
+        },
+        "section3": {
+          "text1": "PORTFOLIO",
+          "text2": "SENSITIVELY",
+          "text3": "about you"
+        },
+        "section4": {
+          "text1": "THE PROCESS FOR ME IS ALWAYS LIKE WE DANCE FEELING EACH OTHER AND THAT TIME COMES SOMETHING UNIQUE FOR YOU AND FOR ME."
+        },
+        "section5": {
+          "text1": "MY APPROACH",
+          "text2": "Care and",
+          "text3": "attention for you",
+          "text4": "TRUST",
+          "text5": "Trust to the artist starts with trust in the world. My aim is to inspire faith in yourself, the future, and life itself through tattoos.",
+          "text6": "FREEDOM",
+          "text7": "I want to deliver a message through my art that you are free and free always and everywhere. The choice is always yours."
+        },
+        "section6": { "text1": "LET'S VIBE", "text2": "TOGETHER" },
+        "section7": {
+          "text1": "Send a message",
+          "text2": "Name",
+          "text3": "Email",
+          "text4": "send"
+        }
       },
-      "section2": {
-        "text1": "ABOUT ME",
-        "text2": "Hey, I'm Jess!",
-        "text3": "And my main inspiration is you.",
-        "text4": "I like to work with people and create something from zero what is going to stay forever on the human body. I do freehand and freestyle tattoos - it's about freedom and feeling.",
-        "text5": "Everyone has their own special energy's which i read in our first 15 min when we meet: how you smile, how you speak, how you feel yourself. There comes an image in my head where i already can see the future design for your project."
-      },
-      "section3": {
-        "text1": "PORTFOLIO",
-        "text2": "SENSITIVELY",
-        "text3": "about you"
-      },
-      "section4": {
-        "text1": "THE PROCESS FOR ME IS ALWAYS LIKE WE DANCE FEELING EACH OTHER AND THAT TIME COMES SOMETHING UNIQUE FOR YOU AND FOR ME."
-      },
-      "section5": {
-        "text1": "MY APPROACH",
-        "text2": "Care and",
-        "text3": "attention for you",
-        "text4": "TRUST",
-        "text5": "Trust to the artist starts with trust in the world. My aim is to inspire faith in yourself, the future, and life itself through tattoos.",
-        "text6": "FREEDOM",
-        "text7": "I want to deliver a message through my art that you are free and free always and everywhere. The choice is always yours."
-      },
-      "section6": { "text1": "LET'S VIBE TOGETHER" },
-      "section7": {
-        "text1": "Send a message",
-        "text2": "Name",
-        "text3": "Email",
-        "text4": "send"
-      }
+      "images": [
+        {
+          "index": 0,
+          "name": "1.png"
+        }
+      ]
     },
     "projects": [
       {
@@ -49,7 +57,15 @@
         "description": "capsule_ceremonie_claudie_pierlot_ss24",
         "bg_color": "pink",
         "text_color": "blue",
-        "home_page": true
+        "home_page": true,
+        "images": [
+          {
+            "index": 0,
+            "name": "1.png",
+            "projectCover": true,
+            "homeCover": true
+          }
+        ]
       },
       {
         "id": "p2",
@@ -58,7 +74,15 @@
         "description": "capsule_cannes_claudie_pierlot_ss24",
         "bg_color": "red",
         "text_color": "green",
-        "home_page": true
+        "home_page": true,
+        "images": [
+          {
+            "index": 0,
+            "name": "1.png",
+            "projectCover": true,
+            "homeCover": true
+          }
+        ]
       },
       {
         "id": "p3",
@@ -67,7 +91,15 @@
         "description": "provence_description",
         "bg_color": "lightblue",
         "text_color": "pink",
-        "home_page": false
+        "home_page": false,
+        "images": [
+          {
+            "index": 0,
+            "name": "1.png",
+            "projectCover": true,
+            "homeCover": true
+          }
+        ]
       }
     ],
     "archives": [
@@ -78,7 +110,13 @@
         "bg_color": "#013559",
         "description": "BEHANDLET_EGETRAE",
         "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
-        "description3": "MINIMALISTISK_INERIOR"
+        "description3": "MINIMALISTISK_INERIOR",
+        "images": [
+          {
+            "index": 0,
+            "name": "1.png"
+          }
+        ]
       },
       {
         "id": "a2",
@@ -87,7 +125,13 @@
         "bg_color": "lightgreen",
         "description": "BEHANDLET_EGETRAE",
         "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
-        "description3": "MINIMALISTISK_INERIOR"
+        "description3": "MINIMALISTISK_INERIOR",
+        "images": [
+          {
+            "index": 0,
+            "name": "1.png"
+          }
+        ]
       },
       {
         "id": "a3",
@@ -96,7 +140,13 @@
         "bg_color": "lightblue",
         "description": "BEHANDLET_EGETRAE",
         "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
-        "description3": "MINIMALISTISK_INERIOR"
+        "description3": "MINIMALISTISK_INERIOR",
+        "images": [
+          {
+            "index": 0,
+            "name": "1.png"
+          }
+        ]
       },
       {
         "id": "a4",
@@ -105,7 +155,13 @@
         "bg_color": "pink",
         "description": "BEHANDLET_EGETRAE",
         "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
-        "description3": "MINIMALISTISK_INERIOR"
+        "description3": "MINIMALISTISK_INERIOR",
+        "images": [
+          {
+            "index": 0,
+            "name": "1.png"
+          }
+        ]
       }
     ]
   }

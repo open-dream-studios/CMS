@@ -14,12 +14,17 @@ import "./About.css";
 // To get entries, click ... prefill form, then prefill tabs, submit, and copy link to get entries
 // Enable responses in responses => enable email
 
-const ContactForm2 = () => {
+const ContactForm2 = (text: any) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
+
+  const [displayText, setDisplayText] = useState<any>({});
+  useEffect(() => {
+    setDisplayText(text.text);
+  }, [text]);
 
   const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,70 +55,78 @@ const ContactForm2 = () => {
 
   return (
     <div className="w-[100%] h-[100%] bg-[#EEEEEE] py-[calc(2vw+15px)] px-[calc(2vw+15px)] md:pl-0 flex flex-col items-center justify-center">
-      <form
-        onSubmit={handleSubmit}
-        className="relative h-[100%] flex flex-col w-[100%] items-center justify-center bg-white "
-      >
-        <p className="baskara text-[calc(3.5vw+30px)] text-[#323232]">
-          Send a Message
-        </p>
-        <div className="abygaer w-[80%] text-center">
-          <textarea
-            name="message"
-            value={formData.message}
-            onChange={handleChange}
-            placeholder=""
-            required
-            className="abygaer w-[100%] py-[10px] text-center min-h-[160px] resize-none border-none outline-none"
-            style={{
-              borderBottom: "1px solid #999999",
-              borderTop: "1px solid #999999",
-            }}
-          />
-        </div>
-
-        <div className="flex flex-row mt-[15px] w-[80%]">
-          <div className="w-[50%] flex flex-row">
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              style={{ borderBottom: "1px solid #999999" }}
-              placeholder="Name"
-              required
-              className="pl-[1px] pb-[3px] w-[100%] abygaer text-[calc(0.5vw+10px)] border-none outline-none"
-            />
-          </div>
-          <div className="w-[50%] pl-[calc(1vw+10px)] flex flex-row">
-            <input
-              type="text"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              style={{ borderBottom: "1px solid #999999" }}
-              placeholder="Email"
-              required
-              inputMode="text"
-              autoComplete="off"
-              className="pl-[1px] pb-[3px] w-[100%] abygaer border-none outline-none text-[calc(0.5vw+10px)]"
-            />
-          </div>
-        </div>
-        <button
-          className="flex flex-row items-center gap-[10px] priestacy cursor-pointer mt-[25px] pl-[30px] pr-[25px] text-[#BBBBBB] text-[calc((0.5vw+10px)*1.4)] leading-[calc((0.5vw+10px)*1.5)]"
-          style={{ borderRadius: "24px", border: "1px solid #DDDDDD" }}
-          type="submit"
+      {displayText && Object.keys(displayText).length > 0 && (
+        <form
+          onSubmit={handleSubmit}
+          className="relative h-[100%] flex flex-col w-[100%] items-center justify-center bg-white "
         >
-          <div className="mt-[9px] mb-[13px]"> send</div>{" "}
-          <img src="assets/icons/arrow1-grey.png" alt="" className="w-[30px]" />
-        </button>
-        <img
-          src="assets/about/contact-flower.png"
-          alt=""
-          className="absolute bottom-0 right-[3%] opacity-[72%] w-[20%] sm:w-[25%] aspect-[1/1]"
-        />
-      </form>
+          <p className="baskara text-[calc(3.5vw+30px)] text-[#323232]">
+            {displayText.section7.text1}
+          </p>
+          <div className="abygaer w-[80%] text-center">
+            <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              placeholder=""
+              required
+              className="abygaer w-[100%] py-[10px] text-center min-h-[160px] resize-none border-none outline-none"
+              style={{
+                borderBottom: "1px solid #999999",
+                borderTop: "1px solid #999999",
+              }}
+            />
+          </div>
+
+          <div className="flex flex-row mt-[15px] w-[80%]">
+            <div className="w-[50%] flex flex-row">
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                style={{ borderBottom: "1px solid #999999" }}
+                placeholder={displayText.section7.text2}
+                required
+                className="pl-[1px] pb-[3px] w-[100%] abygaer text-[calc(0.5vw+10px)] border-none outline-none"
+              />
+            </div>
+            <div className="w-[50%] pl-[calc(1vw+10px)] flex flex-row">
+              <input
+                type="text"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                style={{ borderBottom: "1px solid #999999" }}
+                placeholder={displayText.section7.text3}
+                required
+                inputMode="text"
+                autoComplete="off"
+                className="pl-[1px] pb-[3px] w-[100%] abygaer border-none outline-none text-[calc(0.5vw+10px)]"
+              />
+            </div>
+          </div>
+          <button
+            className="flex flex-row items-center gap-[10px] priestacy cursor-pointer mt-[25px] pl-[30px] pr-[25px] text-[#BBBBBB] text-[calc((0.5vw+10px)*1.4)] leading-[calc((0.5vw+10px)*1.5)]"
+            style={{ borderRadius: "24px", border: "1px solid #DDDDDD" }}
+            type="submit"
+          >
+            <div className="mt-[9px] mb-[13px]">
+              {displayText.section7.text4}
+            </div>{" "}
+            <img
+              src="assets/icons/arrow1-grey.png"
+              alt=""
+              className="w-[30px]"
+            />
+          </button>
+          <img
+            src="assets/about/contact-flower.png"
+            alt=""
+            className="absolute bottom-0 right-[3%] opacity-[72%] w-[20%] sm:w-[25%] aspect-[1/1]"
+          />
+        </form>
+      )}
     </div>
   );
 };
@@ -129,7 +142,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
   const coversRef = useRef<CoverEntry[] | null>(null);
   const [coversReady, setCoversReady] = useState<CoverEntry[] | null>(null);
   const contactRef = useRef<HTMLDivElement | null>(null);
-  const [aboutText, setAboutText] = useState({});
+  const [aboutText, setAboutText] = useState<any>({});
 
   useEffect(() => {
     const project = projectAssets as any;
@@ -141,8 +154,8 @@ const About: React.FC<PageProps> = ({ navigate }) => {
     ) {
       coversRef.current = project["about"] as CoverEntry[];
       setCoversReady(project["about"] as CoverEntry[]);
-      const newAboutText = project["about"].filter(
-        (item) => item && typeof item === "object" && !Array.isArray(item)
+      const newAboutText = project["about"].filter((item) =>
+        Object.keys(item).includes("section1")
       );
       if (newAboutText.length > 0) {
         setAboutText(newAboutText[0]);
@@ -257,28 +270,28 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               JESS <br /> SHULMAN
             </p>
             <p className="manrope text-[#323232] absolute bottom-[calc(7vw+80px)] md:bottom-[15px] text-[calc(10px+0.5vw)] tracking-[-0.05vw] leading-[calc(12px+0.6vw)]  right-[27px] text-right">
-              CREATIVE DESIGNER / <br className="hidden md:block" />
-              PHOTOGRAPHER
+              {aboutText.section1.text4}
+              <br className="hidden md:block" />
+              {aboutText.section1.text5}
               <br />
-              BASED IN NEW JERSEY
+              {aboutText.section1.text6}
             </p>
 
             <div className="absolute top-0 left-0 w-[100%] h-[100%] flex flex-col items-center justify-center">
               <div className="w-[calc((12px+0.4vw)*25)] text-center flex bg-white">
                 <p className="manrope-md text-[#323232] text-[calc(12px+0.4vw)] leading-[calc(16px+0.6vw)]">
-                  I FEEL YOUR ENERGY AND TRANSFER IT TO THE MOST EXPENSIVE
-                  CANVAS IN THE WORLD –
+                  {aboutText.section1.text1}
                 </p>
               </div>
               <p className="baskara mt-[calc(-2px-1vw)] text-[#323232] text-[calc((12px+0.4vw)*5)] leading-[calc((12px+0.4vw)*5)]">
-                your body
+                {aboutText.section1.text2}
               </p>
               <div
                 style={{ border: "0.1px solid #A9524F", color: "#A9524F" }}
                 className="cursor-pointer manrope-md text-[calc((12px+0.4vw)*0.7)] py-[calc((12px+0.4vw)*0.3)] px-[calc((12px+0.4vw)*0.6)]"
                 onClick={handleSendRequestClick}
               >
-                SEND REQUEST
+                {aboutText.section1.text3}
               </div>
             </div>
           </div>
@@ -288,7 +301,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               style={{ borderTop: "0.5px solid #bbbbbb" }}
             >
               <p className="manrope-md absolute left-0 top-[15px] text-[calc((12px+0.4vw)*0.64)]">
-                ABOUT ME
+                {aboutText.section2.text1}
               </p>
 
               <img
@@ -304,23 +317,18 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               className="w-[100%] text-center mt-[calc(1.5vw+20px)] pb-[110px] flex flex-col relative justify-center"
             >
               <p className="baskara text-[#323232] text-[calc((12px+0.4vw)*4.2)] leading-[calc((12px+0.4vw)*3)] sm:text-[calc((12px+0.4vw)*4.8)] sm:leading-[calc((12px+0.4vw)*4)] lg:text-[calc((12px+0.4vw)*3.7)] lg:leading-[calc((12px+0.4vw)*2.8)] tracking-[-0.1vw]">
-                Hey, I'm Jess!
+                {aboutText.section2.text2}
               </p>
-              <p className="baskara text-[#A9524F] mr-[calc((12px+0.4vw)*10)] text-[calc((12px+0.4vw)*4.2)] leading-[calc((12px+0.4vw)*3)] sm:text-[calc((12px+0.4vw)*4.8)] sm:leading-[calc((12px+0.4vw)*3.5)] lg:text-[calc((12px+0.4vw)*3.7)] lg:leading-[calc((12px+0.4vw)*2.5)] tracking-[-0.1vw]">
-                And my main inspiration is you.
+              <p className="baskara text-[#A9524F] mt-[calc(-5px-1vw)] mr-[calc((12px+0.4vw)*10)] text-[calc((12px+0.4vw)*4.2)] leading-[calc((12px+0.4vw)*4.2)] sm:text-[calc((12px+0.4vw)*4.8)] sm:leading-[calc((12px+0.4vw)*4.8)] lg:text-[calc((12px+0.4vw)*3.7)] lg:leading-[calc((12px+0.4vw)*3.7)] tracking-[-0.1vw]">
+                {aboutText.section2.text3}
               </p>
 
               <div className="manrope-md flex:1 lg:mt-[27px] mt-[35px] ml-[calc(50%-(((30vw+90px)/1.34))*0.5)] lg:ml-[calc(50%-(((10vw+150px)/1.34))*0.5)] flex flex-col lg:flex-row gap-[calc(1vw+18px)] lg:gap-0 text-[calc((12px+0.4vw)*0.1.2)] leading-[calc((12px+0.4vw)*1.55)] lg:text-[calc((12px+0.4vw)*0.81)] lg:leading-[calc((12px+0.4vw)*1.26)]">
                 <div className="w-[80%] lg:w-[42%] mr-[5%] text-left">
-                  I like to work with people and create something from zero what
-                  is going to stay forever on the human body. I do freehand and
-                  freestyle tattoos - it's about freedom and feeling.
+                  {aboutText.section2.text4}
                 </div>
                 <div className="w-[80%] lg:w-[50%] text-left">
-                  Everyone has their own special energy's which i read in our
-                  first 15 min when we meet: how you smile, how you speak, how
-                  you feel yourself. There comes an image in my head where i
-                  already can see the future design for your project.
+                  {aboutText.section2.text5}
                 </div>
               </div>
             </div>
@@ -331,7 +339,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               style={{ borderBottom: "0.5px solid #bbbbbb" }}
             >
               <p className="manrope-md absolute right-0 top-[15px] text-[calc((12px+0.4vw)*0.64)]">
-                PORTFOLIO
+                {aboutText.section3.text1}
               </p>
               <div className="w-[100%] h-[auto] flex flex-col lg:flex-row gap-[1%] mt-[15px]">
                 <div className="w-[66%] lg:w-[41%] aspect-[1/1.3]">
@@ -379,10 +387,10 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               </div>
               <div className="w-[100%] relative">
                 <p className="w-[100%] text-left lg:text-right manrope text-[#C9C7C5] text-[calc((12px+0.4vw)*7)] leading-[calc((12px+0.4vw)*8)]">
-                  SENSITIVELY
+                  {aboutText.section3.text2}
                 </p>
                 <p className="absolute left-[calc((12px+0.4vw)*11.5)] lg:right-[calc((12px+0.4vw)*5.5)] lg:top-[calc((12px+0.4vw)*1.8)] top-[calc((12px+0.4vw)*2.2)] text-left lg:text-right bestfriend text-[#323232] text-[calc((12px+0.4vw)*7)] leading-[calc((12px+0.4vw)*8)]">
-                  about you
+                  {aboutText.section3.text3}
                 </p>
               </div>
               <div className="w-[100%] h-[auto] flex flex-row gap-[1%] mt-[50px]">
@@ -460,9 +468,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
                 />
                 <div className="w-[calc((12px+0.4vw)*24)] text-center flex">
                   <p className="manrope-md text-[#323232] text-[calc((12px+0.4vw)*0.8)] leading-[calc((16px+0.6vw)*0.75)]">
-                    THE PROCESS FOR ME IS ALWAYS LIKE WE DANCE FEELING EACH
-                    OTHER AND THAT TIME COMES SOMETHING UNIQUE FOR YOU AND FOR
-                    ME.
+                    {aboutText.section4.text1}
                   </p>
                 </div>
               </div>
@@ -542,7 +548,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               style={{ borderBottom: "0.5px solid #bbbbbb" }}
             >
               <p className="manrope-md absolute right-0 top-[15px] text-[calc((12px+0.4vw)*0.64)]">
-                MY APPROACH
+                {aboutText.section5.text1}
               </p>
               <div className="z-[200] absolute right-0 h-[100%] w-[15%] mr-[calc(-2vw-15px)] hidden lg:flex items-center">
                 <img
@@ -569,25 +575,22 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               </div>
               <div className="w-[100%] sm:w-[67%] lg:w-[60%] lg:pl-[8%] flex flex-col sm:text-left text-center justify-end">
                 <div className="lg:pl-[30px] py-[30px] pt-[60px] lg-pt-[30px] baskara w-[100%]flex-1 flex-col flex justify-center text-[calc((12px+0.4vw)*6)] leading-[calc((12px+0.4vw)*5)] sm:text-[calc((12px+0.4vw)*7)] sm:leading-[calc((12px+0.4vw)*4.5)]">
-                  <p className="text-[#323232]">Care and</p>
+                  <p className="text-[#323232]">{aboutText.section5.text2}</p>
                   <p className="ml-[calc((12px+0.4vw)*10)] sm:ml-[calc((12px+0.4vw)*5)] text-[#A9524F]">
-                    attention for you
+                    {aboutText.section5.text3}
                   </p>
                 </div>
 
                 <div className="sm:text-left text-center sm:items-left items-center manrope-md flex mt-[calc(13px+1vw)]  pb-[calc(13px+5vw)] sm:flex-row flex-col gap-[40px] sm:gap-[calc(1vw+18px)] text-[calc((12px+0.4vw)*0.8)] leading-[calc((12px+0.4vw)*1.3)] sm:text-[calc((12px+0.4vw)*1)] sm:leading-[calc((12px+0.4vw)*1.55)] lg:text-[calc((12px+0.4vw)*0.81)] lg:leading-[calc((12px+0.4vw)*1.26)]">
                   <div className="text-[#323232] w-[50%]">
-                    <span>TRUST</span>
+                    <span>{aboutText.section5.text4}</span>
                     <div className="h-[10px]"></div>
-                    Trust to the artist starts with trust in the world. My aim
-                    is to inspire faith in yourself, the future, and life itself
-                    through tattoos.
+                    {aboutText.section5.text5}
                   </div>
                   <div className="text-[#323232] w-[50%]">
-                    <span>FREEDOM</span>
-                    <div className="h-[10px]"></div>I want to deliver a message
-                    through my art that you are free and free always and
-                    everywhere. The choice is always yours.
+                    <span>{aboutText.section5.text6}</span>
+                    <div className="h-[10px]"></div>
+                    {aboutText.section5.text7}
                   </div>
                 </div>
               </div>
@@ -595,8 +598,10 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           </div>
           <div className="w-[100%] mb-[30px] flex relative justify-center h-[auto] px-[calc(2vw+15px)]">
             <div className="z-[201] px-[calc(2vw+15px)] manrope absolute w-[100%] bottom-[25px] text-[#C9C7C5] text-[calc((12px+0.4vw)*7)] leading-[calc((12px+0.4vw)*6.3)]">
-              <p className="text-left">LET'S VIBE</p>
-              <p className="text-right lg:text-center">TOGETHER</p>
+              <p className="text-left">{aboutText.section6.text1}</p>
+              <p className="text-right lg:text-center">
+                {aboutText.section6.text2}
+              </p>
             </div>
             <img
               ref={imgRef}
@@ -635,7 +640,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               ref={contactRef}
               className="w-[100%] md:w-[calc((96vw-30px)*0.5)] h-[calc((96vw-30px))] md:h-[calc((96vw-30px)*0.65)]"
             >
-              <ContactForm2 />
+              <ContactForm2 text={aboutText} />
             </div>
           </div>
         </div>
