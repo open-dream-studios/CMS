@@ -146,7 +146,11 @@ const Popup: React.FC<PopupProps> = ({
     if (newTitle.trim() !== "") {
       onRename(
         sanitizeTitle(newTitle),
-        sanitizeTitle(currentPath[0] === "archives" && currentPath.length === 1 ? newDesc.toUpperCase() : newDesc),
+        sanitizeTitle(
+          currentPath[0] === "archives" && currentPath.length === 1
+            ? newDesc.toUpperCase()
+            : newDesc
+        ),
         sanitizeTitle(newDesc2.toUpperCase()),
         sanitizeTitle(newDesc3.toUpperCase())
       );
@@ -211,7 +215,8 @@ const Popup: React.FC<PopupProps> = ({
             }
           }}
         />
-        {((currentPath[0] === "archives" && currentPath.length === 1) || currentPath[0] === "projects") && (
+        {((currentPath[0] === "archives" && currentPath.length === 1) ||
+          currentPath[0] === "projects") && (
           <>
             <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
               Description
@@ -244,7 +249,8 @@ const Popup: React.FC<PopupProps> = ({
             />
           </>
         )}
-        {((currentPath[0] === "archives" && currentPath.length === 1) || currentPath[0] === "project") && (
+        {((currentPath[0] === "archives" && currentPath.length === 1) ||
+          currentPath[0] === "project") && (
           <>
             <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
               Description Line 2
@@ -277,7 +283,8 @@ const Popup: React.FC<PopupProps> = ({
             />
           </>
         )}
-        {((currentPath[0] === "archives" && currentPath.length === 1) || currentPath[0] === "project") && (
+        {((currentPath[0] === "archives" && currentPath.length === 1) ||
+          currentPath[0] === "project") && (
           <>
             <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
               Description Line 3
@@ -778,9 +785,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       if (currentPath[0] === "projects") {
         setPopupDesc(unSanitizeTitle(projectItem.description, true));
       } else if (currentPath[0] === "archives" && currentPath.length === 1) {
-        setPopupDesc(unSanitizeTitle(projectItem.description.toUpperCase(), true));
-        setPopupDesc2(unSanitizeTitle(projectItem.description2.toUpperCase(), true));
-        setPopupDesc3(unSanitizeTitle(projectItem.description3.toUpperCase(), true));
+        setPopupDesc(
+          unSanitizeTitle(projectItem.description.toUpperCase(), true)
+        );
+        setPopupDesc2(
+          unSanitizeTitle(projectItem.description2.toUpperCase(), true)
+        );
+        setPopupDesc3(
+          unSanitizeTitle(projectItem.description3.toUpperCase(), true)
+        );
       } else {
         setPopupDesc("");
       }
@@ -1126,8 +1139,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const folderNames = folderContents.map(
         (item, index) => appFile["pages"][pageName][index].title
       );
-      console.log(newTitle, appFile["pages"][pageName][index].title)
-      if (folderNames.includes(newTitle) && newTitle !== appFile["pages"][pageName][index].title) {
+      console.log(newTitle, appFile["pages"][pageName][index].title);
+      if (
+        folderNames.includes(newTitle) &&
+        newTitle !== appFile["pages"][pageName][index].title
+      ) {
         alert("That name is already being used in this folder");
         return;
       }
