@@ -1721,11 +1721,37 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             // Second sort (based on the index from JSON)
             const folderIndexA = indexMap[a] ?? Infinity;
             const folderIndexB = indexMap[b] ?? Infinity;
-
             return folderIndexA - folderIndexB;
+          })
+          .sort((a, b) => {
+            if (currentPath[0] !== "about") {
+              return 0;
+            }
+
+            let images: any[] = [];
+            if (appFile !== null) {
+              if (currentPath[0] === "about") {
+                images = appFile["pages"]["about"]["images"];
+              } else if (currentPath[0] === "projects") {
+                console.log(currentPath[1])
+                const projectItem = appFile["pages"]["projects"].filter((item: any) => item.id === currentPath[1])
+                console.log(projectItem)
+                // images = appFile["pages"]["projects"]["images"];
+              }
+            }
+
+            const imageA: any = images.filter((item) => item.name === a);
+            const imageB: any = images.filter((item) => item.name === b);
+            if (imageA.length > 0 && imageB.length > 0) {
+              const indexA = imageA[0].index;
+              const indexB = imageB[0].index;
+              return indexA - indexB;
+            }
+            return 0;
           })
 
           // .sort((a, b) => {
+          //   co
           //   const indexA = extractBeforeIndex(a);
           //   const indexB = extractBeforeIndex(b);
           //   const numA = indexA !== null ? Number(indexA) : Infinity;
@@ -1866,7 +1892,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                       />
                       <div className="bottom-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
                         <span className="truncate overflow-hidden text-ellipsis">
-                          {extractAfterIndex(key)}
+                          {key}
                         </span>
                       </div>
 
@@ -2276,16 +2302,25 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const handleFiles = (files: File[]) => {
     const currentfolderContents = collectImgNames();
-    const getHighestIndex = (names: string[]) => {
-      const indices = names.map((name) => parseInt(name.split("--")[0], 10));
-      const validIndices = indices.filter((index) => !isNaN(index));
-      return validIndices.length > 0 ? Math.max(...validIndices) : 100;
-    };
+    // const getHighestIndex = (names: string[]) => {
+    //   const indices = names.map((name) => parseInt(name.split("--")[0], 10));
+    //   const validIndices = indices.filter((index) => !isNaN(index));
+    //   return validIndices.length > 0 ? Math.max(...validIndices) : 100;
+    // };
 
     let highestIndex = 0;
-    if (currentfolderContents.length > 0) {
-      highestIndex = getHighestIndex(currentfolderContents);
+    if (currentPath[0] === "about") {
+      const images = appFile["pages"]["about"]["images"];
+      for (let i = 0; i < images.length; i++) {
+        if (images[i].index > highestIndex) {
+          highestIndex = images[i].index;
+        }
+      }
     }
+
+    // if (currentfolderContents.length > 0) {
+    //   highestIndex = getHighestIndex(currentfolderContents);
+    // }
     let nextIndex = highestIndex + 1;
 
     const random4Digits = () => {
@@ -2314,7 +2349,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           }
 
           // Add index
-          sanitizedFileName = `${nextIndex}--${sanitizedFileName}`;
+          // sanitizedFileName = `${nextIndex}--${sanitizedFileName}`;
+          const appFileCopy = appFile;
+          appFileCopy["pages"]["about"]["images"].push({
+            index: nextIndex,
+            name: sanitizedFileName,
+          });
+          setAppFile(appFile);
 
           // Rename to prevent duplicates in folder and currently uploaded group
           const newNameSplit = sanitizedFileName.split(".");
@@ -2345,6 +2386,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           setUploadPopup(false);
           await uploadToGitHub(images);
           await getRepoTree();
+          updateAppData();
         })
         .then(() => {
           setLoading(false);
