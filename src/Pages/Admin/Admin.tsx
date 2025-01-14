@@ -417,18 +417,19 @@ const AboutPopup: React.FC<AboutPopupProps> = ({
         <p className="font-[500] text-[20px] mb-[1px] text-[bold] text-center">
           About Page Text
         </p>
-        {Object.keys(page).length > 0 &&
-          Object.keys(page).map((item, index) => {
+        {Object.keys(page["sections"]).length > 0 &&
+          Object.keys(page["sections"]).map((item, index) => {
+            const sectionGroup = page["sections"][item];
             return (
               <div
                 key={index}
-                className="my-[3px] w-[100%] px-[10px] my-[10px]"
+                className="my-[3px] w-[100%] px-[10px]"
                 style={{ borderRadius: "6px", border: "1px solid #999999" }}
               >
                 <div className="py-[2px]">{"Section " + (index + 1)}</div>
                 <>
-                  {Object.keys(page[item]).length > 0 &&
-                    Object.keys(page[item]).map((section, sectionIndex) => {
+                  {Object.keys(sectionGroup).length > 0 &&
+                    Object.keys(sectionGroup).map((section, sectionIndex) => {
                       return (
                         <div key={sectionIndex}>
                           <textarea
@@ -441,7 +442,7 @@ const AboutPopup: React.FC<AboutPopupProps> = ({
                               border: "1px solid #CCC",
                               borderRadius: "3px",
                             }}
-                            value={page[item][section]}
+                            value={sectionGroup[section]}
                             onChange={(e) => {
                               if (
                                 e.target.value
@@ -451,9 +452,12 @@ const AboutPopup: React.FC<AboutPopupProps> = ({
                                 let pageCopy = page as any;
                                 const updatedPage = {
                                   ...pageCopy,
-                                  [item]: {
-                                    ...pageCopy[item],
-                                    [section]: e.target.value,
+                                  sections: {
+                                    ...pageCopy["sections"],
+                                    [item]: {
+                                      ...pageCopy["sections"][item],
+                                      [section]: e.target.value,
+                                    },
                                   },
                                 };
                                 setPage(updatedPage);
@@ -1072,33 +1076,33 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     try {
       let pageName = null;
       let index = null;
-      if (!path.split("/").pop().includes(".")) {
-        pageName =
-          currentPath[0] === "archives"
-            ? "archives"
-            : currentPath[0] === "projects"
-            ? "projects"
-            : null;
-        if (pageName === null) return null;
-        if (Object.keys(appFile).length === 0) return null;
-        const pages = appFile["pages"];
-        if (!pages || Object.keys(pages).length === 0) return null;
-        const page = pages[pageName];
-        if (!page || page.length === 0) return null;
-        index = page.findIndex((item: any) => item.id === path.split("/")[1]);
-        if (index === null) return null;
-      }
+      // if (!path.split("/").pop().includes(".")) {
+      pageName =
+        currentPath[0] === "archives"
+          ? "archives"
+          : currentPath[0] === "projects"
+          ? "projects"
+          : null;
+      if (pageName === null) return null;
+      if (Object.keys(appFile).length === 0) return null;
+      const pages = appFile["pages"];
+      if (!pages || Object.keys(pages).length === 0) return null;
+      const page = pages[pageName];
+      if (!page || page.length === 0) return null;
+      index = page.findIndex((item: any) => item.id === path.split("/")[1]);
+      if (index === null) return null;
 
-      await deleteItem(
-        "public/assets/" + path,
-        path.split("/").pop().includes(".")
-      );
+      // await deleteItem(
+      //   "public/assets/" + path,
+      //   path.split("/").pop().includes(".")
+      // );
 
       if (
-        !path.split("/").pop().includes(".") &&
+        // !path.split("/").pop().includes(".") &&
         pageName !== null &&
         index !== null
       ) {
+        console.log(pageName, index)
         const appFileCopy = appFile;
         appFileCopy["pages"][pageName].splice(index, 1);
         setAppFile(appFileCopy);
@@ -2192,7 +2196,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [aboutPopupOpen, setAboutPopupOpen] = useState(false);
   const handleAppFileChange = (newAppFile: string) => {
     if (Object.keys(newAppFile).length > 0) {
-      console.log(newAppFile);
       setAppFile(newAppFile);
       updateAppData();
     }
@@ -2391,11 +2394,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               (item: any) => item.id === currentPath[1]
             );
             if (projectItem.length > 0) {
-              appFileCopy["pages"]["projects"][projectItem[0].id]["images"].push({
+              appFileCopy["pages"]["projects"][projectItem[0].id][
+                "images"
+              ].push({
                 index: nextIndex,
                 name: sanitizedFileName,
-                projectCover: false, 
-                homeCover: false
+                projectCover: false,
+                homeCover: false,
               });
             }
           } else if (
@@ -2406,7 +2411,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               (item: any) => item.id === currentPath[1]
             );
             if (projectItem.length > 0) {
-              appFileCopy["pages"]["archives"][projectItem[0].id]["images"].push({
+              appFileCopy["pages"]["archives"][projectItem[0].id][
+                "images"
+              ].push({
                 index: nextIndex,
                 name: sanitizedFileName,
               });
