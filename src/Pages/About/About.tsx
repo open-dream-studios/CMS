@@ -154,12 +154,14 @@ const About: React.FC<PageProps> = ({ navigate }) => {
     ) {
       coversRef.current = project["about"] as CoverEntry[];
       setCoversReady(project["about"] as CoverEntry[]);
-      const newAboutText = project["about"].filter((item) =>
-        Object.keys(item).includes("section1")
-      );
-      if (newAboutText.length > 0) {
-        setAboutText(newAboutText[0]);
-      }
+      console.log(project["about"])
+      // const newAboutText = project["about"].filter((item) =>
+      //   Object.keys(item).includes("sections")
+      // );
+      // console.log(newAboutText)
+      // if (newAboutText.length > 0) {
+      //   setAboutText(newAboutText[0]);
+      // }
     }
   }, [projectAssets]);
 
