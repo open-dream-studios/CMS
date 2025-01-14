@@ -565,8 +565,8 @@ interface FolderStructure {
 type projectImage = {
   index: number;
   name: string;
-  projectCover: boolean;
-  homeCover: boolean;
+  projectCover?: boolean;
+  homeCover?: boolean;
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
@@ -1724,19 +1724,31 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             return folderIndexA - folderIndexB;
           })
           .sort((a, b) => {
-            if (currentPath[0] !== "about") {
-              return 0;
-            }
-
             let images: any[] = [];
             if (appFile !== null) {
               if (currentPath[0] === "about") {
                 images = appFile["pages"]["about"]["images"];
-              } else if (currentPath[0] === "projects") {
-                console.log(currentPath[1])
-                const projectItem = appFile["pages"]["projects"].filter((item: any) => item.id === currentPath[1])
-                console.log(projectItem)
-                // images = appFile["pages"]["projects"]["images"];
+              } else if (
+                currentPath[0] === "projects" &&
+                currentPath.length === 2
+              ) {
+                const projectItem = appFile["pages"]["projects"].filter(
+                  (item: any) => item.id === currentPath[1]
+                );
+                if (projectItem.length > 0) {
+                  images = projectItem[0].images;
+                }
+              } else if (
+                currentPath[0] === "archives" &&
+                currentPath.length === 2
+              ) {
+                const projectItem = appFile["pages"]["archives"].filter(
+                  (item: any) => item.id === currentPath[1]
+                );
+                console.log(projectItem);
+                if (projectItem.length > 0) {
+                  images = projectItem[0].images;
+                }
               }
             }
 
@@ -1749,15 +1761,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             }
             return 0;
           })
-
-          // .sort((a, b) => {
-          //   co
-          //   const indexA = extractBeforeIndex(a);
-          //   const indexB = extractBeforeIndex(b);
-          //   const numA = indexA !== null ? Number(indexA) : Infinity;
-          //   const numB = indexB !== null ? Number(indexB) : Infinity;
-          //   return numA - numB;
-          // })
           .map((key, index) => {
             const isSecondaryFolder =
               typeof currentFolder[key] !== "string" &&
@@ -2309,12 +2312,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     // };
 
     let highestIndex = 0;
-    if (currentPath[0] === "about") {
-      const images = appFile["pages"]["about"]["images"];
-      for (let i = 0; i < images.length; i++) {
-        if (images[i].index > highestIndex) {
-          highestIndex = images[i].index;
+    let images: any[] = [];
+    if (appFile !== null) {
+      if (currentPath[0] === "about") {
+        images = appFile["pages"]["about"]["images"];
+      } else if (currentPath[0] === "projects" && currentPath.length === 2) {
+        const projectItem = appFile["pages"]["projects"].filter(
+          (item: any) => item.id === currentPath[1]
+        );
+        if (projectItem.length > 0) {
+          images = projectItem[0].images;
         }
+      } else if (currentPath[0] === "archives" && currentPath.length === 2) {
+        const projectItem = appFile["pages"]["archives"].filter(
+          (item: any) => item.id === currentPath[1]
+        );
+        console.log(projectItem);
+        if (projectItem.length > 0) {
+          images = projectItem[0].images;
+        }
+      } else {
+        return;
+      }
+    } else {
+      return;
+    }
+
+    for (let i = 0; i < images.length; i++) {
+      if (images[i].index > highestIndex) {
+        highestIndex = images[i].index;
       }
     }
 
@@ -2351,10 +2377,42 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           // Add index
           // sanitizedFileName = `${nextIndex}--${sanitizedFileName}`;
           const appFileCopy = appFile;
-          appFileCopy["pages"]["about"]["images"].push({
-            index: nextIndex,
-            name: sanitizedFileName,
-          });
+
+          if (currentPath[0] === "about") {
+            appFileCopy["pages"]["about"]["images"].push({
+              index: nextIndex,
+              name: sanitizedFileName,
+            });
+          } else if (
+            currentPath[0] === "projects" &&
+            currentPath.length === 2
+          ) {
+            const projectItem = appFile["pages"]["projects"].filter(
+              (item: any) => item.id === currentPath[1]
+            );
+            if (projectItem.length > 0) {
+              appFileCopy["pages"]["projects"][projectItem[0].id]["images"].push({
+                index: nextIndex,
+                name: sanitizedFileName,
+                projectCover: false, 
+                homeCover: false
+              });
+            }
+          } else if (
+            currentPath[0] === "archives" &&
+            currentPath.length === 2
+          ) {
+            const projectItem = appFile["pages"]["archives"].filter(
+              (item: any) => item.id === currentPath[1]
+            );
+            if (projectItem.length > 0) {
+              appFileCopy["pages"]["archives"][projectItem[0].id]["images"].push({
+                index: nextIndex,
+                name: sanitizedFileName,
+              });
+            }
+          }
+
           setAppFile(appFile);
 
           // Rename to prevent duplicates in folder and currently uploaded group
