@@ -348,6 +348,169 @@ const Popup: React.FC<PopupProps> = ({
   );
 };
 
+interface AboutPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  appFile: string;
+  onAppFileChange: (newAppFile: string) => void;
+}
+
+const AboutPopup: React.FC<AboutPopupProps> = ({
+  isOpen,
+  onClose,
+  appFile,
+  onAppFileChange,
+}) => {
+  const [page, setPage] = useState(null);
+
+  useEffect(() => {
+    const appFileCopy = appFile as any;
+    if (Object.keys(appFileCopy).length !== 0) {
+      const pages = appFileCopy["pages"];
+      if (pages && Object.keys(pages).length !== 0) {
+        const page = pages["about"];
+        if (page && page.length !== 0) {
+          setPage(page);
+        }
+      }
+    }
+  }, [appFile]);
+
+  const handleAppFileChange = () => {
+    const appFileCopy = appFile as any;
+    appFileCopy["pages"]["about"] = page;
+    onAppFileChange(appFileCopy);
+    onClose();
+  };
+
+  const isValidFileNameChar = (char: any) => {
+    const invalidChars = ["\\", '"'];
+    return !invalidChars.includes(char) && char !== "\n";
+  };
+
+  if (!isOpen) return null;
+  if (page === null) return <></>;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        justifyContent: "center",
+        paddingTop: "100px",
+        paddingBottom: "20px",
+      }}
+    >
+      <div
+        className="flex flex-col p-[20px] w-[800px] relative pb-[55px]"
+        style={{
+          overflow: "scroll",
+          backgroundColor: "#fff",
+          borderRadius: "8px",
+        }}
+      >
+        <p className="font-[500] text-[20px] mb-[1px] text-[bold] text-center">
+          About Page Text
+        </p>
+        {Object.keys(page).length > 0 &&
+          Object.keys(page).map((item, index) => {
+            return (
+              <div
+                key={index}
+                className="my-[3px] w-[100%] px-[10px] my-[10px]"
+                style={{ borderRadius: "6px", border: "1px solid #999999" }}
+              >
+                <div className="py-[2px]">{"Section " + (index + 1)}</div>
+                <>
+                  {Object.keys(page[item]).length > 0 &&
+                    Object.keys(page[item]).map((section, sectionIndex) => {
+                      return (
+                        <div key={sectionIndex}>
+                          <textarea
+                            className="py-1 px-2"
+                            style={{
+                              width: "100%",
+                              height: "60px",
+                              resize: "none",
+                              overflowY: "auto",
+                              border: "1px solid #CCC",
+                              borderRadius: "3px",
+                            }}
+                            value={page[item][section]}
+                            onChange={(e) => {
+                              if (
+                                e.target.value
+                                  .split("")
+                                  .every((item) => isValidFileNameChar(item))
+                              ) {
+                                let pageCopy = page as any;
+                                const updatedPage = {
+                                  ...pageCopy,
+                                  [item]: {
+                                    ...pageCopy[item],
+                                    [section]: e.target.value,
+                                  },
+                                };
+                                setPage(updatedPage);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleAppFileChange();
+                              }
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                </>
+              </div>
+            );
+          })}
+
+        <div
+          style={{
+            borderBottomRightRadius: "8px",
+            borderBottomLeftRadius: "8px",
+            borderTop: "1px solid #BBBBBB",
+          }}
+          className="bg-white flex flex-row pt-[1px] h-[60px] fixed bottom-[20px] w-[760px] items-center"
+        >
+          <button
+            className="w-[48.5%] mr-[3%] p-[10px] cursor-pointer"
+            style={{
+              backgroundColor: "red",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+            }}
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            className="w-[48.5%] p-[10px] cursor-pointer"
+            style={{
+              backgroundColor: "#007BFF",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+            }}
+            onClick={handleAppFileChange}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Admin = () => {
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(true);
@@ -573,11 +736,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       }
 
       const data = await response.json();
-      const fileContent = atob(data.content);
 
-      if (fileContent) {
+      // Correctly decode Base64 content into UTF-8
+      const base64Content = data.content;
+      const decodedContent = new TextDecoder("utf-8").decode(
+        Uint8Array.from(atob(base64Content), (char) => char.charCodeAt(0))
+      );
+
+      if (decodedContent) {
         try {
-          const parsedContent = JSON.parse(fileContent);
+          const parsedContent = JSON.parse(decodedContent);
           setAppFile(parsedContent);
 
           if (parsedContent["pages"] !== undefined) {
@@ -594,24 +762,74 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         }
       }
 
-      return fileContent;
+      return decodedContent;
     } catch (error) {
       console.error("Error fetching file contents:", error);
     }
   };
 
+  // const fetchAppFileContents = async (blobUrl: string) => {
+  //   try {
+  //     const response = await fetch(blobUrl, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         Accept: "application/vnd.github.v3+json",
+  //       },
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch blob: ${blobUrl}`);
+  //     }
+
+  //     const data = await response.json();
+  //     const fileContent = atob(data.content);
+
+  //     if (fileContent) {
+  //       try {
+  //         const parsedContent = JSON.parse(fileContent);
+  //         setAppFile(parsedContent);
+
+  //         if (parsedContent["pages"] !== undefined) {
+  //           const indexMap = Object.values(parsedContent["pages"])
+  //             .flat()
+  //             .reduce((map: any, item: any) => {
+  //               map[item.id] = item.title;
+  //               return map;
+  //             }, {});
+  //           setReducedAppFile(indexMap);
+  //         }
+  //       } catch (error) {
+  //         console.error("Error parsing JSON content:", error);
+  //       }
+  //     }
+
+  //     return fileContent;
+  //   } catch (error) {
+  //     console.error("Error fetching file contents:", error);
+  //   }
+  // };
+
   async function updateAppFile() {
     const filePath = "src/app.json";
+
     try {
       const fileInfoUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
       const headers = { Authorization: `Bearer ${token}` };
       const { data: fileInfo } = await axios.get(fileInfoUrl, { headers });
       const fileSha = fileInfo.sha;
+
+      // Convert the JSON to a UTF-8 encoded Base64 string
       const updatedContent = btoa(
-        typeof appFile === "string" ? appFile : JSON.stringify(appFile)
+        unescape(
+          encodeURIComponent(
+            typeof appFile === "string" ? appFile : JSON.stringify(appFile)
+          )
+        )
       );
+
       const updateFileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
       const commitMessage = "Update app.json with new content";
+
       await axios.put(
         updateFileUrl,
         {
@@ -622,6 +840,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         },
         { headers }
       );
+
       console.log("File updated successfully");
     } catch (error) {
       console.error("Error updating the file:", error);
@@ -637,6 +856,44 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       setReducedAppFile(indexMap);
     }
   }
+
+  // async function updateAppFile() {
+  //   const filePath = "src/app.json";
+  //   try {
+  //     const fileInfoUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+  //     const headers = { Authorization: `Bearer ${token}` };
+  //     const { data: fileInfo } = await axios.get(fileInfoUrl, { headers });
+  //     const fileSha = fileInfo.sha;
+  //     const updatedContent = btoa(
+  //       typeof appFile === "string" ? appFile : JSON.stringify(appFile)
+  //     );
+  //     const updateFileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+  //     const commitMessage = "Update app.json with new content";
+  //     await axios.put(
+  //       updateFileUrl,
+  //       {
+  //         message: commitMessage,
+  //         content: updatedContent,
+  //         sha: fileSha,
+  //         branch,
+  //       },
+  //       { headers }
+  //     );
+  //     console.log("File updated successfully");
+  //   } catch (error) {
+  //     console.error("Error updating the file:", error);
+  //   }
+
+  //   if (appFile["pages"] !== undefined) {
+  //     const indexMap = Object.values(appFile["pages"])
+  //       .flat()
+  //       .reduce((map: any, item: any) => {
+  //         map[item.id] = item.title;
+  //         return map;
+  //       }, {});
+  //     setReducedAppFile(indexMap);
+  //   }
+  // }
 
   const getFolderItem = (key: string) => {
     const pageName =
@@ -801,10 +1058,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setPopupTrigger((prev) => prev + 1);
     setSelectedPath(path);
     setPopupOpen(true);
-  };
-
-  const closePopup = () => {
-    setPopupOpen(false);
   };
 
   const handleDeleteItem = async (path: any) => {
@@ -1582,6 +1835,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                         )}
                       </>
                     )}
+                  {key === "about" && (
+                    <button
+                      className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAboutPopupOpen(true);
+                      }}
+                    >
+                      <BiSolidPencil
+                        className="ml-[-0.5px]"
+                        color={"black"}
+                        size={13}
+                      />
+                    </button>
+                  )}
                   {typeof currentFolder[key] === "string" && (
                     <>
                       <img
@@ -1861,7 +2129,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           })}
         <Popup
           isOpen={popupOpen}
-          onClose={closePopup}
+          onClose={() => {
+            setPopupOpen(false);
+          }}
           title={popupTitle}
           desc={popupDesc}
           desc2={popupDesc2}
@@ -1871,8 +2141,25 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           popupTrigger={popupTrigger}
           currentPath={currentPath}
         />
+        <AboutPopup
+          isOpen={aboutPopupOpen}
+          onClose={() => {
+            setAboutPopupOpen(false);
+          }}
+          appFile={appFile}
+          onAppFileChange={handleAppFileChange}
+        />
       </div>
     );
+  };
+
+  const [aboutPopupOpen, setAboutPopupOpen] = useState(false);
+  const handleAppFileChange = (newAppFile: string) => {
+    if (Object.keys(newAppFile).length > 0) {
+      console.log(newAppFile);
+      setAppFile(newAppFile);
+      updateAppData();
+    }
   };
 
   const [uploadPopup, setUploadPopup] = useState(false);

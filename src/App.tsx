@@ -312,6 +312,7 @@ const App = () => {
       const sortedImages = mappedImages.sort(
         (a: any, b: any) => a.index - b.index
       );
+      sortedImages.push(appFile["pages"]["about"])
       result = sortedImages;
     }
 
