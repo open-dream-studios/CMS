@@ -562,6 +562,13 @@ interface FolderStructure {
   [key: string]: FolderStructure | string;
 }
 
+type projectImage = {
+  index: number;
+  name: string;
+  projectCover: boolean;
+  homeCover: boolean;
+};
+
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [loading, setLoading] = useState(false);
   const [reducedAppFile, setReducedAppFile] = useState<any>({});
