@@ -359,11 +359,11 @@ const Navbar: React.FC<PageProps> = ({ navigate }) => {
         }}
       >
         <div
-          className="nav-text-item select-none cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
+          className="nav-text-item mr-[calc(22px+1vw)] select-none cursor-pointer mt-[20px] md:mt-[32px] text-[16px] lg:text-[21px] leading-[16px] lg:leading-[21px] font-[400]"
           onClick={handleHomeClick}
           style={{ color: currentNavColor }}
         >
-          JESSICA SHULMAN
+          JESS SHULMAN
         </div>
         <div className="mt-[32px] lg:flex hidden flex-col leading-[14px] gap-[3.5px]">
           <div

@@ -512,6 +512,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                 className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]"
                 style={{ backgroundColor: "transparent" }}
               >
+              
                 {slideUpComponent ? (
                   <>
                     {incomingProject !== null && coversRef.current !== null ? (
@@ -540,6 +541,31 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                         .join(" ")}
                   </>
                 )}
+              </div>
+              <div className="text-center w-[100%] flex justify-center mt-[-4.1%] mb-[4%] lg:mb-[3%] text-[calc(0.5vw+9px)]">
+              
+
+               {slideUpComponent ? (
+                  <>
+                    {incomingProject !== null && coversRef.current !== null ? (
+                      <>
+                        {coversRef.current[incomingProject].description.toUpperCase().replaceAll("_"," ")}
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {selectedProjectName[1] !== null &&
+                      coversRef.current !== null &&
+                      coversRef.current[selectedProjectName[1]].description.toUpperCase().replaceAll("_"," ")}
+                  </>
+                )}
+
+
+              
+              
               </div>
             </div>
             <div className="w-[100%] flex justify-center">

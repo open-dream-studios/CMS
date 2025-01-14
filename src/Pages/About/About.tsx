@@ -128,6 +128,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
 
   const coversRef = useRef<CoverEntry[] | null>(null);
   const [coversReady, setCoversReady] = useState<CoverEntry[] | null>(null);
+  const contactRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const project = projectAssets as any;
@@ -196,6 +197,37 @@ const About: React.FC<PageProps> = ({ navigate }) => {
     };
   }, []);
 
+  const smoothScrollTo = (targetPosition: number) => {
+    const startPosition = window.scrollY;
+    const distance = targetPosition - startPosition;
+    const startTime = performance.now();
+    const duration = 1200
+
+    function animateScroll(currentTime: number) {
+      const elapsedTime = currentTime - startTime;
+      const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
+      const ease = easeInOutQuad(progress); // Apply easing function
+
+      window.scrollTo(0, startPosition + distance * ease);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll);
+      }
+    }
+
+    function easeInOutQuad(t: any) {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    requestAnimationFrame(animateScroll);
+  };
+
+  const handleSendRequestClick = () => {
+    if (contactRef.current !== null) {
+      smoothScrollTo(contactRef.current.getBoundingClientRect().top)
+    }
+  }
+
   return (
     <div className="w-[100%] mt-[56px] md:mt-[72px] lg:mt-[78px]">
       <div
@@ -235,6 +267,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           <div
             style={{ border: "0.1px solid #A9524F", color: "#A9524F" }}
             className="cursor-pointer manrope-md text-[calc((12px+0.4vw)*0.7)] py-[calc((12px+0.4vw)*0.3)] px-[calc((12px+0.4vw)*0.6)]"
+            onClick={handleSendRequestClick}
           >
             SEND REQUEST
           </div>
@@ -346,7 +379,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           <div className="w-[100%] h-[auto] flex flex-row gap-[1%] mt-[50px]">
             <div className="w-[16%] mr-[25%] aspect-[1/1.3] lg:block hidden">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -354,7 +386,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className="w-[16%] aspect-[1/1.3] lg:block hidden">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -362,7 +393,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className="lg:w-[41%] w-[66%] aspect-[1/1.3]">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -370,7 +400,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className="lg:w-[41%] ml-[1%] w-[32%] aspect-[1/1.3] block lg:hidden">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -380,23 +409,20 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           <div className="w-[100%] h-[auto] flex flex-row gap-[1%] mt-[100px] lg:mt-[28px]">
             <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
               />
             </div>
-            <div className=" w-[24%] mr-[17%] aspect-[1/1.3] hidden lg:block">
+            <div className=" w-[24%] mr-[17%] lg:mr-0 aspect-[1/1.3] hidden lg:block">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
               />
             </div>
-            <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
+            <div className="w-[16%] lg:mr-[17%] aspect-[1/1.3] hidden lg:block">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -404,7 +430,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className=" w-[32%] lg:w-[24%] aspect-[1/1.3]">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -412,7 +437,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className=" w-[32%] lg:w-[24%] ml-[35%] aspect-[1/1.3] block lg:hidden">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -421,7 +445,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           </div>
           <div className="w-[100%] mt-[60px] lg:mt-[10px] mb-[70px] relative flex flex-col gap-[3px] justify-center items-center">
             <img
-              style={{}}
               alt=""
               className="w-[80px]"
               src="assets/about/about-plant2.png"
@@ -436,7 +459,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           <div className="w-[100%] h-[auto] flex flex-row gap-[1%] mb-[70px] lg:mb-0">
             <div className="w-[50%] lg:w-[41%] mr-[17%] lg:mr-[25%] aspect-[1/1.3]">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -444,7 +466,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className="w-[16%] aspect-[1/1.3] lg:block hidden">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -452,7 +473,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className="w-[32%] lg:w-[16%] aspect-[1/1.3]">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -462,7 +482,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           <div className="w-[100%] h-[auto] flex flex-col lg:flex-row gap-[1%] mt-[28px] mb-[120px]">
             <div className="w-[16%] mr-[25%] aspect-[1/1.3] hidden lg:block">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -470,7 +489,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className="w-[41%] aspect-[1/1.3] hidden lg:block">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -478,7 +496,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
             <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
               <img
-                style={{}}
                 alt=""
                 src="assets/about/about-img2.png"
                 className="w-[100%] aspect-[1/1.3] object-cover"
@@ -487,7 +504,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             <div className="w-[100%] lg:hidden flex flex-row mb-[80px]">
               <div className="w-[32%] ml-[34%] mr-[2%] aspect-[1/1.3]">
                 <img
-                  style={{}}
                   alt=""
                   src="assets/about/about-img2.png"
                   className="w-[100%] aspect-[1/1.3] object-cover"
@@ -495,7 +511,6 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               </div>
               <div className="w-[32%] aspect-[1/1.3]">
                 <img
-                  style={{}}
                   alt=""
                   src="assets/about/about-img2.png"
                   className="w-[100%] aspect-[1/1.3] object-cover"
@@ -606,7 +621,10 @@ const About: React.FC<PageProps> = ({ navigate }) => {
           />
           <div className="absolute top-0 left-0 w-[100%] h-[100%] opacity-[0%] bg-white"></div>
         </div>
-        <div className="w-[100%] md:w-[calc((96vw-30px)*0.5)] h-[calc((96vw-30px))] md:h-[calc((96vw-30px)*0.65)]">
+        <div
+          ref={contactRef}
+          className="w-[100%] md:w-[calc((96vw-30px)*0.5)] h-[calc((96vw-30px))] md:h-[calc((96vw-30px)*0.65)]"
+        >
           <ContactForm2 />
         </div>
       </div>
