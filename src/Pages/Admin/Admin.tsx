@@ -920,7 +920,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     if (!pages || Object.keys(pages).length === 0) return null;
     const page = pages[pageName];
     if (!page || page.length === 0) return null;
-    if (currentPath.length === 2) {
+    if (
+      currentPath.length === 2 &&
+      currentPath[0] &&
+      currentPath[0] === "projects"
+    ) {
+      const currentFolder = getCurrentFolder()
+      const currentProject = appFile["pages"]["projects"][0].images;
+      console.log(currentProject, key);
+      const currentImage = currentProject.filter(
+        (item: any) => item.name === key
+      );
+      if (currentImage.length > 0) {
+        return currentImage[0];
+      }
       // let indexFound = -1;
       // for (let i = 0; i < page.length; i++) {
       //   const searchIndex = page[i].images.filter(
@@ -1011,6 +1024,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       (acc: FolderStructure, key) => acc[key] as FolderStructure,
       fullProject
     );
+  };
+
+    const getCurrentFolderIndex = (): FolderStructure | string => {
+    if (!fullProject) return {};
+    if (currentPath.length === 2) {
+      console.log("eee", appFile["pages"][currentPath[0]][currentPath[1]])
+      const projectFiltered = appFile["pages"][currentPath[0]][currentPath[1]].filter((item: any) => item.id === currentPath[1])
+      console.log(projectFiltered)
+      if (projectFiltered.length > 0) {
+        console.log(projectFiltered[0].index)
+      }
+    }
+    return {}
   };
 
   const handleFolderClick = (folderName: string) => {
@@ -1530,15 +1556,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleStarChange = async (key: string) => {
-    const projectItem = getFolderItem(key);
-    if (projectItem === null) return;
-    const appFileCopy = appFile;
-    const index = appFileCopy["pages"]["projects"].findIndex(
-      (item: any) => item === projectItem
-    );
-    appFileCopy["pages"]["projects"][index].home_page = !projectItem.home_page;
-    setAppFile(appFileCopy);
-    await updateAppData();
+    // const projectItem = getFolderItem(key);
+    const projectItem = getCurrentFolderIndex();
+
+    // if (projectItem === null) return;
+    // const appFileCopy = appFile;
+    // if (currentPath.length === 1) {
+    //   const index = appFileCopy["pages"]["projects"].findIndex(
+    //     (item: any) => item === projectItem
+    //   );
+    //   appFileCopy["pages"]["projects"][index].home_page =
+    //     !projectItem.home_page;
+    // } else if (currentPath.length === 2) {
+    //   const index = appFileCopy["pages"]["projects"].findIndex(
+    //     (item: any) => item === projectItem
+    //   );
+    //   appFileCopy["pages"]["projects"][index].home_page =
+    //     !projectItem.home_page;
+
+
+
+        
+    // }
+    // setAppFile(appFileCopy);
+    // await updateAppData();
   };
 
   const handleProjectColorsChange = async (key: string) => {
@@ -1861,6 +1902,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             return 0;
           })
           .map((key, index) => {
+            if (key === "blank.png") return <></>;
             const isSecondaryFolder =
               typeof currentFolder[key] !== "string" &&
               ((currentPath[0] === "projects" && key !== "covers") ||
@@ -1889,6 +1931,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               ) {
                 defaultImgColor = isColor(imgColor) || "#CCCCCC";
               }
+            }
+
+            // console.log(
+            //   currentPath.length === 1,
+            //   projectItem,
+            //   currentPath.length === 2,
+            //   projectItem
+            // );
+
+            let starTrue = false;
+            if (currentPath.length === 1 && projectItem) {
+              starTrue = projectItem.home_page;
+            }
+            if (currentPath.length === 2 && projectItem) {
+              starTrue = projectItem.homeCover;
             }
 
             return (
@@ -1962,7 +2019,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                               await getRepoTree();
                             }}
                           >
-                            {projectItem.home_page ? (
+                            {starTrue ? (
                               <IoStar
                                 className="mt-[-1px]"
                                 color={"green"}
@@ -2005,7 +2062,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                           await getRepoTree();
                         }}
                       >
-                        {projectItem ? (
+                        {starTrue ? (
                           <IoStar
                             className="mt-[-1px]"
                             color={"green"}
