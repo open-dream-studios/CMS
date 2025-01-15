@@ -1016,7 +1016,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   // POPUP
   const [popupOpen, setPopupOpen] = useState(false);
-  const [popupKeyIndex, setPopupKeyIndex] = useState("");
   const [popupKey, setPopupKey] = useState("");
   const [popupTitle, setPopupTitle] = useState("");
   const [popupDesc, setPopupDesc] = useState("");
@@ -1033,13 +1032,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     if (name.includes(".")) {
       const extension = name.split(".").pop() || "";
       let imgName = name.slice(0, name.lastIndexOf("."));
-      setPopupExtention(extension);
-      const imgIndex = extractBeforeIndex(imgName);
-      const slicedImgName = extractAfterIndex(imgName);
-      if (imgIndex !== null) {
-        setPopupKeyIndex(imgIndex);
-      }
-      setPopupTitle(slicedImgName);
+      setPopupExtention(extension);;
+      setPopupTitle(imgName);
       setPopupKey(imgName);
       setPopupDesc("");
       setPopupDesc2("");
@@ -1111,9 +1105,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           appFileCopy["pages"][pageName2].images = appFileCopyImages;
         } else if (index !== null && pageName !== null) {
           if (pageName2 === "projects") {
-            console.log(appFileCopy["pages"][pageName2][
-              index
-            ].images, path.split("/").pop())
+            console.log(
+              appFileCopy["pages"][pageName2][index].images,
+              path.split("/").pop()
+            );
             const appFileCopyImages = appFileCopy["pages"][pageName2][
               index
             ].images.filter((img: any) => img.name !== path.split("/").pop());
@@ -1489,16 +1484,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           const archivesIndex = appFileCopy["pages"]["archives"].findIndex(
             (item: any) => item.id === currentPath[1]
           );
-          console.log(archivesIndex, originalName)
-          console.log(appFileCopy["pages"]["archives"][archivesIndex])
+          console.log(archivesIndex, originalName);
+          console.log(appFileCopy["pages"]["archives"][archivesIndex]);
           const indexFound = appFileCopy["pages"]["archives"][archivesIndex][
             "images"
           ].findIndex((item: any) => item.name === originalName);
-          console.log(indexFound)
+          console.log(indexFound);
           if (indexFound !== -1) {
-            console.log(appFileCopy["pages"]["archives"][archivesIndex]["images"][
-              indexFound
-            ].name)
+            console.log(
+              appFileCopy["pages"]["archives"][archivesIndex]["images"][
+                indexFound
+              ].name
+            );
             appFileCopy["pages"]["archives"][archivesIndex]["images"][
               indexFound
             ].name = imageName;
@@ -1522,6 +1519,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       (item: any) => item === projectItem
     );
     appFileCopy["pages"]["projects"][index].home_page = !projectItem.home_page;
+    setAppFile(appFileCopy)
     await updateAppData();
   };
 
@@ -1979,10 +1977,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
                       <button
                         style={{
-                          border:
-                            swapActive && swapItems[0] !== key
-                              ? "1px solid #00BBFC"
-                              : "1px solid black",
+                          opacity:  swapActive && swapItems[0] !== key ? 0 : 1,
+                          border: "1px solid black",
                         }}
                         className="rounded-full absolute top-[20px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
                         onClick={async (e) => {
@@ -2449,6 +2445,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
           // Add index
           // sanitizedFileName = `${nextIndex}--${sanitizedFileName}`;
+
+          // Rename to prevent duplicates in folder and currently uploaded group
+          const newNameSplit = sanitizedFileName.split(".");
+          const newName = newNameSplit.slice(0, -1).join(".");
+
+          if (currentfolderContents.includes(sanitizedFileName)) {
+            sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
+          }
+          while (uploadedNames.includes(sanitizedFileName)) {
+            sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
+          }
+          uploadedNames.push(sanitizedFileName);
+
           const appFileCopy = appFile;
 
           if (currentPath[0] === "about") {
@@ -2497,18 +2506,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           }
 
           setAppFile(appFileCopy);
-
-          // Rename to prevent duplicates in folder and currently uploaded group
-          const newNameSplit = sanitizedFileName.split(".");
-          const newName = newNameSplit.slice(0, -1).join(".");
-
-          if (currentfolderContents.includes(sanitizedFileName)) {
-            sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
-          }
-          while (uploadedNames.includes(sanitizedFileName)) {
-            sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
-          }
-          uploadedNames.push(sanitizedFileName);
           nextIndex += 1;
 
           const reader = new FileReader();
