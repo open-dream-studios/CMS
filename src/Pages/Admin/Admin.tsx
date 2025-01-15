@@ -37,6 +37,7 @@ import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
 import { GIT_KEYS } from "../../App";
+import { left } from "@cloudinary/url-gen/qualifiers/textAlignment";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -925,7 +926,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       currentPath[0] &&
       currentPath[0] === "projects"
     ) {
-      const foundIdx = appFile["pages"]["projects"].findIndex((item: any) => item.id === currentPath[1])
+      const foundIdx = appFile["pages"]["projects"].findIndex(
+        (item: any) => item.id === currentPath[1]
+      );
       const currentProject = appFile["pages"]["projects"][foundIdx].images;
       const currentImage = currentProject.filter(
         (item: any) => item.name === key
@@ -1128,28 +1131,32 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         setAppFile(appFileCopy);
       } else if (path.split("/").pop().includes(".")) {
         const appFileCopy = appFile;
-        const pageName2 = currentPath[0];
-        if (pageName2 === "about") {
+        const pageName = currentPath[0];
+        if (pageName === "about") {
           const appFileCopyImages = appFileCopy["pages"][
-            pageName2
+            pageName
           ].images.filter((img: any) => img.name !== path.split("/").pop());
-          appFileCopy["pages"][pageName2].images = appFileCopyImages;
+          appFileCopy["pages"][pageName].images = appFileCopyImages;
         } else if (index !== null && pageName !== null) {
-          if (pageName2 === "projects") {
+          if (pageName === "projects") {
             console.log(
-              appFileCopy["pages"][pageName2][index].images,
+              appFileCopy["pages"][pageName][index].images,
               path.split("/").pop()
             );
-            const appFileCopyImages = appFileCopy["pages"][pageName2][
+            const appFileCopyImages = appFileCopy["pages"][pageName][
               index
             ].images.filter((img: any) => img.name !== path.split("/").pop());
-            appFileCopy["pages"][pageName2][index].images = appFileCopyImages;
+            appFileCopy["pages"][pageName][index].images = appFileCopyImages;
           }
-          if (pageName2 === "archives") {
-            const appFileCopyImages = appFileCopy["pages"][pageName2][
+          if (pageName === "archives") {
+            console.log(
+              appFileCopy["pages"][pageName][index].images,
+              path.split("/").pop()
+            );
+            const appFileCopyImages = appFileCopy["pages"][pageName][
               index
             ].images.filter((img: any) => img.name !== path.split("/").pop());
-            appFileCopy["pages"][pageName2][index].images = appFileCopyImages;
+            appFileCopy["pages"][pageName][index].images = appFileCopyImages;
           }
         }
         setAppFile(appFileCopy);
@@ -1564,33 +1571,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       appFileCopy["pages"]["projects"][projectItem].images[foundIdx].homeCover =
         !appFileCopy["pages"]["projects"][projectItem].images[foundIdx]
           .homeCover;
-
-      // const index = appFileCopy["pages"]["projects"].findIndex(
-      //   (item: any) => item === projectItem
-      // );
-      // appFileCopy["pages"]["projects"][index].home_page =
-      //   !projectItem.home_page;
     }
-
-    // const projectItem = getFolderItem(key);
-    // const projectItem = getCurrentFolderIndex();
-
-    // // if (projectItem === null) return;
-    // // const appFileCopy = appFile;
-    // // if (currentPath.length === 1) {
-    // //   const index = appFileCopy["pages"]["projects"].findIndex(
-    // //     (item: any) => item === projectItem
-    // //   );
-    // //   appFileCopy["pages"]["projects"][index].home_page =
-    // //     !projectItem.home_page;
-    // // } else if (currentPath.length === 2) {
-    // //   const index = appFileCopy["pages"]["projects"].findIndex(
-    // //     (item: any) => item === projectItem
-    // //   );
-    // //   appFileCopy["pages"]["projects"][index].home_page =
-    // //     !projectItem.home_page;
-
-    // // }
 
     setAppFile(appFileCopy);
     await updateAppData();
@@ -1822,9 +1803,64 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setFolderSwapItems([null, null]);
   };
 
-  const handleMoveImageItem = async (key: any) => {
-    // const projectIndex = appFile["projects"]
-    // console.log(key)
+  const handleMoveImageItem = async (key: any, side: number) => {
+    console.log(key, side);
+    const pageName =
+      currentPath[0] === "projects"
+        ? "projects"
+        : currentPath[0] === "archives"
+        ? "archives"
+        : null;
+    if (pageName === null) return;
+    if (currentPath.length === 2) {
+      const appFileCopy = appFile;
+      const projectIndex = appFile["pages"][pageName].findIndex(
+        (item: any) => item.id === currentPath[1]
+      );
+      console.log(projectIndex === -1 || swapItems[0] === null);
+      if (projectIndex === -1 || swapItems[0] === null) return;
+      const originalIndex = appFile["pages"][pageName][
+        projectIndex
+      ].images.findIndex((item: any) => item.name === swapItems[0]);
+      const newIndex = appFile["pages"][pageName][
+        projectIndex
+      ].images.findIndex((item: any) => item.name === key);
+      if (newIndex === -1 || originalIndex === -1) return;
+
+      console.log(newIndex, originalIndex);
+      const finalIndex =
+        appFileCopy["pages"][pageName][projectIndex].images[newIndex].index;
+      appFileCopy["pages"][pageName][projectIndex].images[
+        originalIndex
+      ].index = 1000;
+      appFileCopy["pages"][pageName][projectIndex].images.forEach(
+        (img: any) =>
+          (img.index =
+            img.index <
+              appFileCopy["pages"][pageName][projectIndex].images[originalIndex]
+                .index &&
+            img.index >=
+              appFileCopy["pages"][pageName][projectIndex].images[newIndex]
+                .index
+              ? img.index + 1
+              : img.index >
+                  appFileCopy["pages"][pageName][projectIndex].images[
+                    originalIndex
+                  ].index &&
+                img.index <
+                  appFileCopy["pages"][pageName][projectIndex].images[newIndex]
+                    .index
+              ? img.index - 1
+              : img.index)
+      );
+      appFileCopy["pages"][pageName][projectIndex].images[originalIndex].index =
+        finalIndex + side;
+
+      setSwapActive(false);
+      setSwapItems([null, null]);
+      setAppFile(appFileCopy);
+      await updateAppData();
+    }
   };
 
   const renderContent = () => {
@@ -1947,20 +1983,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               }
             }
 
-            // console.log(
-            //   currentPath.length === 1,
-            //   projectItem,
-            //   currentPath.length === 2,
-            //   projectItem
-            // );
-
             let starTrue = false;
             if (currentPath.length === 1 && projectItem) {
               starTrue = projectItem.home_page;
             }
             if (currentPath.length === 2 && projectItem) {
               starTrue = projectItem.homeCover;
-              console.log(projectItem)
+            }
+            const pageName =
+              currentPath[0] === "projects"
+                ? "projects"
+                : currentPath[0] === "archives"
+                ? "archives"
+                : null;
+
+            if (pageName === null && currentPath.length > 0) return <></>;
+            let projectIndex = -1;
+            if (pageName !== null && currentPath.length > 0) {
+              if (currentPath.length === 2) {
+                projectIndex = appFile["pages"][pageName].findIndex(
+                  (item: any) => item.id === currentPath[1]
+                );
+              }
+            }
+
+            if (pageName !== null) {
+              console.log(
+                projectIndex
+                // appFile["pages"][pageName][projectIndex].images.length - 1
+              );
             }
 
             return (
@@ -1978,9 +2029,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   !swapActive ? "cursor-pointer" : ""
                 }`}
                 onClick={() =>
-                  currentPath.length !== 0 &&
-                  currentPath[0] !== "projects" &&
-                  currentPath[0] !== "archives"
+                  currentPath.length === 2 && swapActive
                     ? () => {}
                     : handleFolderClick(key)
                 }
@@ -2070,7 +2119,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   {currentPath.length === 2 &&
                     currentPath[0] === "projects" && (
                       <button
-                        className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                        className="z-[12] absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
                         onClick={async (e) => {
                           e.stopPropagation();
                           await handleStarChange(key);
@@ -2094,23 +2143,38 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     )}
 
                   {typeof currentFolder[key] === "string" && swapActive && (
-                    <div
-                      className={`${
-                        swapActive ? "cursor-pointer" : ""
-                      } z-[9] w-[25px] bg-red-400 h-[100%] absolute left-[-25px] top-0`}
-                      style={{ borderRadius: "5px" }}
-                      onClick={() => {
-                        handleMoveImageItem(key);
-                      }}
-                    ></div>
+                    <>
+                      <div
+                        className={`${
+                          swapActive ? "cursor-pointer" : ""
+                        } z-[9] w-[25px] bg-red-400 h-[100%] absolute left-[-25px] top-0`}
+                        style={{ borderRadius: "5px" }}
+                        onClick={() => {
+                          handleMoveImageItem(key, 0);
+                        }}
+                      ></div>
+
+                      {pageName !== null &&
+                        index ===
+                          appFile["pages"][pageName][projectIndex].images
+                            .length -
+                            1 && (
+                          <div
+                            className={`${
+                              swapActive ? "cursor-pointer" : ""
+                            } z-[9] w-[25px] bg-red-400 h-[100%] absolute right-[-25px] top-0`}
+                            style={{ borderRadius: "5px" }}
+                            onClick={() => {
+                              handleMoveImageItem(key, 1);
+                            }}
+                          ></div>
+                        )}
+                    </>
                   )}
 
                   {typeof currentFolder[key] === "string" && (
                     <div className="z-[9]">
                       <div
-                        onClick={() =>
-                          swapActive ? () => {} : handleFolderClick(key)
-                        }
                         className="z-[9]"
                         style={{
                           opacity: swapActive && swapItems[0] !== key ? 0.3 : 1,
