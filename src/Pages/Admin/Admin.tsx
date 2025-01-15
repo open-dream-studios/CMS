@@ -925,29 +925,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       currentPath[0] &&
       currentPath[0] === "projects"
     ) {
-      const currentFolder = getCurrentFolder()
-      const currentProject = appFile["pages"]["projects"][0].images;
-      console.log(currentProject, key);
+      const foundIdx = appFile["pages"]["projects"].findIndex((item: any) => item.id === currentPath[1])
+      const currentProject = appFile["pages"]["projects"][foundIdx].images;
       const currentImage = currentProject.filter(
         (item: any) => item.name === key
       );
       if (currentImage.length > 0) {
         return currentImage[0];
       }
-      // let indexFound = -1;
-      // for (let i = 0; i < page.length; i++) {
-      //   const searchIndex = page[i].images.filter(
-      //     (item: any) => item.name === key
-      //   );
-      //   if (searchIndex.length > 0) {
-      //     indexFound = i;
-      //   }
-      // }
-      // console.log(indexFound)
-      // if (indexFound === -1) return null;
-      // const projectItem = page[indexFound].images.filter((item: any) => item.name === key);
-      // if (!projectItem) return null;
-      // return projectItem;
     } else {
       const projectItem = page.find((item: any) => item.id === key);
       if (!projectItem) return null;
@@ -1026,17 +1011,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     );
   };
 
-    const getCurrentFolderIndex = (): FolderStructure | string => {
+  const getCurrentFolderIndex = (): FolderStructure | string => {
     if (!fullProject) return {};
     if (currentPath.length === 2) {
-      console.log("eee", appFile["pages"][currentPath[0]][currentPath[1]])
-      const projectFiltered = appFile["pages"][currentPath[0]][currentPath[1]].filter((item: any) => item.id === currentPath[1])
-      console.log(projectFiltered)
+      console.log("eee", appFile["pages"][currentPath[0]][currentPath[1]]);
+      const projectFiltered = appFile["pages"][currentPath[0]][
+        currentPath[1]
+      ].filter((item: any) => item.id === currentPath[1]);
+      console.log(projectFiltered);
       if (projectFiltered.length > 0) {
-        console.log(projectFiltered[0].index)
+        console.log(projectFiltered[0].index);
       }
     }
-    return {}
+    return {};
   };
 
   const handleFolderClick = (folderName: string) => {
@@ -1556,30 +1543,57 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleStarChange = async (key: string) => {
+    const appFileCopy = appFile;
+    if (currentPath.length === 1) {
+      let projectItem = appFileCopy["pages"]["projects"].findIndex(
+        (item: any) => item.id === key
+      );
+      if (projectItem === null || projectItem === -1) return;
+      appFileCopy["pages"]["projects"][projectItem].home_page =
+        !appFileCopy["pages"]["projects"][projectItem].home_page;
+    } else if (currentPath.length === 2) {
+      let projectItem = appFileCopy["pages"]["projects"].findIndex(
+        (item: any) => item.id === currentPath[1]
+      );
+
+      if (projectItem === null || projectItem === -1) return;
+      const foundIdx = appFileCopy["pages"]["projects"][
+        projectItem
+      ].images.findIndex((img: any) => img.name === key);
+      if (foundIdx === -1) return;
+      appFileCopy["pages"]["projects"][projectItem].images[foundIdx].homeCover =
+        !appFileCopy["pages"]["projects"][projectItem].images[foundIdx]
+          .homeCover;
+
+      // const index = appFileCopy["pages"]["projects"].findIndex(
+      //   (item: any) => item === projectItem
+      // );
+      // appFileCopy["pages"]["projects"][index].home_page =
+      //   !projectItem.home_page;
+    }
+
     // const projectItem = getFolderItem(key);
-    const projectItem = getCurrentFolderIndex();
+    // const projectItem = getCurrentFolderIndex();
 
-    // if (projectItem === null) return;
-    // const appFileCopy = appFile;
-    // if (currentPath.length === 1) {
-    //   const index = appFileCopy["pages"]["projects"].findIndex(
-    //     (item: any) => item === projectItem
-    //   );
-    //   appFileCopy["pages"]["projects"][index].home_page =
-    //     !projectItem.home_page;
-    // } else if (currentPath.length === 2) {
-    //   const index = appFileCopy["pages"]["projects"].findIndex(
-    //     (item: any) => item === projectItem
-    //   );
-    //   appFileCopy["pages"]["projects"][index].home_page =
-    //     !projectItem.home_page;
+    // // if (projectItem === null) return;
+    // // const appFileCopy = appFile;
+    // // if (currentPath.length === 1) {
+    // //   const index = appFileCopy["pages"]["projects"].findIndex(
+    // //     (item: any) => item === projectItem
+    // //   );
+    // //   appFileCopy["pages"]["projects"][index].home_page =
+    // //     !projectItem.home_page;
+    // // } else if (currentPath.length === 2) {
+    // //   const index = appFileCopy["pages"]["projects"].findIndex(
+    // //     (item: any) => item === projectItem
+    // //   );
+    // //   appFileCopy["pages"]["projects"][index].home_page =
+    // //     !projectItem.home_page;
 
+    // // }
 
-
-        
-    // }
-    // setAppFile(appFileCopy);
-    // await updateAppData();
+    setAppFile(appFileCopy);
+    await updateAppData();
   };
 
   const handleProjectColorsChange = async (key: string) => {
@@ -1914,7 +1928,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
             let projectFound = true;
             const projectItem = getFolderItem(key);
-            console.log(projectItem);
+            // console.log(projectItem);
             if (projectItem === null) {
               projectFound = false;
             }
@@ -1946,6 +1960,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             }
             if (currentPath.length === 2 && projectItem) {
               starTrue = projectItem.homeCover;
+              console.log(projectItem)
             }
 
             return (
