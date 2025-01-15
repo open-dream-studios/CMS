@@ -177,6 +177,7 @@ const Popup: React.FC<PopupProps> = ({
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        zIndex: 12,
       }}
     >
       <div
@@ -919,9 +920,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     if (!pages || Object.keys(pages).length === 0) return null;
     const page = pages[pageName];
     if (!page || page.length === 0) return null;
-    const projectItem = page.find((item: any) => item.id === key);
-    if (!projectItem) return null;
-    return projectItem;
+    if (currentPath.length === 2) {
+      // let indexFound = -1;
+      // for (let i = 0; i < page.length; i++) {
+      //   const searchIndex = page[i].images.filter(
+      //     (item: any) => item.name === key
+      //   );
+      //   if (searchIndex.length > 0) {
+      //     indexFound = i;
+      //   }
+      // }
+      // console.log(indexFound)
+      // if (indexFound === -1) return null;
+      // const projectItem = page[indexFound].images.filter((item: any) => item.name === key);
+      // if (!projectItem) return null;
+      // return projectItem;
+    } else {
+      const projectItem = page.find((item: any) => item.id === key);
+      if (!projectItem) return null;
+      return projectItem;
+    }
   };
 
   const updateAppData = async () => {
@@ -1032,7 +1050,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     if (name.includes(".")) {
       const extension = name.split(".").pop() || "";
       let imgName = name.slice(0, name.lastIndexOf("."));
-      setPopupExtention(extension);;
+      setPopupExtention(extension);
       setPopupTitle(imgName);
       setPopupKey(imgName);
       setPopupDesc("");
@@ -1519,7 +1537,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       (item: any) => item === projectItem
     );
     appFileCopy["pages"]["projects"][index].home_page = !projectItem.home_page;
-    setAppFile(appFileCopy)
+    setAppFile(appFileCopy);
     await updateAppData();
   };
 
@@ -1749,6 +1767,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setFolderSwapItems([null, null]);
   };
 
+  const handleMoveImageItem = async (key: any) => {
+    // const projectIndex = appFile["projects"]
+    // console.log(key)
+  };
+
   const renderContent = () => {
     const currentFolder = getCurrentFolder();
     const githubBaseUrl =
@@ -1845,11 +1868,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
             const isProjectFolder =
               typeof currentFolder[key] !== "string" &&
-              currentPath[0] === "projects" &&
-              key !== "covers";
+              currentPath[0] === "projects";
 
             let projectFound = true;
             const projectItem = getFolderItem(key);
+            console.log(projectItem);
             if (projectItem === null) {
               projectFound = false;
             }
@@ -1871,22 +1894,31 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             return (
               <div
                 key={key}
-                style={{ display: key === "blank.png" ? "none" : "all" }}
+                style={{
+                  display: key === "blank.png" ? "none" : "all",
+                  border: swapActive ? "1px solid red" : "1px solid #bbb",
+                }}
                 className={`min-w-[150px] flex ${
-                  key === "covers" ? "h-[40px]" : ""
-                } ${
                   isSecondaryFolder
                     ? "flex-col"
                     : "items-center justify-center w-[calc(33%-1rem)] max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
-                } relative p-2 bg-[#f9f9f9] border border-[#bbb] rounded-lg cursor-pointer`}
-                onClick={() => handleFolderClick(key)}
+                } relative p-2 bg-[#f9f9f9]  rounded-lg ${
+                  !swapActive ? "cursor-pointer" : ""
+                }`}
+                onClick={() =>
+                  currentPath.length !== 0 &&
+                  currentPath[0] !== "projects" &&
+                  currentPath[0] !== "archives"
+                    ? () => {}
+                    : handleFolderClick(key)
+                }
               >
                 <>
                   {key !== "about" &&
                     key !== "archives" &&
                     key !== "projects" &&
                     key !== "covers" && (
-                      <>
+                      <div className="z-[10]">
                         <button
                           className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
@@ -1945,7 +1977,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                             )}
                           </button>
                         )}
-                      </>
+                      </div>
                     )}
                   {key === "about" && (
                     <button
@@ -1962,57 +1994,105 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                       />
                     </button>
                   )}
-                  {typeof currentFolder[key] === "string" && (
-                    <>
-                      <img
-                        src={`${githubBaseUrl}${currentPath.join("/")}/${key}`}
-                        alt={key}
-                        className="w-full h-auto mb-8"
-                      />
-                      <div className="bottom-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
-                        <span className="truncate overflow-hidden text-ellipsis">
-                          {key}
-                        </span>
-                      </div>
 
+                  {currentPath.length === 2 &&
+                    currentPath[0] === "projects" && (
                       <button
-                        style={{
-                          opacity:  swapActive && swapItems[0] !== key ? 0 : 1,
-                          border: "1px solid black",
-                        }}
-                        className="rounded-full absolute top-[20px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+                        className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
                         onClick={async (e) => {
                           e.stopPropagation();
-                          if (!swapActive) {
-                            setSwapActive(true);
-                            const swapItemsCopy = swapItems;
-                            swapItemsCopy[0] = key;
-                            setSwapItems(swapItemsCopy);
-                          } else {
-                            if (key === swapItems[0]) {
-                              setSwapItems([null, null]);
-                              setSwapActive(false);
-                              return;
-                            }
-                            const swapItemsCopy = swapItems;
-                            swapItemsCopy[1] = key;
-                            setSwapItems(swapItemsCopy);
-                            await handleSwapItems();
-                          }
+                          await handleStarChange(key);
+                          await getRepoTree();
                         }}
                       >
-                        <GrPowerCycle
-                          color={
-                            swapActive && swapItems[0] !== key
-                              ? "#00BBFC"
-                              : "black"
-                          }
-                          size={15}
-                          className="ml-[-0.5px]"
-                        />
+                        {projectItem ? (
+                          <IoStar
+                            className="mt-[-1px]"
+                            color={"green"}
+                            size={15}
+                          />
+                        ) : (
+                          <IoStarOutline
+                            className="mt-[-1px]"
+                            color={"#888"}
+                            size={15}
+                          />
+                        )}
                       </button>
+                    )}
 
-                      {/* {currentPath.length > 1 &&
+                  {typeof currentFolder[key] === "string" && swapActive && (
+                    <div
+                      className={`${
+                        swapActive ? "cursor-pointer" : ""
+                      } z-[9] w-[25px] bg-red-400 h-[100%] absolute left-[-25px] top-0`}
+                      style={{ borderRadius: "5px" }}
+                      onClick={() => {
+                        handleMoveImageItem(key);
+                      }}
+                    ></div>
+                  )}
+
+                  {typeof currentFolder[key] === "string" && (
+                    <div className="z-[9]">
+                      <div
+                        onClick={() =>
+                          swapActive ? () => {} : handleFolderClick(key)
+                        }
+                        className="z-[9]"
+                        style={{
+                          opacity: swapActive && swapItems[0] !== key ? 0.3 : 1,
+                        }}
+                      >
+                        <img
+                          src={`${githubBaseUrl}${currentPath.join(
+                            "/"
+                          )}/${key}`}
+                          alt={key}
+                          className="w-full h-auto mb-8"
+                        />
+                        <div className="bottom-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
+                          <span className="truncate overflow-hidden text-ellipsis">
+                            {key}
+                          </span>
+                        </div>
+
+                        <button
+                          style={{
+                            opacity: swapActive && swapItems[0] !== key ? 0 : 1,
+                            border: !swapActive
+                              ? "1px solid black"
+                              : "1px solid #00BBFC",
+                          }}
+                          className="rounded-full absolute top-[20px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!swapActive) {
+                              setSwapActive(true);
+                              const swapItemsCopy = swapItems;
+                              swapItemsCopy[0] = key;
+                              setSwapItems(swapItemsCopy);
+                            } else {
+                              if (key === swapItems[0]) {
+                                setSwapItems([null, null]);
+                                setSwapActive(false);
+                                return;
+                              }
+                              const swapItemsCopy = swapItems;
+                              swapItemsCopy[1] = key;
+                              setSwapItems(swapItemsCopy);
+                              await handleSwapItems();
+                            }
+                          }}
+                        >
+                          <GrPowerCycle
+                            color={swapActive ? "#00BBFC" : "black"}
+                            size={15}
+                            className="ml-[-0.5px]"
+                          />
+                        </button>
+
+                        {/* {currentPath.length > 1 &&
                         currentPath[0] === "archives" && (
                           <>
                             <button
@@ -2067,7 +2147,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                             )}
                           </>
                         )} */}
-                    </>
+                      </div>
+                    </div>
                   )}
                   {typeof currentFolder[key] !== "string" &&
                     currentPath[0] === "projects" &&
