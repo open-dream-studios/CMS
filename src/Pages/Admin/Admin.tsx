@@ -1817,7 +1817,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const projectIndex = appFile["pages"][pageName].findIndex(
         (item: any) => item.id === currentPath[1]
       );
-      console.log(projectIndex === -1 || swapItems[0] === null);
+      // console.log(projectIndex === -1 || swapItems[0] === null);
       if (projectIndex === -1 || swapItems[0] === null) return;
       const originalIndex = appFile["pages"][pageName][
         projectIndex
@@ -1827,9 +1827,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       ].images.findIndex((item: any) => item.name === key);
       if (newIndex === -1 || originalIndex === -1) return;
 
-      console.log(newIndex, originalIndex);
+      console.log(newIndex, originalIndex, side);
       const finalIndex =
         appFileCopy["pages"][pageName][projectIndex].images[newIndex].index;
+      appFileCopy["pages"][pageName][projectIndex].images[
+        originalIndex
+      ].index = 1000;
+      const originalIndexIndex = appFileCopy["pages"][pageName][projectIndex].images[originalIndex].index;
       appFileCopy["pages"][pageName][projectIndex].images[
         originalIndex
       ].index = 1000;
@@ -1837,19 +1841,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         (img: any) =>
           (img.index =
             img.index <
-              appFileCopy["pages"][pageName][projectIndex].images[originalIndex]
-                .index &&
+              originalIndexIndex &&
             img.index >=
               appFileCopy["pages"][pageName][projectIndex].images[newIndex]
                 .index
               ? img.index + 1
-              : img.index >
-                  appFileCopy["pages"][pageName][projectIndex].images[
-                    originalIndex
-                  ].index &&
+              : img.index > originalIndexIndex &&
                 img.index <
                   appFileCopy["pages"][pageName][projectIndex].images[newIndex]
-                    .index
+                    .index + side
               ? img.index - 1
               : img.index)
       );
@@ -1997,7 +1997,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 ? "archives"
                 : null;
 
-            if (pageName === null && currentPath.length > 0) return <></>;
+            if (pageName === null && currentPath.length > 0 && currentPath[0] !== "about") return <></>;
             let projectIndex = -1;
             if (pageName !== null && currentPath.length > 0) {
               if (currentPath.length === 2) {
@@ -2007,12 +2007,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               }
             }
 
-            if (pageName !== null) {
-              console.log(
-                projectIndex
-                // appFile["pages"][pageName][projectIndex].images.length - 1
-              );
-            }
+            // if (pageName !== null) {
+            //   console.log(
+            //     projectIndex
+            //     // appFile["pages"][pageName][projectIndex].images.length - 1
+            //   );
+            // }
 
             return (
               <div
