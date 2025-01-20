@@ -1874,13 +1874,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     // Render folders or multiple items, including images
     return (
       <div
-        className={`flex flex-wrap gap-6 mt-6 ${
+        className={`flex ${currentPath.length <= 1 && !(currentPath.length === 1 &&  currentPath[0] === "about") ? "justify-left flex-col" : "justify-center flex-wrap"} gap-6 mt-6 ${
           currentPath[0] === "about" ||
           (currentPath[0] === "projects" && currentPath.length > 1) ||
           (currentPath[0] === "archives" && currentPath.length > 1)
             ? "pb-[95px] top-0 left-0 "
             : ""
-        } min-h-[40px] justify-center absolute px-[22px]`}
+        } absolute px-[22px]`}
         // style={{ backgroundColor: "red" }}
       >
         {Object.keys(currentFolder)
@@ -2021,10 +2021,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   display: key === "blank.png" ? "none" : "all",
                   border: swapActive ? "1px solid red" : "1px solid #bbb",
                 }}
-                className={`min-w-[150px] flex ${
+                className={`min-w-[150px] ${currentPath.length === 1 ? currentPath[0] === "about" ? "" : currentPath[0] === "projects" ? "h-[105px] pl-[17px]" :  "h-[80px] pl-[17px]" : ""} flex ${
                   isSecondaryFolder
                     ? "flex-col"
-                    : "items-center justify-center w-[calc(33%-1rem)] max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
+                    : "items-center justify-center max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
                 } relative p-2 bg-[#f9f9f9]  rounded-lg ${
                   !swapActive ? "cursor-pointer" : ""
                 }`}
@@ -2287,8 +2287,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     </div>
                   )}
                   {typeof currentFolder[key] !== "string" &&
-                    currentPath[0] === "projects" &&
-                    key !== "covers" && (
+                    currentPath[0] === "projects" && (
                       <div className="h-[200px] w-[auto]">
                         {!projectFound ? (
                           <>{key}</>
