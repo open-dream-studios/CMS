@@ -823,7 +823,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   //   }
   // };
 
-  async function updateAppFile() {
+  async function updateAppFile(appFileCopy: any) {
     const filePath = "src/app.json";
 
     try {
@@ -836,7 +836,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const updatedContent = btoa(
         unescape(
           encodeURIComponent(
-            typeof appFile === "string" ? appFile : JSON.stringify(appFile)
+            typeof appFileCopy === "string" ? appFileCopy : JSON.stringify(appFileCopy)
           )
         )
       );
@@ -860,8 +860,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       console.error("Error updating the file:", error);
     }
 
-    if (appFile["pages"] !== undefined) {
-      const indexMap = Object.values(appFile["pages"])
+    if (appFileCopy["pages"] !== undefined) {
+      const indexMap = Object.values(appFileCopy["pages"])
         .flat()
         .reduce((map: any, item: any) => {
           map[item.id] = item.title;
@@ -944,8 +944,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  const updateAppData = async () => {
-    await updateAppFile();
+  const updateAppData = async (appFileCopy: any) => {
+    await updateAppFile(appFileCopy);
     await getRepoTree();
   };
 
@@ -1140,14 +1140,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           );
         }
       }
-
+      // setAppFile(appFileCopy);    
       await deleteItem(
         "public/assets/" + path,
         path.split("/").pop().includes(".")
       );
-
-      setAppFile(appFileCopy);
-      updateAppData();
+      console.log(appFileCopy)
+      updateAppData(appFileCopy);
     } catch (error) {
       console.error(error);
     } finally {
@@ -1459,8 +1458,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         appFileCopy["pages"][pageName][index].description2 = newDesc2;
         appFileCopy["pages"][pageName][index].description3 = newDesc3;
       }
-      setAppFile(appFileCopy);
-      await updateAppData();
+      // setAppFile(appFileCopy);
+      await updateAppData(appFileCopy);
     } else {
       const folderContents = collectImgNames();
       const originalName = popupKey + "." + popupExtention;
@@ -1519,8 +1518,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           return;
         }
         console.log(appFileCopy);
-        setAppFile(appFileCopy);
-        await updateAppData();
+        // setAppFile(appFileCopy);
+        await updateAppData(appFileCopy);
       }
       await getRepoTree();
     }
@@ -1550,8 +1549,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           .projectCover;
     }
 
-    setAppFile(appFileCopy);
-    await updateAppData();
+    // setAppFile(appFileCopy);
+    await updateAppData(appFileCopy);
   };
 
   const handleProjectColorsChange = async (key: string) => {
@@ -1579,7 +1578,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       if (colorToChange[1] !== null && pageName === "projects") {
         appFileCopy["pages"][pageName][index].text_color = colorToChange[1];
       }
-      await updateAppData();
+      await updateAppData(appFileCopy);
     }
     setChangedColorItems({});
     setColorToChange([null, null]);
@@ -1773,8 +1772,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       appFileCopy["pages"][currentPath[0]][index1].index = storedIndex2;
       appFileCopy["pages"][currentPath[0]][index2].index = storedIndex1;
 
-      setAppFile(appFileCopy);
-      await updateAppData();
+      // setAppFile(appFileCopy);
+      await updateAppData(appFileCopy);
     }
     setFolderSwapActive(false);
     setFolderSwapItems([null, null]);
@@ -1837,8 +1836,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
       setSwapActive(false);
       setSwapItems([null, null]);
-      setAppFile(appFileCopy);
-      await updateAppData();
+      // setAppFile(appFileCopy);
+      await updateAppData(appFileCopy);
     }
   };
 
@@ -2482,8 +2481,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [aboutPopupOpen, setAboutPopupOpen] = useState(false);
   const handleAppFileChange = (newAppFile: string) => {
     if (Object.keys(newAppFile).length > 0) {
-      setAppFile(newAppFile);
-      updateAppData();
+      // setAppFile(newAppFile);
+      updateAppData(newAppFile);
     }
   };
 
@@ -2640,6 +2639,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setLoading(true);
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
     if (imageFiles.length > 0) {
+      const appFileCopy = appFile;
       const uploadedNames: string[] = [];
       const readerPromises = imageFiles.map((file) => {
         return new Promise<{ name: string; src: string }>((resolve) => {
@@ -2673,7 +2673,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           }
           uploadedNames.push(sanitizedFileName);
 
-          const appFileCopy = appFile;
+          
 
           if (currentPath[0] === "about") {
             appFileCopy["pages"]["about"]["images"].push({
@@ -2716,7 +2716,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             }
           }
 
-          setAppFile(appFileCopy);
+          // setAppFile(appFileCopy);
           nextIndex += 1;
 
           const reader = new FileReader();
@@ -2735,10 +2735,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           setUploadPopup(false);
           await uploadToGitHub(images);
           await getRepoTree();
-          updateAppData();
         })
         .then(() => {
           setLoading(false);
+          updateAppData(appFileCopy);
         });
     } else {
       alert("Only image files are allowed!");
@@ -2823,8 +2823,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           images: [],
         });
       }
-      setAppFile(appFileCopy);
-      await updateAppData();
+      // setAppFile(appFileCopy);
+      await updateAppData(appFileCopy);
 
       await uploadBlankImageToGitHub(nextTitle);
       setTimeout(async () => {
