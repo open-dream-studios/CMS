@@ -1833,15 +1833,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       appFileCopy["pages"][pageName][projectIndex].images[
         originalIndex
       ].index = 1000;
-      const originalIndexIndex = appFileCopy["pages"][pageName][projectIndex].images[originalIndex].index;
+      const originalIndexIndex =
+        appFileCopy["pages"][pageName][projectIndex].images[originalIndex]
+          .index;
       appFileCopy["pages"][pageName][projectIndex].images[
         originalIndex
       ].index = 1000;
       appFileCopy["pages"][pageName][projectIndex].images.forEach(
         (img: any) =>
           (img.index =
-            img.index <
-              originalIndexIndex &&
+            img.index < originalIndexIndex &&
             img.index >=
               appFileCopy["pages"][pageName][projectIndex].images[newIndex]
                 .index
@@ -1849,7 +1850,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               : img.index > originalIndexIndex &&
                 img.index <
                   appFileCopy["pages"][pageName][projectIndex].images[newIndex]
-                    .index + side
+                    .index +
+                    side
               ? img.index - 1
               : img.index)
       );
@@ -1874,7 +1876,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     // Render folders or multiple items, including images
     return (
       <div
-        className={`flex ${currentPath.length <= 1 && !(currentPath.length === 1 &&  currentPath[0] === "about") ? "justify-left flex-col" : "justify-center flex-wrap"} gap-6 mt-6 ${
+        className={`flex ${
+          currentPath.length <= 1 &&
+          !(currentPath.length === 1 && currentPath[0] === "about")
+            ? "justify-left flex-col"
+            : "justify-center flex-wrap"
+        } gap-6 mt-6 ${
           currentPath[0] === "about" ||
           (currentPath[0] === "projects" && currentPath.length > 1) ||
           (currentPath[0] === "archives" && currentPath.length > 1)
@@ -1997,7 +2004,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 ? "archives"
                 : null;
 
-            if (pageName === null && currentPath.length > 0 && currentPath[0] !== "about") return <></>;
+            if (
+              pageName === null &&
+              currentPath.length > 0 &&
+              currentPath[0] !== "about"
+            )
+              return <></>;
             let projectIndex = -1;
             if (pageName !== null && currentPath.length > 0) {
               if (currentPath.length === 2) {
@@ -2021,9 +2033,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   display: key === "blank.png" ? "none" : "all",
                   border: swapActive ? "1px solid red" : "1px solid #bbb",
                 }}
-                className={`min-w-[150px] ${currentPath.length === 1 ? currentPath[0] === "about" ? "" : currentPath[0] === "projects" ? "h-[105px] pl-[17px]" :  "h-[80px] pl-[17px]" : ""} flex ${
-                  isSecondaryFolder
-                    ? "flex-col"
+                className={`min-w-[150px] ${
+                  currentPath.length === 1
+                    ? currentPath[0] === "about"
+                      ? ""
+                      : currentPath[0] === "projects"
+                      ? "h-[105px] pl-[17px]"
+                      : "h-[80px] pl-[17px]"
+                    : ""
+                } flex ${
+                  currentPath.length === 1 && currentPath[0] !== "about"
+                    ? "flex-col w-[300px]"
                     : "items-center justify-center max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
                 } relative p-2 bg-[#f9f9f9]  rounded-lg ${
                   !swapActive ? "cursor-pointer" : ""
@@ -2037,8 +2057,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 <>
                   {key !== "about" &&
                     key !== "archives" &&
-                    key !== "projects" &&
-                    key !== "covers" && (
+                    key !== "projects" && (
                       <div className="z-[10]">
                         <button
                           className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
@@ -2299,10 +2318,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                               whiteSpace: "normal",
                             }}
                           >
-                            <p>{unSanitizeTitle(projectItem.title, false)}</p>
-                            <p>
+                            <p className="truncate overflow-hidden text-ellipsis">
+                              {unSanitizeTitle(projectItem.title, false)}
+                            </p>
+
+                            <p className="truncate overflow-hidden text-ellipsis">
                               {unSanitizeTitle(projectItem.description, true)}
                             </p>
+
                             <div className="flex flex-row gap-2 mt-[7px]">
                               <div
                                 onClick={(e: any) => e.stopPropagation()}
