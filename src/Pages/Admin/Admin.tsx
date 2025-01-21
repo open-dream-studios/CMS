@@ -219,7 +219,7 @@ const Popup: React.FC<PopupProps> = ({
           }}
         />
         {((currentPath[0] === "archives" && currentPath.length === 1) ||
-          currentPath[0] === "projects") && (
+          (currentPath[0] === "projects" && currentPath.length === 1)) && (
           <>
             <p className="font-[500] text-[14px] mb-[1px] mt-[10px]">
               Description
@@ -947,8 +947,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const updateAppData = async (appFileCopy: any) => {
+    setLoading(true)
     await updateAppFile(appFileCopy);
     await getRepoTree();
+    setLoading(false)
   };
 
   // FULL REPOSITORY
