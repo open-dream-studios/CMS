@@ -38,6 +38,7 @@ import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
 import { GIT_KEYS } from "../../App";
 import { left } from "@cloudinary/url-gen/qualifiers/textAlignment";
+import _ from "lodash";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -1102,75 +1103,51 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const handleDeleteItem = async (path: any) => {
     setLoading(true);
     try {
-      let pageName = null;
-      let index = null;
+      let pageName = currentPath[0];
+      let folderIndex = null;
+      if (Object.keys(appFile).length === 0) return null;
+      const pages = appFile["pages"];
+      if (Object.keys(pages).length === 0) return null;
+
       if (currentPath[0] !== "about") {
-        pageName =
-          currentPath[0] === "archives"
-            ? "archives"
-            : currentPath[0] === "projects"
-            ? "projects"
-            : null;
-        if (pageName === null) return null;
-        if (Object.keys(appFile).length === 0) return null;
-        const pages = appFile["pages"];
-        if (!pages || Object.keys(pages).length === 0) return null;
-        const page = pages[pageName];
+        const page = pages[currentPath[0]];
         if (!page || page.length === 0) return null;
-        index = page.findIndex((item: any) => item.id === path.split("/")[1]);
-        if (index === null) return null;
+        folderIndex = page.findIndex(
+          (item: any) => item.id === path.split("/")[1]
+        );
+        if (folderIndex === -1) return null;
       }
 
-      if (
-        !path.split("/").pop().includes(".") &&
-        pageName !== null &&
-        index !== null
-      ) {
-        const appFileCopy = appFile;
-        appFileCopy["pages"][pageName].splice(index, 1);
-        setAppFile(appFileCopy);
-      } else if (path.split("/").pop().includes(".")) {
-        const appFileCopy = appFile;
-        const pageName = currentPath[0];
-        if (pageName === "about") {
-          const appFileCopyImages = appFileCopy["pages"][
-            pageName
-          ].images.filter((img: any) => img.name !== path.split("/").pop());
-          appFileCopy["pages"][pageName].images = appFileCopyImages;
-        } else if (index !== null && pageName !== null) {
-          if (pageName === "projects") {
-            console.log(
-              appFileCopy["pages"][pageName][index].images,
-              path.split("/").pop()
-            );
-            const appFileCopyImages = appFileCopy["pages"][pageName][
-              index
-            ].images.filter((img: any) => img.name !== path.split("/").pop());
-            appFileCopy["pages"][pageName][index].images = appFileCopyImages;
-          }
-          if (pageName === "archives") {
-            console.log(
-              appFileCopy["pages"][pageName][index].images,
-              path.split("/").pop()
-            );
-            const appFileCopyImages = appFileCopy["pages"][pageName][
-              index
-            ].images.filter((img: any) => img.name !== path.split("/").pop());
-            appFileCopy["pages"][pageName][index].images = appFileCopyImages;
-          }
-        }
-        setAppFile(appFileCopy);
+      const appFileCopy = JSON.parse(JSON.stringify(appFile));
+
+      if (!path.split("/").pop().includes(".")) {
+        appFileCopy["pages"][pageName].splice(folderIndex, 1);
       } else {
-        return;
+        if (pageName === "about") {
+          const imageIndex = appFileCopy["pages"][pageName].images.findIndex(
+            (img: any) => img.name === path.split("/").pop()
+          );
+          if (imageIndex === -1) return;
+          appFileCopy["pages"][pageName].images.splice(imageIndex, 1);
+        } else {
+          const imageIndex = appFileCopy["pages"][pageName][
+            folderIndex
+          ].images.findIndex((img: any) => img.name === path.split("/").pop());
+          if (imageIndex === -1) return;
+          appFileCopy["pages"][pageName][folderIndex].images.splice(
+            imageIndex,
+            1
+          );
+        }
       }
 
       await deleteItem(
         "public/assets/" + path,
         path.split("/").pop().includes(".")
       );
-      updateAppData();
 
-      await getRepoTree();
+      setAppFile(appFileCopy);
+      updateAppData();
     } catch (error) {
       console.error(error);
     } finally {
@@ -1568,9 +1545,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         projectItem
       ].images.findIndex((img: any) => img.name === key);
       if (foundIdx === -1) return;
-      appFileCopy["pages"]["projects"][projectItem].images[foundIdx].homeCover =
+      appFileCopy["pages"]["projects"][projectItem].images[foundIdx].projectCover =
         !appFileCopy["pages"]["projects"][projectItem].images[foundIdx]
-          .homeCover;
+          .projectCover;
     }
 
     setAppFile(appFileCopy);
@@ -1995,7 +1972,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               starTrue = projectItem.home_page;
             }
             if (currentPath.length === 2 && projectItem) {
-              starTrue = projectItem.homeCover;
+              starTrue = projectItem.projectCover;
             }
             const pageName =
               currentPath[0] === "projects"
@@ -2670,10 +2647,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           if (!extension) return;
 
           // Remove extension
-          const fullExtension = "." + extension;
-          const newFileName = file.name.endsWith(fullExtension)
-            ? file.name.slice(0, -fullExtension.length)
-            : file.name;
+          const lastDotIndex = file.name.lastIndexOf(".");
+          if (lastDotIndex === -1) return;
+          const newFileName = file.name.slice(0, lastDotIndex);
 
           let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
 
@@ -2719,24 +2695,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 index: nextIndex,
                 name: sanitizedFileName,
                 projectCover: false,
-                homeCover: false,
               });
             }
           } else if (
             currentPath[0] === "archives" &&
             currentPath.length === 2
           ) {
-            console.log(323);
             const projectItem = appFile["pages"]["archives"].filter(
               (item: any) => item.id === currentPath[1]
             );
-            console.log(projectItem);
-            console.log(appFileCopy["pages"]["archives"]);
+
             if (projectItem.length > 0) {
               const foundIndex = appFileCopy["pages"]["archives"].findIndex(
                 (item: any) => item.id === currentPath[1]
               );
-              console.log(foundIndex);
               appFileCopy["pages"]["archives"][foundIndex]["images"].push({
                 index: nextIndex,
                 name: sanitizedFileName,
