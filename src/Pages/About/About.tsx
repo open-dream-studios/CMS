@@ -155,13 +155,11 @@ const About: React.FC<PageProps> = ({ navigate }) => {
       coversRef.current = project["about"] as CoverEntry[];
       setCoversReady(project["about"] as CoverEntry[]);
       console.log(project["about"])
-      // const newAboutText = project["about"].filter((item) =>
-      //   Object.keys(item).includes("sections")
-      // );
-      // console.log(newAboutText)
-      // if (newAboutText.length > 0) {
-      //   setAboutText(newAboutText[0]);
-      // }
+      let newAboutText = projectAssets as any
+      newAboutText = newAboutText["aboutText"]
+      if (Object.keys(newAboutText).length > 0) {
+        setAboutText(newAboutText);
+      }
     }
   }, [projectAssets]);
 

@@ -57,7 +57,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const [firstPageLoad, setFirstPageLoad] = useState(false);
 
   useEffect(() => {
-    const project = projectAssets as any
+    const project = projectAssets as any;
     if (
       project !== null &&
       project["projects"] &&
@@ -386,7 +386,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     >
       <div
         ref={projectPageRef}
-        className={`absolute right-0 top-0 w-[100vw] sm:w-[calc(98vw-220px)] min-h-[100vh] md:w-[calc(98vw-250px)]  h-[auto] flex flex-col pl-[calc(30px+3vw)] pr-[calc(30px+3vw)] sm:pl-0 lg:pl-[calc(30px+3vw)] pt-[90px]`}
+        className={`absolute right-0 top-0 w-[100vw] sm:w-[calc(98vw-220px)] min-h-[150vh] md:w-[calc(98vw-250px)]  h-[auto] flex flex-col pl-[calc(30px+3vw)] pr-[calc(30px+3vw)] sm:pl-0 lg:pl-[calc(30px+3vw)] pt-[90px]`}
         style={{
           pointerEvents: "all",
           backgroundColor: slideUpComponent
@@ -416,47 +416,35 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                     //       : coversRef.current[selectedProjectName[1]].images[0]
                     //     : ""
                     // }
-                  src={imageDimensions && imageDimensions.length > 0? imageDimensions[0].src : ""}
-
+                    src={
+                      imageDimensions && imageDimensions.length > 0
+                        ? imageDimensions[0].src
+                        : ""
+                    }
                     className="w-[100%] aspect-[1.55/1] max-h-[50vh]"
                     style={{ objectFit: "cover" }}
                   />
 
-                  <div
-                    className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]"
-                    style={{ backgroundColor: "transparent" }}
-                  >
-                    {slideUpComponent ? (
-                      <>
-                        {incomingProject !== null &&
-                        coversRef.current !== null ? (
-                          <>
-                            {coversRef.current[incomingProject].title
-                              .split("_")
-                              .map(
-                                (item) =>
-                                  item.charAt(0).toUpperCase() + item.slice(1)
-                              )
-                              .join(" ")}
-                          </>
-                        ) : (
-                          <></>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        {selectedProjectName[1] !== null &&
-                          coversRef.current !== null &&
-                          coversRef.current[selectedProjectName[1]].title
+                  {incomingProject !== null && coversRef.current !== null && (
+                    <>
+                      <div className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]">
+                        <>
+                          {coversRef.current[incomingProject].title
                             .split("_")
                             .map(
                               (item) =>
                                 item.charAt(0).toUpperCase() + item.slice(1)
                             )
                             .join(" ")}
-                      </>
-                    )}
-                  </div>
+                        </>
+                      </div>
+                      <div className="text-center w-[100%] flex justify-center mt-[calc(-4.1%+0.4vw)] mb-[4%] lg:mb-[3%] text-[calc(0.5vw+9px)]">
+                        {coversRef.current[incomingProject].description
+                          .toUpperCase()
+                          .replaceAll("_", " ")}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="w-[100%] flex justify-center">
                   <div
@@ -496,7 +484,11 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
             <div className="w-[100%] pl-[5px]">
               <img
                 alt=""
-                src={imageDimensions && imageDimensions.length > 0? imageDimensions[0].src : ""}
+                src={
+                  imageDimensions && imageDimensions.length > 0
+                    ? imageDimensions[0].src
+                    : ""
+                }
                 // src={
                 //   selectedProjectName[1] !== null && coversRef.current !== null
                 //     ? slideUpComponent && selectedProjectName[2] !== null
@@ -508,64 +500,20 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                 style={{ objectFit: "cover" }}
               />
 
-              <div
-                className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]"
-                style={{ backgroundColor: "transparent" }}
-              >
-              
-                {slideUpComponent ? (
-                  <>
-                    {incomingProject !== null && coversRef.current !== null ? (
-                      <>
-                        {coversRef.current[incomingProject].title
-                          .split("_")
-                          .map(
-                            (item) =>
-                              item.charAt(0).toUpperCase() + item.slice(1)
-                          )
-                          .join(" ")}
-                      </>
-                    ) : (
-                      <></>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {selectedProjectName[1] !== null &&
-                      coversRef.current !== null &&
-                      coversRef.current[selectedProjectName[1]].title
-                        .split("_")
-                        .map(
-                          (item) => item.charAt(0).toUpperCase() + item.slice(1)
-                        )
-                        .join(" ")}
-                  </>
-                )}
+              <div className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]">
+                {selectedProjectName[1] !== null &&
+                  coversRef.current !== null &&
+                  coversRef.current[selectedProjectName[1]].title
+                    .split("_")
+                    .map((item) => item.charAt(0).toUpperCase() + item.slice(1))
+                    .join(" ")}
               </div>
-              <div className="text-center w-[100%] flex justify-center mt-[-4.1%] mb-[4%] lg:mb-[3%] text-[calc(0.5vw+9px)]">
-              
-
-               {slideUpComponent ? (
-                  <>
-                    {incomingProject !== null && coversRef.current !== null ? (
-                      <>
-                        {coversRef.current[incomingProject].description.toUpperCase().replaceAll("_"," ")}
-                      </>
-                    ) : (
-                      <></>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {selectedProjectName[1] !== null &&
-                      coversRef.current !== null &&
-                      coversRef.current[selectedProjectName[1]].description.toUpperCase().replaceAll("_"," ")}
-                  </>
-                )}
-
-
-              
-              
+              <div className="text-center w-[100%] flex justify-center mt-[calc(-4.1%+0.4vw)] mb-[4%] lg:mb-[3%] text-[calc(0.5vw+9px)]">
+                {selectedProjectName[1] !== null &&
+                  coversRef.current !== null &&
+                  coversRef.current[selectedProjectName[1]].description
+                    .toUpperCase()
+                    .replaceAll("_", " ")}
               </div>
             </div>
             <div className="w-[100%] flex justify-center">

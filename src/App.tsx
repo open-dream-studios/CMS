@@ -254,6 +254,7 @@ const App = () => {
       const tree: any = {};
       const pageNames = Object.keys(filteredProject);
       pageNames.push("home");
+      pageNames.push("aboutText");
 
       for (let i = 0; i < pageNames.length; i++) {
         const newPage = sortPages(pageNames[i], filteredProject, appFile);
@@ -339,6 +340,11 @@ const App = () => {
     let result = null;
     let collectNewImages = false;
     const collectAllImagesCopy = collectAllImages.current;
+
+    if (page === "aboutText" && Object.keys(project["about"]).length > 0) {
+      const folder = appFile["pages"]["about"]["sections"];
+      return folder
+    }
 
     if (page === "about" && Object.keys(project[page]).length > 0) {
       if (collectAllImagesCopy[1].length === 0) {
