@@ -8,7 +8,9 @@ import Projects from "./Pages/Projects/Projects";
 import Navbar from "./Components/Navbar/Navbar";
 import Archives from "./Pages/Archives/Archives";
 import ProjectsPage from "./Pages/Projects/ProjectsPage/ProjectsPage";
-import useProjectColorsState, { ProjectColors } from "./store/useProjectColorsStore";
+import useProjectColorsState, {
+  ProjectColors,
+} from "./store/useProjectColorsStore";
 import useCurrentPageState from "./store/useCurrentPageStore";
 import useCurrentNavColorState from "./store/useCurrentNavColorStore";
 import useSelectedProjectNameState from "./store/useSelectedProjectNameStore";
@@ -165,7 +167,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   // FULL REPOSITORY & APP FILE
-    const fetchAppFileContents = async (blobUrl: string) => {
+  const fetchAppFileContents = async (blobUrl: string) => {
     try {
       const response = await fetch(blobUrl, {
         headers: {
@@ -189,8 +191,8 @@ const App = () => {
       if (decodedContent) {
         try {
           const parsedContent = JSON.parse(decodedContent);
-          setAppDataFile(parsedContent);  
-          return parsedContent
+          setAppDataFile(parsedContent);
+          return parsedContent;
         } catch (error) {
           console.error("Error parsing JSON content:", error);
         }
@@ -259,6 +261,7 @@ const App = () => {
           tree[pageNames[i]] = newPage;
         }
       }
+
       setProjectAssets(tree);
       let startingPreloadIndex = 0;
       if (location.pathname.startsWith("/about")) {
@@ -286,8 +289,51 @@ const App = () => {
           setPreloadedImages(preloadedImagesCopy);
         }
       }
+
+      //  HOME PAGE COVER LAYOUT ORDER (num covers, 2 layouts available so far)
+      const projectCovers = appFile["pages"]["projects"].filter(
+        (item: any) => item.home_page === true
+      );
+      if (projectCovers.length !== 0) {
+        const numberOfCovers = 3;
+        const numberOfLayoutsCreated = 7;
+
+        let previous = -1; // Start with a value that can't match the first random number
+        const newLayoutOrder = Array.from(
+          { length: numberOfCovers },
+          (_, index) => {
+            let next;
+            do {
+              next = Math.floor(Math.random() * numberOfLayoutsCreated);
+            } while (next === previous);
+            previous = next;
+            return next;
+          }
+        );
+
+        // Ensure the first and last elements are different
+        if (
+          newLayoutOrder.length > 1 &&
+          newLayoutOrder[0] === newLayoutOrder[newLayoutOrder.length - 1]
+        ) {
+          let replacement;
+          do {
+            replacement = Math.floor(Math.random() * numberOfLayoutsCreated);
+          } while (
+            replacement === newLayoutOrder[newLayoutOrder.length - 2] ||
+            replacement === newLayoutOrder[0]
+          );
+          newLayoutOrder[newLayoutOrder.length - 1] = replacement;
+        }
+
+        setLayoutOrder(newLayoutOrder);
+      }
     }
   };
+
+  // Generate an array where each number is unique to the two next to it
+  const [layoutOrder, setLayoutOrder] = useState<number[]>([]);
+
 
   function sortPages(page: any, project: any, appFile: any) {
     let result = null;
@@ -298,26 +344,27 @@ const App = () => {
       if (collectAllImagesCopy[1].length === 0) {
         collectNewImages = true;
       }
+      const folder = appFile["pages"]["about"]["images"];
       const mappedImages: Entry[] = Object.keys(project[page])
         .filter((item) => item !== "blank.png")
+        .filter(
+          (img: any) =>
+            folder.findIndex((item: any) => item.name === img) !== -1
+        )
         .map((img: any) => {
-          const imgName = img.split(".")[0];
-          const index = imgName.split("--")[0];
+          const index = folder.findIndex((item: any) => item.name === img);
           if (collectNewImages) {
             collectAllImagesCopy[1].push(BASE_URL + page + "/" + img);
           }
           return {
             title: img,
             url: BASE_URL + page + "/" + img,
-            index: !isNaN(Number(index))
-              ? parseInt(index, 10)
-              : random4Digits(),
+            index: index,
           };
         });
       const sortedImages = mappedImages.sort(
         (a: any, b: any) => a.index - b.index
       );
-      sortedImages.push(appFile["pages"]["about"])
       result = sortedImages;
     }
 
@@ -326,7 +373,6 @@ const App = () => {
       if (collectAllImagesCopy[2].length === 0) {
         collectNewImages = true;
       }
-
       const indexMap: any =
         appFile["pages"] === undefined
           ? null
@@ -337,30 +383,47 @@ const App = () => {
                 return map;
               }, {});
 
+      const appFilePage = appFile["pages"][page];
       const mappedEntries: any = Object.keys(project[page])
         .filter((item) => item !== "blank.png")
+        .filter(
+          (folder: any) =>
+            appFilePage.findIndex((item: any) => item.id === folder) !== -1
+        )
         .map((folder: any) => {
           if (indexMap !== null) {
-            newProjectsList.push(indexMap[folder].replaceAll("_",""));
+            newProjectsList.push(indexMap[folder].replaceAll("_", ""));
           }
+          const appFolderIndex = appFilePage.findIndex(
+            (item: any) => item.id === folder
+          );
+          const appFileFolder =
+            appFile["pages"][page][appFolderIndex]["images"];
           const mappedImages: Entry[] = Object.keys(project[page][folder])
-            .filter((item) => item !== "blank.png" && item !== "covers")
+            .filter((item) => item !== "blank.png")
+            .filter(
+              (img: any) =>
+                appFileFolder.findIndex((item: any) => item.name === img) !== -1
+            )
             .map((folderItem: any) => {
-              const imgName = folderItem.split(".")[0];
-              const index = imgName.split("--")[0];
+              const foundIndex = appFileFolder.findIndex(
+                (item: any) => item.name === folderItem
+              );
+              const imgIndex = appFileFolder[foundIndex].index;
+
               if (collectNewImages) {
                 collectAllImagesCopy[2].push(
                   BASE_URL + page + "/" + folder + "/" + folderItem
                 );
               }
+
               return {
                 title: folderItem,
                 url: BASE_URL + page + "/" + folder + "/" + folderItem,
-                index: !isNaN(Number(index))
-                  ? parseInt(index, 10)
-                  : random4Digits(),
+                index: imgIndex,
               };
             });
+
           const sortedImages = mappedImages.sort(
             (a: any, b: any) => a.index - b.index
           );
@@ -387,6 +450,7 @@ const App = () => {
       const sortedEntries = mappedEntries.sort(
         (a: any, b: any) => a.index - b.index
       );
+
       result = sortedEntries;
       setProjectsList(newProjectsList);
     }
@@ -395,14 +459,31 @@ const App = () => {
       if (collectAllImagesCopy[3].length === 0) {
         collectNewImages = true;
       }
+      const appFilePage = appFile["pages"][page];
       const mappedEntries: any = Object.keys(project[page])
         .filter((item) => item !== "blank.png")
+        .filter(
+          (folder: any) =>
+            appFilePage.findIndex((item: any) => item.id === folder) !== -1
+        )
         .map((folder: any) => {
+          const appFolderIndex = appFilePage.findIndex(
+            (item: any) => item.id === folder
+          );
+          const appFileFolder =
+            appFile["pages"][page][appFolderIndex]["images"];
           const mappedImages: Entry[] = Object.keys(project[page][folder])
             .filter((item) => item !== "blank.png")
+            .filter(
+              (img: any) =>
+                appFileFolder.findIndex((item: any) => item.name === img) !== -1
+            )
             .map((folderItem: any) => {
-              const imgName = folderItem.split(".")[0];
-              const index = imgName.split("--")[0];
+              const foundIndex = appFileFolder.findIndex(
+                (item: any) => item.name === folderItem
+              );
+              const imgIndex = appFileFolder[foundIndex].index;
+
               if (collectNewImages) {
                 collectAllImagesCopy[3].push(
                   BASE_URL + page + "/" + folder + "/" + folderItem
@@ -411,9 +492,7 @@ const App = () => {
               return {
                 title: folderItem,
                 url: BASE_URL + page + "/" + folder + "/" + folderItem,
-                index: !isNaN(Number(index))
-                  ? parseInt(index, 10)
-                  : random4Digits(),
+                index: imgIndex,
               };
             });
           const sortedImages = mappedImages.sort(
@@ -427,9 +506,15 @@ const App = () => {
           const appFileProject = appFile["pages"][page][appFileProjectIndex];
           return {
             title: appFileProject.title,
-            description: appFileProject.description.replaceAll("_"," ").toUpperCase(),
-            description2: appFileProject.description2.replaceAll("_"," ").toUpperCase(),
-            description3: appFileProject.description3.replaceAll("_"," ").toUpperCase(),
+            description: appFileProject.description
+              .replaceAll("_", " ")
+              .toUpperCase(),
+            description2: appFileProject.description2
+              .replaceAll("_", " ")
+              .toUpperCase(),
+            description3: appFileProject.description3
+              .replaceAll("_", " ")
+              .toUpperCase(),
             id: appFileProject.id,
             bg_color: isColor(appFileProject.bg_color)
               ? appFileProject.bg_color
@@ -449,40 +534,57 @@ const App = () => {
       if (collectAllImagesCopy[0].length === 0) {
         collectNewImages = true;
       }
+
+      const appFilePage = appFile["pages"][page];
       const mappedEntries: any = Object.keys(project[page])
         .filter((item) => item !== "blank.png")
+        .filter(
+          (folder: any) =>
+            appFilePage.findIndex((item: any) => item.id === folder) !== -1
+        )
         .map((folder: any) => {
-          let sortedImages = null;
-          if (
-            Object.keys(project[page][folder]["covers"]) !== undefined &&
-            Object.keys(project[page][folder]["covers"]).length > 1
-          ) {
-            const covers = Object.keys(project[page][folder]["covers"]);
-            const mappedImages: Entry[] = covers
-              .filter((item: string) => item !== "blank.png")
-              .map((img: string) => {
-                const imgName = img.split(".")[0];
-                const index = imgName.split("--")[0];
-                if (collectNewImages) {
-                  collectAllImagesCopy[0].push(
-                    BASE_URL + page + "/" + folder + "/covers/" + img
-                  );
-                }
-                return {
-                  title: img,
-                  url: BASE_URL + page + "/" + folder + "/covers/" + img,
-                  index: !isNaN(Number(index))
-                    ? parseInt(index, 10)
-                    : random4Digits(),
-                };
-              });
+          const appFolderIndex = appFilePage.findIndex(
+            (item: any) => item.id === folder
+          );
+          const appFileFolder =
+            appFile["pages"][page][appFolderIndex]["images"];
+          const mappedImages: Entry[] = Object.keys(project[page][folder])
+            .filter((item) => item !== "blank.png")
+            .filter(
+              (img: any) =>
+                appFileFolder.findIndex((item: any) => item.name === img) !== -1
+            )
+            .filter(
+              (img: any) =>
+                appFileFolder[
+                  appFileFolder.findIndex((item: any) => item.name === img)
+                ].projectCover === true
+            )
+            // .filter((item: any) => item.projectCover === true)
+            .map((folderItem: any) => {
+              const foundIndex = appFileFolder.findIndex(
+                (item: any) => item.name === folderItem
+              );
+              const imgIndex = appFileFolder[foundIndex].index;
 
-            sortedImages = mappedImages.sort(
-              (a: any, b: any) => a.index - b.index
-            );
-          }
+              if (collectNewImages) {
+                collectAllImagesCopy[0].push(
+                  BASE_URL + page + "/" + folder + "/" + folderItem
+                );
+              }
 
-          if (!appFile["pages"][page] || sortedImages === null) return null;
+              return {
+                title: folderItem,
+                url: BASE_URL + page + "/" + folder + "/" + folderItem,
+                index: imgIndex,
+              };
+            });
+
+          const sortedImages = mappedImages.sort(
+            (a: any, b: any) => a.index - b.index
+          );
+
+          if (!appFile["pages"][page]) return null;
           const appFileProjectIndex = appFile["pages"][page].findIndex(
             (item: any) => item.id === folder
           );
@@ -499,13 +601,11 @@ const App = () => {
               : "#000000",
             images: sortedImages,
             index: appFileProject.index,
-            home_page: appFileProject.home_page,
           };
         });
-      const sortedEntries = mappedEntries
-        .filter((item: any) => item !== null)
-        .filter((item: any) => item.home_page === true)
-        .sort((a: any, b: any) => a.index - b.index);
+      const sortedEntries = mappedEntries.sort(
+        (a: any, b: any) => a.index - b.index
+      );
       result = sortedEntries;
     }
     collectAllImages.current = collectAllImagesCopy;
@@ -559,25 +659,36 @@ const App = () => {
   //   }
   // }, [currentPage, location, projectsList]);
 
-    useEffect(() => {
+  useEffect(() => {
     const path = location.pathname.replace("/", "") || "home";
     if (
-      path !== currentPage && 
-
-        (path.startsWith("projects/") &&
-          projectsList.includes(path.split("/")[1]) &&
-          path.split("/").length === 2)
+      path !== currentPage &&
+      path.startsWith("projects/") &&
+      projectsList.includes(path.split("/")[1]) &&
+      path.split("/").length === 2
     ) {
       setCurrentPage(path as Page);
-      const projectIndex = projectsList.findIndex((item) => item === path.split("/")[1])
-      const project = projectAssets as any
-      if (projectIndex !== -1 && project && project !== null && project["projects"]) {
-        setSelectedProject(projectIndex)
-        setSelectedProjectName([null, projectIndex, null])
-        const newColor1 = project["projects"][projectIndex].bg_color || "white"
-        const newColor2 = project["projects"][projectIndex].text_color || "white"
-        const newColors = [["white", "white"],[newColor1, newColor2],["white", "white"]] as ProjectColors
-        setProjectColors(newColors)
+      const projectIndex = projectsList.findIndex(
+        (item) => item === path.split("/")[1]
+      );
+      const project = projectAssets as any;
+      if (
+        projectIndex !== -1 &&
+        project &&
+        project !== null &&
+        project["projects"]
+      ) {
+        setSelectedProject(projectIndex);
+        setSelectedProjectName([null, projectIndex, null]);
+        const newColor1 = project["projects"][projectIndex].bg_color || "white";
+        const newColor2 =
+          project["projects"][projectIndex].text_color || "white";
+        const newColors = [
+          ["white", "white"],
+          [newColor1, newColor2],
+          ["white", "white"],
+        ] as ProjectColors;
+        setProjectColors(newColors);
       }
     }
   }, [location, projectsList, projectAssets]);
@@ -590,7 +701,6 @@ const App = () => {
 
   const navigate = (page: Page) => {
     if (page === currentPage || !canSelectPage) return;
-
 
     // NAV
     if (page.startsWith("archives")) {
@@ -605,10 +715,7 @@ const App = () => {
     }
 
     // Archives
-    setSelectedArchiveGroup(null)
-
-
-
+    setSelectedArchiveGroup(null);
 
     const newVal = currentPage;
     if (
@@ -641,42 +748,12 @@ const App = () => {
         setSittingProject(true);
       } else {
         setSittingProject(false);
-        setSelectedProjectName([null, null, null])
+        setSelectedProjectName([null, null, null]);
       }
       setCachedCurrent(newVal);
       setCanSelectPage(true);
     }, 1000); // Match this timeout to the animation duration
   };
-
-  // HOME PAGE COVER LAYOUT ORDER (num covers, 2 layouts available so far)
-  const numberOfLayoutsCreated = 7;
-  const numberOfCovers = 2;
-  // Generate an array where each number is unique to the two next to it
-  const [layoutOrder, setLayoutOrder] = useState(() => {
-    let previous = -1; // Start with a value that can't match the first random number
-    const array = Array.from({ length: numberOfCovers }, (_, index) => {
-      let next;
-      do {
-        next = Math.floor(Math.random() * numberOfLayoutsCreated);
-      } while (next === previous);
-      previous = next;
-      return next;
-    });
-
-    // Ensure the first and last elements are different
-    if (array.length > 1 && array[0] === array[array.length - 1]) {
-      let replacement;
-      do {
-        replacement = Math.floor(Math.random() * numberOfLayoutsCreated);
-      } while (
-        replacement === array[array.length - 2] ||
-        replacement === array[0]
-      );
-      array[array.length - 1] = replacement;
-    }
-
-    return array;
-  });
 
   useEffect(() => {
     if (location.pathname === "/home") {

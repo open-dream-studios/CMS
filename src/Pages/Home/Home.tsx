@@ -133,11 +133,21 @@ const Home: React.FC<HomePageProps> = ({
       { x: 73, y: 6, w: 18, h: 1.2, z: 104, top: false },
     ],
   ];
-  const pageLayouts = layoutOrder.map((item) => coverLayouts[item]);
   const nextMove = useRef([0, false]);
   const [currentCover, setCurrentCover] = useState(0);
   const currentCoverRef = useRef(0);
-  const [currentLayout, setCurrentLayout] = useState(pageLayouts[0]);
+  const [currentLayout, setCurrentLayout] = useState<any>(null);
+  const pageLayoutsRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (layoutOrder.length > 0) {
+      const newPageLayouts = layoutOrder.map((item) => coverLayouts[item]);
+      if (newPageLayouts.length > 0) {
+        pageLayoutsRef.current = newPageLayouts;
+        setCurrentLayout(newPageLayouts[0]);
+      }
+    }
+  }, [layoutOrder]);
 
   const [exitingCover, setExitingCover] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -297,7 +307,12 @@ const Home: React.FC<HomePageProps> = ({
     setTimeout(() => {
       setIsRevealing1([direction, false]);
       setTimeout(() => {
-        if (currentCoverRef && coversRef.current !== null) {
+        if (
+          currentCoverRef &&
+          coversRef.current !== null &&
+          pageLayoutsRef &&
+          pageLayoutsRef.current !== null
+        ) {
           if (direction === 1) {
             const nextCover =
               currentCoverRef.current === coversRef.current.length - 1
@@ -305,7 +320,7 @@ const Home: React.FC<HomePageProps> = ({
                 : currentCoverRef.current + 1;
             currentCoverRef.current = nextCover;
             setCurrentCover(nextCover);
-            setCurrentLayout(pageLayouts[nextCover]);
+            setCurrentLayout(pageLayoutsRef.current[nextCover]);
           } else {
             const nextCover =
               currentCoverRef.current === 0
@@ -313,7 +328,7 @@ const Home: React.FC<HomePageProps> = ({
                 : currentCoverRef.current - 1;
             currentCoverRef.current = nextCover;
             setCurrentCover(nextCover);
-            setCurrentLayout(pageLayouts[nextCover]);
+            setCurrentLayout(pageLayoutsRef.current[nextCover]);
           }
         }
         setExitingCover(null);
@@ -441,64 +456,24 @@ const Home: React.FC<HomePageProps> = ({
           }
         }}
       >
-        {currentLayout.map((item, index) => {
-          return (
-            <React.Fragment key={`layout-${index}`}>
-              <AnimatePresence>
-                {exitingCover !== null && (
-                  <motion.div
-                    key={`exiting-${exitingCover}`}
-                    initial={{ opacity: 1 }}
-                    animate={{ opacity: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      duration: 0.4,
-                      ease: "easeInOut",
-                      delay: generateRandomDelay(),
-                    }}
-                    style={{
-                      zIndex: item.z,
-                    }}
-                  >
-                    <div
-                      className="image absolute"
-                      style={{
-                        aspectRatio: `1/${item.h}`,
-                        width: `${item.w}vw`,
-                        left: `${item.x}vw`,
-                        top: item.top ? `${item.y}vh` : "none",
-                        bottom: item.top ? "none" : `${item.y}vh`,
-                        backgroundColor: "#cccccc",
-                      }}
-                    >
-                      {/* <img
-                        alt=""
-                        className="image w-[100%] h-[100%]"
-                        style={{ objectFit: "cover" }}
-                        // src={
-                        //   coversRef.current === null
-                        //     ? ""
-                        //     : coversRef.current[currentCoverRef.current].images[
-                        //         index
-                        //       ].url
-                        // }
-                      
-                      /> */}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {firstPageLoad && (
+        {currentLayout &&
+          currentLayout.length > 0 &&
+          currentLayout !== null &&
+          pageLayoutsRef &&
+          pageLayoutsRef.current !== null &&
+          pageLayoutsRef.current.length > 0 &&
+          currentLayout.map((item: any, index: number) => {
+            return (
+              <React.Fragment key={`layout-${index}`}>
                 <AnimatePresence>
-                  {exitingCover === null && (
+                  {exitingCover !== null && (
                     <motion.div
-                      key={`current-${currentCoverRef.current}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      key={`exiting-${exitingCover}`}
+                      initial={{ opacity: 1 }}
+                      animate={{ opacity: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{
-                        duration: 0.7,
+                        duration: 0.4,
                         ease: "easeInOut",
                         delay: generateRandomDelay(),
                       }}
@@ -514,27 +489,72 @@ const Home: React.FC<HomePageProps> = ({
                           left: `${item.x}vw`,
                           top: item.top ? `${item.y}vh` : "none",
                           bottom: item.top ? "none" : `${item.y}vh`,
+                          backgroundColor: "#cccccc",
                         }}
                       >
-                        <img
-                          alt="img"
-                          className="image w-[100%] h-[100%]"
-                          style={{ objectFit: "cover" }}
-                          src={
-                            coversRef.current === null
-                              ? ""
-                              : coversRef.current[currentCoverRef.current]
-                                  .images[index].url
-                          }
-                        />
+                        {/* <img
+                        alt=""
+                        className="image w-[100%] h-[100%]"
+                        style={{ objectFit: "cover" }}
+                        // src={
+                        //   coversRef.current === null
+                        //     ? ""
+                        //     : coversRef.current[currentCoverRef.current].images[
+                        //         index
+                        //       ].url
+                        // }
+                      
+                      /> */}
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              )}
-            </React.Fragment>
-          );
-        })}
+
+                {firstPageLoad && (
+                  <AnimatePresence>
+                    {exitingCover === null && (
+                      <motion.div
+                        key={`current-${currentCoverRef.current}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          duration: 0.7,
+                          ease: "easeInOut",
+                          delay: generateRandomDelay(),
+                        }}
+                        style={{
+                          zIndex: item.z,
+                        }}
+                      >
+                        <div
+                          className="image absolute"
+                          style={{
+                            aspectRatio: `1/${item.h}`,
+                            width: `${item.w}vw`,
+                            left: `${item.x}vw`,
+                            top: item.top ? `${item.y}vh` : "none",
+                            bottom: item.top ? "none" : `${item.y}vh`,
+                          }}
+                        >
+                          <img
+                            alt="img"
+                            className="image w-[100%] h-[100%]"
+                            style={{ objectFit: "cover" }}
+                            src={
+                              coversRef.current === null
+                                ? ""
+                                : coversRef.current[0].images[0].url
+                            }
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </React.Fragment>
+            );
+          })}
 
         {isDisplayed && (
           <div

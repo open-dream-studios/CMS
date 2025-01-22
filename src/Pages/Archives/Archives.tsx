@@ -416,7 +416,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
       {revealGallery && (
         <div 
           ref={archivesNavBar}
-          className="z-[201] absolute top-0 left-0 w-[100vw] lg:h-[80px] h-[76px]"
+          className="z-[201] absolute top-0 left-0 w-[100vw] h-[58px] md:h-[76px] lg:h-[80px] "
           style={{
             pointerEvents: "none",
             // opacity: showArchivesNavBar ? 1 : 0,
@@ -1106,7 +1106,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                         ? archivesRef.current[selectedArchiveGroup].images[
                             currentHeroImg
                           ].url
-                        : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/a2/3--lightblue.png?w=248&fit=crop&auto=format&dpr=2"
+                        : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/a1/1.jpeg?w=248&fit=crop&auto=format&dpr=2"
                     }
                   />
 
