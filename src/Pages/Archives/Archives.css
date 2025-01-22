@@ -125,17 +125,37 @@
 
 
 
-.image-scale {
+/* .image-scale {
   overflow: hidden;
   position: relative;
 }
 
 .image-scale img {
-  transition: transform 0.3s ease-in-out; /* Smooth scaling effect */
+  transition: transform 0.3s ease-in-out; 
   display: block; 
   will-change: transform; 
 }
 
 .image-scale:hover img {
   transform: scale(1.05); 
+} */
+
+.image-scale {
+  overflow: hidden;
+  position: relative;
+  width: 100%; /* Ensure it spans the container */
+  height: 100%;
+}
+
+.image-scale img {
+  display: block; /* Prevent inline spacing issues */
+  width: 100%; /* Ensure the image fully spans the container */
+  height: 100%; /* Maintains the container's aspect ratio */
+  object-fit: cover; /* Ensures the image fits nicely */
+  transition: transform 0.3s ease-in-out; /* Smooth hover effect */
+  will-change: transform; /* Optimize performance */
+}
+
+.image-scale:hover img {
+  transform: scale(1.05); /* Scale the image slightly */
 }

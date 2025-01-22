@@ -23,6 +23,7 @@ export type ArchivesEntryImage = {
   title: string;
   index: number;
   url: string;
+  aspectRatio?: number;
 };
 
 export type ArchivesEntry = {
@@ -125,9 +126,9 @@ const Archives: React.FC<ArchivesPageProps> = ({
     setIsRevealing1(true);
     setIsVisible(true);
     setDropdown1Display(true);
-    setTimeout(()=>{
-      setCurrentNavColor("white")
-    },2000)
+    setTimeout(() => {
+      setCurrentNavColor("white");
+    }, 2000);
   }, []);
 
   useEffect(() => {
@@ -184,7 +185,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
       setHideArrowButton(true);
       setTimeout(() => {
         setImageDisplayOpen(true);
-        setCurrentNavColor("black")
+        setCurrentNavColor("black");
 
         setTimeout(
           () => {
@@ -390,8 +391,8 @@ const Archives: React.FC<ArchivesPageProps> = ({
   const handleImageClick = (url: any) => {
     setFullscreenImage(url);
     if (archivesNavBar.current) {
-      archivesNavBar.current.style.transition = "none"
-      setShowArchivesNavBar(true)
+      archivesNavBar.current.style.transition = "none";
+      setShowArchivesNavBar(true);
     }
   };
 
@@ -414,7 +415,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
       )}
 
       {revealGallery && (
-        <div 
+        <div
           ref={archivesNavBar}
           className="z-[201] absolute top-0 left-0 w-[100vw] h-[58px] md:h-[76px] lg:h-[80px] "
           style={{
@@ -548,6 +549,14 @@ const Archives: React.FC<ArchivesPageProps> = ({
                               height: "100%",
                               objectFit: "cover",
                               transition: "transform 0.3s ease-in-out",
+                            }}
+                            onLoad={(e: any) => {
+                              const img = e.target;
+                              const naturalWidth = img.naturalWidth;
+                              const naturalHeight = img.naturalHeight;
+
+                              // Set the aspect ratio dynamically
+                              item.aspectRatio = naturalWidth / naturalHeight;
                             }}
                           />
                         </div>
