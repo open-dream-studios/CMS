@@ -672,7 +672,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                               ? 0
                               : selectedArchiveGroup + 1
                           ].images[currentHeroImg].url
-                        : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/a2/3--lightblue.png?w=248&fit=crop&auto=format&dpr=2"
+                        : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/fallback.jpeg?w=248&fit=crop&auto=format&dpr=2"
                     }
                   />
                 </div>
@@ -803,7 +803,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                   </div>
                 </div>
 
-                <div className="absolute select-none top-0 right-0 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))] h-[100vh] z-[105] flex items-center">
+                <div className="absolute select-none top-0 right-0 w-[calc(100px+50vw+(20px+1vw))] md:w-[calc(300px+25vw+(20px+2vw))] lg:w-[calc(80px+29vw+(10px+7vw))] h-[100vh] overflow-hidden z-[105] flex items-center">
                   <div
                     style={{
                       transition: startingShowGallery
@@ -825,7 +825,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                           ? []
                           : archivesRef.current[index].images
                       }
-                      haltSlider={selectedArchiveGroup !== null}
+                      haltSlider={startingShowGallery === true}
                     />
                   </div>
                 </div>
@@ -1106,7 +1106,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                         ? archivesRef.current[selectedArchiveGroup].images[
                             currentHeroImg
                           ].url
-                        : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/archives/a1/1.jpeg?w=248&fit=crop&auto=format&dpr=2"
+                        : "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/fallback.jpeg?w=248&fit=crop&auto=format&dpr=2"
                     }
                   />
 

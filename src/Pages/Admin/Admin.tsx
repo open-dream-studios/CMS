@@ -1962,7 +1962,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         // style={{ backgroundColor: "red" }}
       >
         {Object.keys(currentFolder)
-
           .sort((a, b) => {
             let indexMap: any = {};
             if (appFile["pages"] !== undefined) {
@@ -2030,7 +2029,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             return 0;
           })
           .map((key, index) => {
-            if (key === "blank.png") return <></>;
+            if (key === "blank.png" || key === "fallback.jpeg") return <></>;
             const isSecondaryFolder =
               typeof currentFolder[key] !== "string" &&
               ((currentPath[0] === "projects" && key !== "covers") ||
