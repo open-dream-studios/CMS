@@ -1,30 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Admin.css";
-// import React, { useState, useEffect } from "react";
-// import { BrowserRouter as Router } from "react-router-dom";
-// import { motion } from "framer-motion";
-// import { useNavigate, useLocation } from "react-router-dom";
-// import Home from "./Pages/Home/Home";
-// import About from "./Pages/About/About";
-// import Projects from "./Pages/Projects/Projects";
-// import Navbar from "./Components/Navbar/Navbar";
-// import Archives from "./Pages/Archives/Archives";
-// import "./App.css";
-// import ProjectsPage from "./Pages/Projects/ProjectsPage/ProjectsPage";
-// import useProjectColorsState from "./store/useProjectColorsStore";
-// import useCurrentPageState from "./store/useCurrentPageStore";
-// import useCurrentNavColorState from "./store/useCurrentNavColorStore";
-// import useSelectedProjectNameState from "./store/useSelectedProjectNameStore";
-// import useSelectedProjectState from "./store/useSelectedProjectStore";
-// import useIncomingImageDimensionsState from "./store/useIncomingImageDimensionsState";
-// import useIncomingImageStylesStore from "./store/useIncomingImageStylesStore";
-// import useIncomingImageSpeedState from "./store/useIncomingImageSpeedState";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
-import { useLocation } from "react-router-dom";
-import useSelectedArchiveGroupStore from "../../store/useSelectedArchiveGroupStore";
-import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
-// import usePreloadedImagesStore from "./store/usePreloadedImagesStore";
-// import useSelectedArchiveGroupStore from "./store/useSelectedArchiveGroupStore";
 import { BiSolidPencil } from "react-icons/bi";
 import { FaTrash } from "react-icons/fa";
 import { IoCloseOutline } from "react-icons/io5";
@@ -37,8 +13,7 @@ import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
 import { GIT_KEYS } from "../../App";
-import { left } from "@cloudinary/url-gen/qualifiers/textAlignment";
-import _, { update } from "lodash";
+import imageCompression from "browser-image-compression";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -947,10 +922,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const updateAppData = async (appFileCopy: any) => {
-    setLoading(true)
+    setLoading(true);
     await updateAppFile(appFileCopy);
     await getRepoTree();
-    setLoading(false)
+    setLoading(false);
   };
 
   // FULL REPOSITORY
@@ -1811,17 +1786,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         appFileCopy["pages"][pageName].images[finalImageIndex].index;
 
       let highestIndex = -1;
-      for (
-        let i = 0;
-        i < appFileCopy["pages"][pageName].images.length;
-        i++
-      ) {
-        if (
-          appFileCopy["pages"][pageName].images[i].index >
-          highestIndex
-        ) {
-          highestIndex =
-            appFileCopy["pages"][pageName].images[i].index;
+      for (let i = 0; i < appFileCopy["pages"][pageName].images.length; i++) {
+        if (appFileCopy["pages"][pageName].images[i].index > highestIndex) {
+          highestIndex = appFileCopy["pages"][pageName].images[i].index;
         }
       }
       if (highestIndex === -1) return;
@@ -2688,14 +2655,27 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const compressImage = async (
+    file: File,
+    maxSizeMB: number = 1
+  ): Promise<File> => {
+    try {
+      const options = {
+        maxSizeMB: maxSizeMB, // Maximum file size in MB
+        maxWidthOrHeight: 1920, // Resize if necessary (optional)
+        useWebWorker: true,
+      };
+
+      const compressedFile = await imageCompression(file, options);
+      return compressedFile;
+    } catch (error) {
+      console.error("Error compressing the image:", error);
+      throw error;
+    }
+  };
+
   const handleFiles = (files: File[]) => {
     const currentfolderContents = collectImgNames();
-    // const getHighestIndex = (names: string[]) => {
-    //   const indices = names.map((name) => parseInt(name.split("--")[0], 10));
-    //   const validIndices = indices.filter((index) => !isNaN(index));
-    //   return validIndices.length > 0 ? Math.max(...validIndices) : 100;
-    // };
-
     let highestIndex = 0;
     let images: any[] = [];
 
@@ -2729,9 +2709,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       }
     }
 
-    // if (currentfolderContents.length > 0) {
-    //   highestIndex = getHighestIndex(currentfolderContents);
-    // }
     let nextIndex = highestIndex + 1;
 
     const random4Digits = () => {
@@ -2742,15 +2719,102 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     if (imageFiles.length > 0) {
       const appFileCopy = appFile;
       const uploadedNames: string[] = [];
-      const readerPromises = imageFiles.map((file) => {
+      // const readerPromises = imageFiles.map((file) => {
+      //   return new Promise<{ name: string; src: string }>((resolve) => {
+      //     const extension = file.type.split("/").pop();
+      //     if (!extension) return;
+
+      //     // Remove extension
+      //     const lastDotIndex = file.name.lastIndexOf(".");
+      //     if (lastDotIndex === -1) return;
+      //     const newFileName = file.name.slice(0, lastDotIndex);
+
+      //     let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
+
+      //     // Ensure img has extension
+      //     if (!sanitizedFileName.endsWith(`.${extension}`)) {
+      //       sanitizedFileName = `${sanitizedFileName}.${extension}`;
+      //     }
+
+      //     // Rename to prevent duplicates in folder and currently uploaded group
+      //     const newNameSplit = sanitizedFileName.split(".");
+      //     const newName = newNameSplit.slice(0, -1).join(".");
+
+      //     if (currentfolderContents.includes(sanitizedFileName)) {
+      //       sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
+      //     }
+      //     while (uploadedNames.includes(sanitizedFileName)) {
+      //       sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
+      //     }
+      //     uploadedNames.push(sanitizedFileName);
+
+      //     if (currentPath[0] === "about") {
+      //       appFileCopy["pages"]["about"]["images"].push({
+      //         index: nextIndex,
+      //         name: sanitizedFileName,
+      //       });
+      //     } else if (
+      //       currentPath[0] === "projects" &&
+      //       currentPath.length === 2
+      //     ) {
+      //       const projectItem = appFile["pages"]["projects"].filter(
+      //         (item: any) => item.id === currentPath[1]
+      //       );
+      //       if (projectItem.length > 0) {
+      //         const foundIndex = appFileCopy["pages"]["projects"].findIndex(
+      //           (item: any) => item.id === currentPath[1]
+      //         );
+      //         appFileCopy["pages"]["projects"][foundIndex]["images"].push({
+      //           index: nextIndex,
+      //           name: sanitizedFileName,
+      //           projectCover: false,
+      //         });
+      //       }
+      //     } else if (
+      //       currentPath[0] === "archives" &&
+      //       currentPath.length === 2
+      //     ) {
+      //       const projectItem = appFile["pages"]["archives"].filter(
+      //         (item: any) => item.id === currentPath[1]
+      //       );
+
+      //       if (projectItem.length > 0) {
+      //         const foundIndex = appFileCopy["pages"]["archives"].findIndex(
+      //           (item: any) => item.id === currentPath[1]
+      //         );
+      //         appFileCopy["pages"]["archives"][foundIndex]["images"].push({
+      //           index: nextIndex,
+      //           name: sanitizedFileName,
+      //         });
+      //       }
+      //     }
+
+      //     setAppFile(appFileCopy);
+      //     nextIndex += 1;
+
+      //     const reader = new FileReader();
+      //     reader.onload = (event) => {
+      //       resolve({
+      //         name: sanitizedFileName,
+      //         src: event.target?.result as string,
+      //       });
+      //     };
+      //     reader.readAsDataURL(file);
+      //   });
+      // });
+
+      const readerPromises = imageFiles.map(async (file) => {
+        // Compress the image
+        const compressedFile = await compressImage(file, 1); // Compress to under 1MB
+
         return new Promise<{ name: string; src: string }>((resolve) => {
-          const extension = file.type.split("/").pop();
+          const extension = compressedFile.type.split("/").pop();
           if (!extension) return;
 
           // Remove extension
-          const lastDotIndex = file.name.lastIndexOf(".");
+          const lastDotIndex = compressedFile.name.lastIndexOf(".");
           if (lastDotIndex === -1) return;
-          const newFileName = file.name.slice(0, lastDotIndex);
+          const newFileName = compressedFile.name.slice(0, lastDotIndex);
 
           let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
 
@@ -2758,9 +2822,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           if (!sanitizedFileName.endsWith(`.${extension}`)) {
             sanitizedFileName = `${sanitizedFileName}.${extension}`;
           }
-
-          // Add index
-          // sanitizedFileName = `${nextIndex}--${sanitizedFileName}`;
 
           // Rename to prevent duplicates in folder and currently uploaded group
           const newNameSplit = sanitizedFileName.split(".");
@@ -2815,7 +2876,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             }
           }
 
-          // setAppFile(appFileCopy);
+          setAppFile(appFileCopy);
           nextIndex += 1;
 
           const reader = new FileReader();
@@ -2825,7 +2886,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               src: event.target?.result as string,
             });
           };
-          reader.readAsDataURL(file);
+          reader.readAsDataURL(compressedFile); // Use the compressed file here
         });
       });
 
@@ -3076,7 +3137,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   if (folderName && folderName !== "") {
                     const sanitizedFolderName = folderName
                       .trim()
-                      .replace(/[^a-zA-Z0-9-]/g, "_");
+                      .replace(/[^a-zA-Z0-9-&]/g, "_");
                     handleAddFolder(sanitizedFolderName);
                   }
                 }}

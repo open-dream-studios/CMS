@@ -33,7 +33,6 @@ export type ProjectEntry = {
   images: ProjectEntryImage[];
 };
 
-
 const Projects: React.FC<ProjectsPageProps> = ({
   navigate,
   page,
@@ -57,12 +56,10 @@ const Projects: React.FC<ProjectsPageProps> = ({
   const [projectsList, setProjectsList] = useState<string[]>([]);
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const coversRef = useRef<ProjectEntry[] | null>(null);
-  const [coversReady, setCoversReady] = useState<ProjectEntry[] | null>(
-    null
-  );
+  const [coversReady, setCoversReady] = useState<ProjectEntry[] | null>(null);
 
   useEffect(() => {
-    const projects = projectAssets as any
+    const projects = projectAssets as any;
     if (
       projects !== null &&
       projects["projects"] &&
@@ -71,7 +68,7 @@ const Projects: React.FC<ProjectsPageProps> = ({
     ) {
       const coversList = projects["projects"] as ProjectEntry[];
       const newProjectsList = coversList.map((item) =>
-        item.title.replace("_", "")
+        item.title.replaceAll("_", "").replaceAll("&", "and")
       );
       setProjectsList(newProjectsList);
       coversRef.current = coversList;
@@ -120,7 +117,10 @@ const Projects: React.FC<ProjectsPageProps> = ({
       }
       setSelectedProject(index);
       setSelectedProjectName([null, currentProj, index]);
-      navigate("projects/" + coversReady[index].title.replace("_", ""));
+      const nextTitle =
+        "projects/" +
+        coversReady[index].title.replaceAll("_", "").replaceAll("&", "and");
+      navigate(nextTitle);
 
       setProjectColors(projectColorsCopy);
       setTimeout(() => {
@@ -196,6 +196,8 @@ const Projects: React.FC<ProjectsPageProps> = ({
                             }`}
                             style={{
                               whiteSpace: "nowrap",
+                              display: "flex",
+                              flexDirection: "row",
                               animationDelay: animateWave
                                 ? `${Math.pow(index, 0.75) * 0.045}s`
                                 : "none",
@@ -215,7 +217,15 @@ const Projects: React.FC<ProjectsPageProps> = ({
                                 (item) =>
                                   item.charAt(0).toUpperCase() + item.slice(1)
                               )
-                              .join(" ")}
+                              .join(" ")
+                              .split("")
+                              .map((letter: any) => {
+                                return (
+                                  <span>
+                                    {letter === " " ? "\u00A0" : letter === "&" ? <span className="abygaer">&</span> : letter}
+                                  </span>
+                                );
+                              })}
                           </div>
                         </div>
                       </div>

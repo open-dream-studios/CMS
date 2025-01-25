@@ -43,6 +43,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const { canSelectProject, setCanSelectProject } = useCanSelectProjectState();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
 
+  console.log(selectedProject, selectedProjectName)
+  console.log(projectColors)
+
   const [imageDimensions, setImageDimensions] = useState<ImageDimension[]>([]);
   const scrollRef = useRef(0);
   const parallaxRefs = useRef<HTMLImageElement[]>([]);
@@ -348,7 +351,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       const projects = coversRef.current;
       setSelectedProject(index);
       setSelectedProjectName([null, currentProj, index]);
-      navigate("projects/" + projects[index].title.replace("_", ""));
+      const nextTitle = "projects/" + projects[index].title.replaceAll("_", "").replaceAll("&","and")
+      navigate(nextTitle);
       const projectColorsCopy = projectColors;
       projectColorsCopy[2] = [item.bg_color, item.text_color];
       projectColorsCopy[0] = [

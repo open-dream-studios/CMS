@@ -55,6 +55,7 @@ const Home: React.FC<HomePageProps> = ({
       coversRef.current = project["home"];
       readyToTransition.current = true;
       setCoversReady(project["home"]);
+      // console.log(project["home"])
     }
   }, [projectAssets]);
 
@@ -201,6 +202,7 @@ const Home: React.FC<HomePageProps> = ({
             }
           }
         } else if (deltaY < 4 && deltaY > -4) {
+          nextMove.current = [0, false]
           if (
             !readyToRetrigger.current &&
             !nextMove.current[1] &&
@@ -537,16 +539,17 @@ const Home: React.FC<HomePageProps> = ({
                             bottom: item.top ? "none" : `${item.y}vh`,
                           }}
                         >
-                          <img
+                          {coversRef.current !== null && index < coversRef.current[currentCoverRef.current].images.length && <img
                             alt="img"
                             className="image w-[100%] h-[100%]"
                             style={{ objectFit: "cover" }}
                             src={
-                              coversRef.current === null
-                                ? ""
-                                : coversRef.current[0].images[0].url
+                              coversRef.current !== null && index < coversRef.current[currentCoverRef.current].images.length
+                                ? 
+                                coversRef.current[currentCoverRef.current].images[index].url
+                                : ""
                             }
-                          />
+                          />}
                         </div>
                       </motion.div>
                     )}

@@ -398,7 +398,7 @@ const App = () => {
         )
         .map((folder: any) => {
           if (indexMap !== null) {
-            newProjectsList.push(indexMap[folder].replaceAll("_", ""));
+            newProjectsList.push(indexMap[folder].replaceAll("_", "").replaceAll("&","and"));
           }
           const appFolderIndex = appFilePage.findIndex(
             (item: any) => item.id === folder
@@ -547,6 +547,10 @@ const App = () => {
         .filter(
           (folder: any) =>
             appFilePage.findIndex((item: any) => item.id === folder) !== -1
+        )
+        .filter(
+          (folder: any) =>
+            appFile["pages"][page][appFilePage.findIndex((item: any) => item.id === folder)].home_page === true
         )
         .map((folder: any) => {
           const appFolderIndex = appFilePage.findIndex(
