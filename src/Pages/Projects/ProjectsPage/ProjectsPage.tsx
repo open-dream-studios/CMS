@@ -43,8 +43,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const { canSelectProject, setCanSelectProject } = useCanSelectProjectState();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
 
-  console.log(selectedProject, selectedProjectName)
-  console.log(projectColors)
+  // console.log(selectedProject, selectedProjectName)
+  // console.log(projectColors)
 
   const [imageDimensions, setImageDimensions] = useState<ImageDimension[]>([]);
   const scrollRef = useRef(0);
@@ -90,6 +90,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         incomingImageDimensions.length !== 0 &&
         incomingImageStyles.length !== 0
       ) {
+        console.log("setting", incomingImageDimensions)
         setImageDimensions(incomingImageDimensions);
         setImageStyles(incomingImageStyles);
       }
@@ -390,7 +391,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     >
       <div
         ref={projectPageRef}
-        className={`absolute right-0 top-0 w-[100vw] sm:w-[calc(98vw-220px)] min-h-[150vh] md:w-[calc(98vw-250px)]  h-[auto] flex flex-col pl-[calc(30px+3vw)] pr-[calc(30px+3vw)] sm:pl-0 lg:pl-[calc(30px+3vw)] pt-[90px]`}
+        className={`absolute right-0 top-0 w-[100vw] sm:w-[calc((98vw-220px)-(3vw+30px))] md:w-[calc((98vw-250px)-(3vw+30px))] min-h-[150vh] h-[auto] flex flex-col pl-0 pr-[calc(30px+3vw)] pt-[90px]`}
         style={{
           pointerEvents: "all",
           backgroundColor: slideUpComponent

@@ -832,8 +832,9 @@ const App = () => {
             left: 0,
             width: "100%",
             height: "100%",
-            zIndex: zTrigger !== null && selectedProjectName[1] === null
-                ? zTrigger : 102
+            zIndex: 102
+            // zIndex: zTrigger !== null && selectedProjectName[1] === null
+            //     ? zTrigger : 102
           }}
         >
           {currentPage === "home" && (
@@ -933,7 +934,7 @@ const App = () => {
               <div>
                 {sittingProject && (
                   <div
-                    className="w-[0] sm:w-[calc(2vw+225px)] md:w-[calc(2vw+255px)]
+                    className="w-[0] sm:w-[calc((2vw+225px)+(3vw+30px))] md:w-[calc((2vw+255px)+(3vw+30px))]
                     h-[100vh] fixed left-0 top-0 "
                     style={{
                       backgroundColor: projectColors[1][0],
@@ -992,7 +993,7 @@ const App = () => {
           incomingPageDecision.split("/").length === 2 && (
             <>
               <div
-                className="w-[calc(310px+2vw)] sm:w-[calc(360px+2vw)] md:w-[calc(410px+2vw)] h-[100vh] fixed left-0 top-0 "
+                className="w-[calc((310px+2vw)+(3vw+30px))] sm:w-[calc((360px+2vw)+(3vw+30px))] md:w-[calc((410px+2vw)+(3vw+30px))] h-[100vh] fixed left-0 top-0 "
                 style={{ backgroundColor: projectColors[0][0] }}
               ></div>
 
