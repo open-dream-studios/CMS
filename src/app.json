@@ -42,14 +42,7 @@
           "text4": "send"
         }
       },
-      "images": [
-        {
-          "index": 0,
-          "name": "1.png",
-          "width": 452,
-          "height": 802
-        }
-      ]
+      "images": []
     },
     "projects": [
       {
@@ -60,51 +53,7 @@
         "bg_color": "pink",
         "text_color": "blue",
         "home_page": true,
-        "images": [
-          {
-            "index": 0,
-            "name": "1.png",
-            "projectCover": true,
-            "width": 452,
-            "height": 802
-          }
-        ]
-      },
-      {
-        "id": "p2",
-        "index": 1,
-        "title": "la_croisette",
-        "description": "capsule_cannes_claudie_pierlot_ss24",
-        "bg_color": "red",
-        "text_color": "green",
-        "home_page": true,
-        "images": [
-          {
-            "index": 0,
-            "name": "1.png",
-            "projectCover": true,
-            "width": 452,
-            "height": 802
-          }
-        ]
-      },
-      {
-        "id": "p3",
-        "index": 2,
-        "title": "provence",
-        "description": "provence_description",
-        "bg_color": "lightblue",
-        "text_color": "pink",
-        "home_page": false,
-        "images": [
-          {
-            "index": 0,
-            "name": "1.png",
-            "projectCover": true,
-            "width": 452,
-            "height": 802
-          }
-        ]
+        "images": []
       }
     ],
     "archives": [
@@ -116,65 +65,7 @@
         "description": "BEHANDLET_EGETRAE",
         "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
         "description3": "MINIMALISTISK_INERIOR",
-        "images": [
-          {
-            "index": 0,
-            "name": "1.png",
-            "width": 452,
-            "height": 802
-          }
-        ]
-      },
-      {
-        "id": "a2",
-        "index": 2,
-        "title": "earth",
-        "bg_color": "lightgreen",
-        "description": "BEHANDLET_EGETRAE",
-        "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
-        "description3": "MINIMALISTISK_INERIOR",
-        "images": [
-          {
-            "index": 0,
-            "name": "1.png",
-            "width": 452,
-            "height": 802
-          }
-        ]
-      },
-      {
-        "id": "a3",
-        "index": 1,
-        "title": "travel",
-        "bg_color": "lightblue",
-        "description": "BEHANDLET_EGETRAE",
-        "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
-        "description3": "MINIMALISTISK_INERIOR",
-        "images": [
-          {
-            "index": 0,
-            "name": "1.png",
-            "width": 452,
-            "height": 802
-          }
-        ]
-      },
-      {
-        "id": "a4",
-        "index": 3,
-        "title": "people",
-        "bg_color": "pink",
-        "description": "BEHANDLET_EGETRAE",
-        "description2": "MUNDVANDSDRIVENDE_KAFFERISTNING",
-        "description3": "MINIMALISTISK_INERIOR",
-        "images": [
-          {
-            "index": 0,
-            "name": "1.png",
-            "width": 452,
-            "height": 802
-          }
-        ]
+        "images": []
       }
     ]
   }

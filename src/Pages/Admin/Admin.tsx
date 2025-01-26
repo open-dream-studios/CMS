@@ -2020,39 +2020,43 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     key !== "archives" &&
                     key !== "projects" && (
                       <div className="z-[10]">
-                        {typeof currentFolder[key] !== "string" && <button
-                          className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const basePath = `${currentPath.join("/")}/`;
-                            openPopup(key, basePath);
-                          }}
-                        >
-                          <BiSolidPencil
-                            className="ml-[-0.5px]"
-                            color={"black"}
-                            size={13}
-                          />
-                        </button>}
+                        {typeof currentFolder[key] !== "string" && (
+                          <button
+                            className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const basePath = `${currentPath.join("/")}/`;
+                              openPopup(key, basePath);
+                            }}
+                          >
+                            <BiSolidPencil
+                              className="ml-[-0.5px]"
+                              color={"black"}
+                              size={13}
+                            />
+                          </button>
+                        )}
 
-                        <button
-                          className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (window.confirm(`Delete item?`)) {
-                              const fullPath = `${currentPath.join(
-                                "/"
-                              )}/${key}`;
-                              handleDeleteItem(fullPath);
-                            }
-                          }}
-                        >
-                          <FaTrash
-                            className="ml-[0px]"
-                            color={"black"}
-                            size={11}
-                          />
-                        </button>
+                        {!swapActive && (
+                          <button
+                            className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Delete item?`)) {
+                                const fullPath = `${currentPath.join(
+                                  "/"
+                                )}/${key}`;
+                                handleDeleteItem(fullPath);
+                              }
+                            }}
+                          >
+                            <FaTrash
+                              className="ml-[0px]"
+                              color={"black"}
+                              size={11}
+                            />
+                          </button>
+                        )}
 
                         {isProjectFolder && projectFound && (
                           <button
@@ -2589,20 +2593,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     formData.append("currentPath", currentPath.join("/"));
 
     try {
-      const local = false
-      let serverUrl = "https://image-server-production-53c2.up.railway.app/compress"
+      const local = false;
+      let serverUrl =
+        "https://image-server-production-53c2.up.railway.app/compress";
       if (local) {
-         serverUrl = "http://localhost:3001/compress"
+        serverUrl = "http://localhost:3001/compress";
       }
-      const response = await axios.post(
-        serverUrl,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await axios.post(serverUrl, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       return response.status === 200;
     } catch (error) {
@@ -2873,7 +2874,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </div>
       )}
 
-      <div className="w-[100%] h-[calc(100vh-63px)] absolute left-0 top-[63px] flex items-center justify-center">
+      <div className="overflow-scroll w-[100%] h-[calc(100vh-130px)] absolute left-0 top-[63px] pt-[80px] flex items-center justify-center">
         {renderContent()}
       </div>
 
