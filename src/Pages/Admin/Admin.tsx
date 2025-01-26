@@ -2835,58 +2835,114 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           }
           uploadedNames.push(sanitizedFileName);
 
-          if (currentPath[0] === "about") {
-            appFileCopy["pages"]["about"]["images"].push({
-              index: nextIndex,
-              name: sanitizedFileName,
-            });
-          } else if (
-            currentPath[0] === "projects" &&
-            currentPath.length === 2
-          ) {
-            const projectItem = appFile["pages"]["projects"].filter(
-              (item: any) => item.id === currentPath[1]
-            );
-            if (projectItem.length > 0) {
-              const foundIndex = appFileCopy["pages"]["projects"].findIndex(
-                (item: any) => item.id === currentPath[1]
-              );
-              appFileCopy["pages"]["projects"][foundIndex]["images"].push({
-                index: nextIndex,
-                name: sanitizedFileName,
-                projectCover: false,
-              });
-            }
-          } else if (
-            currentPath[0] === "archives" &&
-            currentPath.length === 2
-          ) {
-            const projectItem = appFile["pages"]["archives"].filter(
-              (item: any) => item.id === currentPath[1]
-            );
+          // if (currentPath[0] === "about") {
+          //   appFileCopy["pages"]["about"]["images"].push({
+          //     index: nextIndex,
+          //     name: sanitizedFileName,
+          //   });
+          // } else if (
+          //   currentPath[0] === "projects" &&
+          //   currentPath.length === 2
+          // ) {
+          //   const projectItem = appFile["pages"]["projects"].filter(
+          //     (item: any) => item.id === currentPath[1]
+          //   );
+          //   if (projectItem.length > 0) {
+          //     const foundIndex = appFileCopy["pages"]["projects"].findIndex(
+          //       (item: any) => item.id === currentPath[1]
+          //     );
+          //     appFileCopy["pages"]["projects"][foundIndex]["images"].push({
+          //       index: nextIndex,
+          //       name: sanitizedFileName,
+          //       projectCover: false,
+          //     });
+          //   }
+          // } else if (
+          //   currentPath[0] === "archives" &&
+          //   currentPath.length === 2
+          // ) {
+          //   const projectItem = appFile["pages"]["archives"].filter(
+          //     (item: any) => item.id === currentPath[1]
+          //   );
 
-            if (projectItem.length > 0) {
-              const foundIndex = appFileCopy["pages"]["archives"].findIndex(
-                (item: any) => item.id === currentPath[1]
-              );
-              appFileCopy["pages"]["archives"][foundIndex]["images"].push({
-                index: nextIndex,
-                name: sanitizedFileName,
-              });
-            }
-          }
-
-          setAppFile(appFileCopy);
-          nextIndex += 1;
+          //   if (projectItem.length > 0) {
+          //     const foundIndex = appFileCopy["pages"]["archives"].findIndex(
+          //       (item: any) => item.id === currentPath[1]
+          //     );
+          //     appFileCopy["pages"]["archives"][foundIndex]["images"].push({
+          //       index: nextIndex,
+          //       name: sanitizedFileName,
+          //     });
+          //   }
+          // }
 
           const reader = new FileReader();
           reader.onload = (event) => {
-            resolve({
-              name: sanitizedFileName,
-              src: event.target?.result as string,
-            });
+            const img = new Image();
+            img.onload = () => {
+              const imageWidth = img.width;
+              const imageHeight = img.height;
+
+              if (currentPath[0] === "about") {
+                appFileCopy["pages"]["about"]["images"].push({
+                  index: nextIndex,
+                  name: sanitizedFileName,
+                  width: imageWidth,
+                  height: imageHeight,
+                });
+              } else if (
+                currentPath[0] === "projects" &&
+                currentPath.length === 2
+              ) {
+                const projectItem = appFile["pages"]["projects"].filter(
+                  (item: any) => item.id === currentPath[1]
+                );
+                if (projectItem.length > 0) {
+                  const foundIndex = appFileCopy["pages"]["projects"].findIndex(
+                    (item: any) => item.id === currentPath[1]
+                  );
+                  appFileCopy["pages"]["projects"][foundIndex]["images"].push({
+                    index: nextIndex,
+                    name: sanitizedFileName,
+                    width: imageWidth,
+                    height: imageHeight,
+                    projectCover: false,
+                  });
+                }
+              } else if (
+                currentPath[0] === "archives" &&
+                currentPath.length === 2
+              ) {
+                const projectItem = appFile["pages"]["archives"].filter(
+                  (item: any) => item.id === currentPath[1]
+                );
+
+                if (projectItem.length > 0) {
+                  const foundIndex = appFileCopy["pages"]["archives"].findIndex(
+                    (item: any) => item.id === currentPath[1]
+                  );
+                  appFileCopy["pages"]["archives"][foundIndex]["images"].push({
+                    index: nextIndex,
+                    name: sanitizedFileName,
+                    width: imageWidth,
+                    height: imageHeight,
+                  });
+                }
+              }
+
+              setAppFile(appFileCopy);
+              nextIndex += 1;
+
+              resolve({
+                name: sanitizedFileName,
+                src: event.target?.result as string,
+              });
+            };
+
+            img.src = event.target?.result as string;
           };
-          reader.readAsDataURL(compressedFile); // Use the compressed file here
+
+          reader.readAsDataURL(compressedFile);
         });
       });
 

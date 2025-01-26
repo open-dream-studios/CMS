@@ -43,9 +43,6 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   const { canSelectProject, setCanSelectProject } = useCanSelectProjectState();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
 
-  // console.log(selectedProject, selectedProjectName)
-  // console.log(projectColors)
-
   const [imageDimensions, setImageDimensions] = useState<ImageDimension[]>([]);
   const scrollRef = useRef(0);
   const parallaxRefs = useRef<HTMLImageElement[]>([]);
@@ -90,19 +87,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         incomingImageDimensions.length !== 0 &&
         incomingImageStyles.length !== 0
       ) {
-        console.log("setting", incomingImageDimensions)
+        // console.log("setting", incomingImageDimensions)
         setImageDimensions(incomingImageDimensions);
         setImageStyles(incomingImageStyles);
       }
-
-      // if (selectedProjectName[1] !== null) {
-      //   const projectColorsCopy = projectColors;
-      //   projectColorsCopy[1] = [
-      //     coversRef.current[selectedProjectName[1]].bg_color,
-      //     coversRef.current[selectedProjectName[1]].text_color,
-      //   ];
-      //   setProjectColors(projectColorsCopy);
-      // }
     }
   }, [incomingImageDimensions, incomingImageStyles, coversRef.current]);
 
@@ -178,7 +166,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
   >([]);
 
   useEffect(() => {
-    const loadImageDimensions = async () => {
+    const loadImageDimensions2 = async () => {
       if (incomingImageDimensions.length === 0) {
         setImageDimensions([]);
       } else {
@@ -191,7 +179,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       }
     };
 
-    loadImageDimensions();
+    loadImageDimensions2();
   }, [selectedProjectName[1], slideUpComponent]);
 
   useEffect(() => {
@@ -432,7 +420,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
 
                   {incomingProject !== null && coversRef.current !== null && (
                     <>
-                      <div className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]">
+                      <div className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw] text-center">
                         <>
                           {coversRef.current[incomingProject].title
                             .split("_")
@@ -505,7 +493,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
                 style={{ objectFit: "cover" }}
               />
 
-              <div className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw]">
+              <div className="w-[100%] py-[4px] aspect-[6/1] flex justify-center klivora text-[7vw] text-center">
                 {selectedProjectName[1] !== null &&
                   coversRef.current !== null &&
                   coversRef.current[selectedProjectName[1]].title

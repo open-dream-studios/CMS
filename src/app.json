@@ -45,7 +45,9 @@
       "images": [
         {
           "index": 0,
-          "name": "1.png"
+          "name": "1.png",
+          "width": 452,
+          "height": 802
         }
       ]
     },
@@ -62,7 +64,9 @@
           {
             "index": 0,
             "name": "1.png",
-            "projectCover": true
+            "projectCover": true,
+            "width": 452,
+            "height": 802
           }
         ]
       },
@@ -78,7 +82,9 @@
           {
             "index": 0,
             "name": "1.png",
-            "projectCover": true
+            "projectCover": true,
+            "width": 452,
+            "height": 802
           }
         ]
       },
@@ -94,7 +100,9 @@
           {
             "index": 0,
             "name": "1.png",
-            "projectCover": true
+            "projectCover": true,
+            "width": 452,
+            "height": 802
           }
         ]
       }
@@ -111,7 +119,9 @@
         "images": [
           {
             "index": 0,
-            "name": "1.png"
+            "name": "1.png",
+            "width": 452,
+            "height": 802
           }
         ]
       },
@@ -126,7 +136,9 @@
         "images": [
           {
             "index": 0,
-            "name": "1.png"
+            "name": "1.png",
+            "width": 452,
+            "height": 802
           }
         ]
       },
@@ -141,7 +153,9 @@
         "images": [
           {
             "index": 0,
-            "name": "1.png"
+            "name": "1.png",
+            "width": 452,
+            "height": 802
           }
         ]
       },
@@ -156,7 +170,9 @@
         "images": [
           {
             "index": 0,
-            "name": "1.png"
+            "name": "1.png",
+            "width": 452,
+            "height": 802
           }
         ]
       }
