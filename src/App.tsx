@@ -365,6 +365,8 @@ const App = () => {
             title: img,
             url: BASE_URL + page + "/" + img,
             index: index,
+            width: folder[index].width,
+            height: folder[index].height,
           };
         });
       const sortedImages = mappedImages.sort(
@@ -428,6 +430,8 @@ const App = () => {
                 title: folderItem,
                 url: BASE_URL + page + "/" + folder + "/" + folderItem,
                 index: imgIndex,
+                width: appFileFolder[foundIndex].width,
+                height: appFileFolder[foundIndex].height,
               };
             });
 
@@ -500,6 +504,8 @@ const App = () => {
                 title: folderItem,
                 url: BASE_URL + page + "/" + folder + "/" + folderItem,
                 index: imgIndex,
+                width: appFileFolder[foundIndex].width,
+                height: appFileFolder[foundIndex].height,
               };
             });
           const sortedImages = mappedImages.sort(
@@ -590,6 +596,8 @@ const App = () => {
                 title: folderItem,
                 url: BASE_URL + page + "/" + folder + "/" + folderItem,
                 index: imgIndex,
+                width: appFileFolder[foundIndex].width,
+                height: appFileFolder[foundIndex].height,
               };
             });
 
@@ -711,7 +719,7 @@ const App = () => {
   const [sittingProject, setSittingProject] = useState(false);
   const { currentNavColor, setCurrentNavColor } = useCurrentNavColorState();
   const [canSelectPage, setCanSelectPage] = useState<boolean>(true);
-  const [zTrigger, setZTrigger] = useState<null | number>(null)
+  const [zTrigger, setZTrigger] = useState<null | number>(null);
   const navigate = (page: Page) => {
     if (page === currentPage || !canSelectPage) return;
 
@@ -737,7 +745,7 @@ const App = () => {
       page.split("/").length === 2
     ) {
       setSittingProject(false);
-      setZTrigger(800)
+      setZTrigger(800);
     }
     setCanSelectPage(false);
     setIncomingPage(page); // Set the incoming page to trigger animation
@@ -766,11 +774,10 @@ const App = () => {
       }
       setCachedCurrent(newVal);
       setCanSelectPage(true);
-      
     }, 1000); // Match this timeout to the animation duration
-    setTimeout(()=>{
-      setZTrigger(null)
-    },1200)
+    setTimeout(() => {
+      setZTrigger(null);
+    }, 1200);
   };
 
   useEffect(() => {
@@ -832,7 +839,7 @@ const App = () => {
             left: 0,
             width: "100%",
             height: "100%",
-            zIndex: 102
+            zIndex: 102,
             // zIndex: zTrigger !== null && selectedProjectName[1] === null
             //     ? zTrigger : 102
           }}
@@ -924,8 +931,12 @@ const App = () => {
             left: 0,
             width: "100%",
             height: "100%",
-            zIndex: selectedProjectName[1] === null && zTrigger === null
-                ? 101 : zTrigger === null ? 102 : zTrigger
+            zIndex:
+              selectedProjectName[1] === null && zTrigger === null
+                ? 101
+                : zTrigger === null
+                ? 102
+                : zTrigger,
           }}
         >
           {currentPage?.startsWith("projects/") &&

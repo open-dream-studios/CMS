@@ -12,8 +12,7 @@ import axios from "axios";
 import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
-import { GIT_KEYS } from "../../App";
-import imageCompression from "browser-image-compression";
+import { BASE_URL, GIT_KEYS } from "../../App";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -2246,13 +2245,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                             "/"
                           )}/${key}`}
                           alt={key}
-                          className="w-full h-auto mb-8"
+                          className="w-full h-auto"
                         />
-                        <div className="bottom-0 left-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
+                        {/* <div className="bottom-0 left-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
                           <span className="truncate overflow-hidden text-ellipsis w-[100%]text-center">
                             {key}
                           </span>
-                        </div>
+                        </div> */}
 
                         <button
                           style={{
@@ -2570,37 +2569,37 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     };
   }, []);
 
-  const uploadToGitHub = async (images: { name: string; src: string }[]) => {
-    const currentBase = currentPath.join("/");
-    try {
-      for (const image of images) {
-        const response = await fetch(
-          `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${currentBase}/${image.name}`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              message: `Add ${image.name}`,
-              content: image.src.split(",")[1],
-              branch: branch,
-            }),
-          }
-        );
+  // const uploadToGitHub = async (images: { name: string; src: string }[]) => {
+  //   const currentBase = currentPath.join("/");
+  //   try {
+  //     for (const image of images) {
+  //       const response = await fetch(
+  //         `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${currentBase}/${image.name}`,
+  //         {
+  //           method: "PUT",
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify({
+  //             message: `Add ${image.name}`,
+  //             content: image.src.split(",")[1],
+  //             branch: branch,
+  //           }),
+  //         }
+  //       );
 
-        if (!response.ok) {
-          throw new Error(
-            `Failed to upload ${image.name}: ${response.statusText}`
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error uploading to GitHub:", error);
-      alert("Failed to upload images to GitHub. Check console for details.");
-    }
-  };
+  //       if (!response.ok) {
+  //         throw new Error(
+  //           `Failed to upload ${image.name}: ${response.statusText}`
+  //         );
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error uploading to GitHub:", error);
+  //     alert("Failed to upload images to GitHub. Check console for details.");
+  //   }
+  // };
 
   const uploadBlankImageToGitHub = async (folderName: string) => {
     if (currentPath.length === 0) return;
@@ -2655,22 +2654,33 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  const compressImage = async (
-    file: File,
-    maxSizeMB: number = 1
-  ): Promise<File> => {
-    try {
-      const options = {
-        maxSizeMB: maxSizeMB, // Maximum file size in MB
-        maxWidthOrHeight: 1920, // Resize if necessary (optional)
-        useWebWorker: true,
-      };
+  type FileImage = {
+    name: string;
+    file: File;
+  };
 
-      const compressedFile = await imageCompression(file, options);
-      return compressedFile;
+  const handleSend = async (files: FileImage[]) => {
+    const formData = new FormData();
+
+    files.forEach((fileImage, index) => {
+      formData.append("files", fileImage.file, fileImage.name);
+    });
+    formData.append("currentPath", currentPath.join("/"));
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/compress",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.status === 200;
     } catch (error) {
-      console.error("Error compressing the image:", error);
-      throw error;
+      console.error("Upload error:", error);
+      return false;
     }
   };
 
@@ -2711,246 +2721,89 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
     let nextIndex = highestIndex + 1;
 
-    const random4Digits = () => {
-      return Math.floor(1000 + Math.random() * 9000);
+    const random8Digits = () => {
+      return Math.floor(10000000 + Math.random() * 90000000);
     };
     setLoading(true);
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
     if (imageFiles.length > 0) {
       const appFileCopy = appFile;
       const uploadedNames: string[] = [];
-      // const readerPromises = imageFiles.map((file) => {
-      //   return new Promise<{ name: string; src: string }>((resolve) => {
-      //     const extension = file.type.split("/").pop();
-      //     if (!extension) return;
-
-      //     // Remove extension
-      //     const lastDotIndex = file.name.lastIndexOf(".");
-      //     if (lastDotIndex === -1) return;
-      //     const newFileName = file.name.slice(0, lastDotIndex);
-
-      //     let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
-
-      //     // Ensure img has extension
-      //     if (!sanitizedFileName.endsWith(`.${extension}`)) {
-      //       sanitizedFileName = `${sanitizedFileName}.${extension}`;
-      //     }
-
-      //     // Rename to prevent duplicates in folder and currently uploaded group
-      //     const newNameSplit = sanitizedFileName.split(".");
-      //     const newName = newNameSplit.slice(0, -1).join(".");
-
-      //     if (currentfolderContents.includes(sanitizedFileName)) {
-      //       sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
-      //     }
-      //     while (uploadedNames.includes(sanitizedFileName)) {
-      //       sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
-      //     }
-      //     uploadedNames.push(sanitizedFileName);
-
-      //     if (currentPath[0] === "about") {
-      //       appFileCopy["pages"]["about"]["images"].push({
-      //         index: nextIndex,
-      //         name: sanitizedFileName,
-      //       });
-      //     } else if (
-      //       currentPath[0] === "projects" &&
-      //       currentPath.length === 2
-      //     ) {
-      //       const projectItem = appFile["pages"]["projects"].filter(
-      //         (item: any) => item.id === currentPath[1]
-      //       );
-      //       if (projectItem.length > 0) {
-      //         const foundIndex = appFileCopy["pages"]["projects"].findIndex(
-      //           (item: any) => item.id === currentPath[1]
-      //         );
-      //         appFileCopy["pages"]["projects"][foundIndex]["images"].push({
-      //           index: nextIndex,
-      //           name: sanitizedFileName,
-      //           projectCover: false,
-      //         });
-      //       }
-      //     } else if (
-      //       currentPath[0] === "archives" &&
-      //       currentPath.length === 2
-      //     ) {
-      //       const projectItem = appFile["pages"]["archives"].filter(
-      //         (item: any) => item.id === currentPath[1]
-      //       );
-
-      //       if (projectItem.length > 0) {
-      //         const foundIndex = appFileCopy["pages"]["archives"].findIndex(
-      //           (item: any) => item.id === currentPath[1]
-      //         );
-      //         appFileCopy["pages"]["archives"][foundIndex]["images"].push({
-      //           index: nextIndex,
-      //           name: sanitizedFileName,
-      //         });
-      //       }
-      //     }
-
-      //     setAppFile(appFileCopy);
-      //     nextIndex += 1;
-
-      //     const reader = new FileReader();
-      //     reader.onload = (event) => {
-      //       resolve({
-      //         name: sanitizedFileName,
-      //         src: event.target?.result as string,
-      //       });
-      //     };
-      //     reader.readAsDataURL(file);
-      //   });
-      // });
-
-      const readerPromises = imageFiles.map(async (file) => {
-        // Compress the image
-        const compressedFile = await compressImage(file, 1); // Compress to under 1MB
-
-        return new Promise<{ name: string; src: string }>((resolve) => {
-          const extension = compressedFile.type.split("/").pop();
+      const readerPromises = imageFiles.map((file) => {
+        return new Promise<FileImage>(async (resolve) => {
+          const extension = file.type.split("/").pop();
           if (!extension) return;
 
           // Remove extension
-          const lastDotIndex = compressedFile.name.lastIndexOf(".");
+          const lastDotIndex = file.name.lastIndexOf(".");
           if (lastDotIndex === -1) return;
-          const newFileName = compressedFile.name.slice(0, lastDotIndex);
+          const newFileName = file.name.slice(0, lastDotIndex);
 
           let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
+          const newExtension = "webp";
 
           // Ensure img has extension
-          if (!sanitizedFileName.endsWith(`.${extension}`)) {
-            sanitizedFileName = `${sanitizedFileName}.${extension}`;
-          }
-
-          // Rename to prevent duplicates in folder and currently uploaded group
-          const newNameSplit = sanitizedFileName.split(".");
-          const newName = newNameSplit.slice(0, -1).join(".");
-
-          if (currentfolderContents.includes(sanitizedFileName)) {
-            sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
-          }
-          while (uploadedNames.includes(sanitizedFileName)) {
-            sanitizedFileName = `${newName}--${random4Digits()}.${extension}`;
-          }
+          sanitizedFileName = `${sanitizedFileName}-${random8Digits()}.${newExtension}`;
           uploadedNames.push(sanitizedFileName);
 
-          // if (currentPath[0] === "about") {
-          //   appFileCopy["pages"]["about"]["images"].push({
-          //     index: nextIndex,
-          //     name: sanitizedFileName,
-          //   });
-          // } else if (
-          //   currentPath[0] === "projects" &&
-          //   currentPath.length === 2
-          // ) {
-          //   const projectItem = appFile["pages"]["projects"].filter(
-          //     (item: any) => item.id === currentPath[1]
-          //   );
-          //   if (projectItem.length > 0) {
-          //     const foundIndex = appFileCopy["pages"]["projects"].findIndex(
-          //       (item: any) => item.id === currentPath[1]
-          //     );
-          //     appFileCopy["pages"]["projects"][foundIndex]["images"].push({
-          //       index: nextIndex,
-          //       name: sanitizedFileName,
-          //       projectCover: false,
-          //     });
-          //   }
-          // } else if (
-          //   currentPath[0] === "archives" &&
-          //   currentPath.length === 2
-          // ) {
-          //   const projectItem = appFile["pages"]["archives"].filter(
-          //     (item: any) => item.id === currentPath[1]
-          //   );
+          if (currentPath[0] === "about") {
+            appFileCopy["pages"]["about"]["images"].push({
+              index: nextIndex,
+              name: sanitizedFileName,
+            });
+          } else if (
+            currentPath[0] === "projects" &&
+            currentPath.length === 2
+          ) {
+            const projectItem = appFile["pages"]["projects"].filter(
+              (item: any) => item.id === currentPath[1]
+            );
+            if (projectItem.length > 0) {
+              const foundIndex = appFileCopy["pages"]["projects"].findIndex(
+                (item: any) => item.id === currentPath[1]
+              );
+              appFileCopy["pages"]["projects"][foundIndex]["images"].push({
+                index: nextIndex,
+                name: sanitizedFileName,
+                projectCover: false,
+              });
+            }
+          } else if (
+            currentPath[0] === "archives" &&
+            currentPath.length === 2
+          ) {
+            const projectItem = appFile["pages"]["archives"].filter(
+              (item: any) => item.id === currentPath[1]
+            );
 
-          //   if (projectItem.length > 0) {
-          //     const foundIndex = appFileCopy["pages"]["archives"].findIndex(
-          //       (item: any) => item.id === currentPath[1]
-          //     );
-          //     appFileCopy["pages"]["archives"][foundIndex]["images"].push({
-          //       index: nextIndex,
-          //       name: sanitizedFileName,
-          //     });
-          //   }
-          // }
+            if (projectItem.length > 0) {
+              const foundIndex = appFileCopy["pages"]["archives"].findIndex(
+                (item: any) => item.id === currentPath[1]
+              );
+              appFileCopy["pages"]["archives"][foundIndex]["images"].push({
+                index: nextIndex,
+                name: sanitizedFileName,
+              });
+            }
+          }
 
+          setAppFile(appFileCopy);
+          nextIndex += 1;
           const reader = new FileReader();
           reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-              const imageWidth = img.width;
-              const imageHeight = img.height;
-
-              if (currentPath[0] === "about") {
-                appFileCopy["pages"]["about"]["images"].push({
-                  index: nextIndex,
-                  name: sanitizedFileName,
-                  width: imageWidth,
-                  height: imageHeight,
-                });
-              } else if (
-                currentPath[0] === "projects" &&
-                currentPath.length === 2
-              ) {
-                const projectItem = appFile["pages"]["projects"].filter(
-                  (item: any) => item.id === currentPath[1]
-                );
-                if (projectItem.length > 0) {
-                  const foundIndex = appFileCopy["pages"]["projects"].findIndex(
-                    (item: any) => item.id === currentPath[1]
-                  );
-                  appFileCopy["pages"]["projects"][foundIndex]["images"].push({
-                    index: nextIndex,
-                    name: sanitizedFileName,
-                    width: imageWidth,
-                    height: imageHeight,
-                    projectCover: false,
-                  });
-                }
-              } else if (
-                currentPath[0] === "archives" &&
-                currentPath.length === 2
-              ) {
-                const projectItem = appFile["pages"]["archives"].filter(
-                  (item: any) => item.id === currentPath[1]
-                );
-
-                if (projectItem.length > 0) {
-                  const foundIndex = appFileCopy["pages"]["archives"].findIndex(
-                    (item: any) => item.id === currentPath[1]
-                  );
-                  appFileCopy["pages"]["archives"][foundIndex]["images"].push({
-                    index: nextIndex,
-                    name: sanitizedFileName,
-                    width: imageWidth,
-                    height: imageHeight,
-                  });
-                }
-              }
-
-              setAppFile(appFileCopy);
-              nextIndex += 1;
-
-              resolve({
-                name: sanitizedFileName,
-                src: event.target?.result as string,
-              });
-            };
-
-            img.src = event.target?.result as string;
+            resolve({
+              name: sanitizedFileName,
+              file: file,
+            });
           };
-
-          reader.readAsDataURL(compressedFile);
+          reader.readAsDataURL(file);
         });
       });
 
       Promise.all(readerPromises)
         .then(async (images) => {
           setUploadPopup(false);
-          await uploadToGitHub(images);
-          await getRepoTree();
+          await handleSend(images);
         })
         .then(() => {
           setLoading(false);

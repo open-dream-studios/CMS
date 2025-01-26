@@ -228,20 +228,29 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
         incomingImageDimensions.length === 0 &&
         imageDimensions.length === 0
       ) {
-        dimensions = await Promise.all(
-          coversRef.current[selectedProjectName[1]].images.map((item) => {
-            return new Promise<ImageDimension>((resolve) => {
-              const img = new Image();
-              img.onload = () =>
-                resolve({
-                  width: img.naturalWidth,
-                  height: img.naturalHeight,
-                  src: item.url,
-                });
-              img.src = item.url;
-            });
-          })
+        dimensions = coversRef.current[selectedProjectName[1]].images.map(
+          (item) => {
+            return {
+              width: item.width,
+              height: item.height,
+              src: item.url,
+            };
+          }
         );
+        // dimensions = await Promise.all(
+        //   coversRef.current[selectedProjectName[1]].images.map((item) => {
+        //     return new Promise<ImageDimension>((resolve) => {
+        //       const img = new Image();
+        //       img.onload = () =>
+        //         resolve({
+        //           width: img.naturalWidth,
+        //           height: img.naturalHeight,
+        //           src: item.url,
+        //         });
+        //       img.src = item.url;
+        //     });
+        //   })
+        // );
 
         setImageDimensions(dimensions);
         setIncomingImageDimensions(dimensions);
@@ -340,7 +349,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
       const projects = coversRef.current;
       setSelectedProject(index);
       setSelectedProjectName([null, currentProj, index]);
-      const nextTitle = "projects/" + projects[index].title.replaceAll("_", "").replaceAll("&","and")
+      const nextTitle =
+        "projects/" +
+        projects[index].title.replaceAll("_", "").replaceAll("&", "and");
       navigate(nextTitle);
       const projectColorsCopy = projectColors;
       projectColorsCopy[2] = [item.bg_color, item.text_color];

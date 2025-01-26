@@ -21,6 +21,8 @@ export type ProjectEntryImage = {
   title: string;
   index: number;
   url: string;
+  width: number;
+  height: number;
 };
 
 export type ProjectEntry = {
