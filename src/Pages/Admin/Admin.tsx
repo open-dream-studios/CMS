@@ -756,47 +756,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  // const fetchAppFileContents = async (blobUrl: string) => {
-  //   try {
-  //     const response = await fetch(blobUrl, {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //         Accept: "application/vnd.github.v3+json",
-  //       },
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to fetch blob: ${blobUrl}`);
-  //     }
-
-  //     const data = await response.json();
-  //     const fileContent = atob(data.content);
-
-  //     if (fileContent) {
-  //       try {
-  //         const parsedContent = JSON.parse(fileContent);
-  //         setAppFile(parsedContent);
-
-  //         if (parsedContent["pages"] !== undefined) {
-  //           const indexMap = Object.values(parsedContent["pages"])
-  //             .flat()
-  //             .reduce((map: any, item: any) => {
-  //               map[item.id] = item.title;
-  //               return map;
-  //             }, {});
-  //           setReducedAppFile(indexMap);
-  //         }
-  //       } catch (error) {
-  //         console.error("Error parsing JSON content:", error);
-  //       }
-  //     }
-
-  //     return fileContent;
-  //   } catch (error) {
-  //     console.error("Error fetching file contents:", error);
-  //   }
-  // };
-
   async function updateAppFile(appFileCopy: any) {
     const filePath = "src/app.json";
 
@@ -846,44 +805,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       setReducedAppFile(indexMap);
     }
   }
-
-  // async function updateAppFile() {
-  //   const filePath = "src/app.json";
-  //   try {
-  //     const fileInfoUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-  //     const headers = { Authorization: `Bearer ${token}` };
-  //     const { data: fileInfo } = await axios.get(fileInfoUrl, { headers });
-  //     const fileSha = fileInfo.sha;
-  //     const updatedContent = btoa(
-  //       typeof appFile === "string" ? appFile : JSON.stringify(appFile)
-  //     );
-  //     const updateFileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-  //     const commitMessage = "Update app.json with new content";
-  //     await axios.put(
-  //       updateFileUrl,
-  //       {
-  //         message: commitMessage,
-  //         content: updatedContent,
-  //         sha: fileSha,
-  //         branch,
-  //       },
-  //       { headers }
-  //     );
-  //     console.log("File updated successfully");
-  //   } catch (error) {
-  //     console.error("Error updating the file:", error);
-  //   }
-
-  //   if (appFile["pages"] !== undefined) {
-  //     const indexMap = Object.values(appFile["pages"])
-  //       .flat()
-  //       .reduce((map: any, item: any) => {
-  //         map[item.id] = item.title;
-  //         return map;
-  //       }, {});
-  //     setReducedAppFile(indexMap);
-  //   }
-  // }
 
   const getFolderItem = (key: string) => {
     const pageName =
@@ -2235,7 +2156,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   {typeof currentFolder[key] === "string" && (
                     <div className="z-[9]">
                       <div
-                        className="z-[9] min-w-[100%]"
+                        className="z-[9] min-w-[100%] min-h-[200px] items-center flex"
                         style={{
                           opacity: swapActive && swapItems[0] !== key ? 0.3 : 1,
                         }}
@@ -2677,6 +2598,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           },
         }
       );
+
       return response.status === 200;
     } catch (error) {
       console.error("Upload error:", error);
