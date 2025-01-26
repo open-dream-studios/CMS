@@ -2020,7 +2020,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     key !== "archives" &&
                     key !== "projects" && (
                       <div className="z-[10]">
-                        <button
+                        {typeof currentFolder[key] !== "string" && <button
                           className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -2033,7 +2033,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                             color={"black"}
                             size={13}
                           />
-                        </button>
+                        </button>}
 
                         <button
                           className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
@@ -2181,7 +2181,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                               ? "1px solid black"
                               : "1px solid #00BBFC",
                           }}
-                          className="rounded-full absolute top-[20px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+                          className="rounded-full absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
                           onClick={async (e) => {
                             e.stopPropagation();
                             if (!swapActive) {
@@ -2469,7 +2469,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [aboutPopupOpen, setAboutPopupOpen] = useState(false);
   const handleAppFileChange = (newAppFile: string) => {
     if (Object.keys(newAppFile).length > 0) {
-      // setAppFile(newAppFile);
+      setAppFile(newAppFile);
       updateAppData(newAppFile);
     }
   };
@@ -2589,8 +2589,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     formData.append("currentPath", currentPath.join("/"));
 
     try {
+      const local = false
+      let serverUrl = "https://image-server-production-53c2.up.railway.app/compress"
+      if (local) {
+         serverUrl = "http://localhost:3001/compress"
+      }
       const response = await axios.post(
-        "http://localhost:3001/compress",
+        serverUrl,
         formData,
         {
           headers: {
@@ -2607,7 +2612,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleFiles = (files: File[]) => {
-    const currentfolderContents = collectImgNames();
     let highestIndex = 0;
     let images: any[] = [];
 
