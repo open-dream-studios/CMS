@@ -229,7 +229,7 @@ const Home: React.FC<HomePageProps> = ({
   useEffect(() => {
     if (!slideUpComponent && coversRef.current !== null) {
       setTimeout(() => {
-        const maxWaitTime = 60000; // Max wait time for preload
+        const maxWaitTime = 1000; // Max wait time for preload
         const startTime = Date.now();
 
         const checkPreload = () => {

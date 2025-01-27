@@ -381,7 +381,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
 
   return (
     <div
-      className={`right-0 top-0 w-[100vw] min-h-[100vh] flex px-[calc(30px+3vw)] pt-[100px]`}
+      className={`select-none right-0 top-0 w-[100vw] min-h-[100vh] flex px-[calc(30px+3vw)] pt-[100px]`}
       style={{
         pointerEvents: "none",
         backgroundColor: "transparent",
@@ -390,7 +390,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({
     >
       <div
         ref={projectPageRef}
-        className={`absolute right-0 top-0 w-[100vw] sm:w-[calc((98vw-220px)-(3vw+30px))] md:w-[calc((98vw-250px)-(3vw+30px))] min-h-[150vh] h-[auto] flex flex-col pl-0 pr-[calc(30px+3vw)] pt-[90px]`}
+        className={`absolute select-none right-0 top-0 w-[100vw] sm:w-[calc((98vw-220px)-(3vw+30px))] md:w-[calc((98vw-250px)-(3vw+30px))] min-h-[150vh] h-[auto] flex flex-col pl-0 pr-[calc(30px+3vw)] pt-[90px]`}
         style={{
           pointerEvents: "all",
           backgroundColor: slideUpComponent

@@ -577,7 +577,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                     <div
                       className={`mb-[29px] text-center
                       sm:max-w-[80%] max-w-[calc(100%-10vw-104px-20px)] h-[auto]
-                    kayonest leading-[calc(30px+5vw)] text-[calc(30px+5vw)]`}
+                    kayonest leading-[calc(30px+5vw)] text-[calc(12px+4vw)]`}
                       style={{
                         color: "black",
                         wordBreak: "break-word",
