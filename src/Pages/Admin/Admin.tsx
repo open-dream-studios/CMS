@@ -211,7 +211,6 @@ const Popup: React.FC<PopupProps> = ({
               value={newDesc}
               onChange={(e) => {
                 if (
-                  e.target.value.split("").length < 80 &&
                   e.target.value
                     .split("")
                     .every((item) => isValidFileNameChar(item))
