@@ -495,7 +495,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                       left: 0,
                       width: "100vw",
                       height: "100vh",
-                      backgroundColor: "rgba(0, 0, 0, 0.8)",
+                      backgroundColor: "rgba(256, 256, 256, 0.9)",
                       zIndex: 1000,
                       display: "flex",
                       justifyContent: "center",
@@ -539,7 +539,7 @@ const Archives: React.FC<ArchivesPageProps> = ({
                           }}
                         >
                           <img
-                            className="cursor-pointer"
+                            className="select-none cursor-pointer"
                             srcSet={`${item.url}?w=248&fit=crop&auto=format&dpr=2 2x`}
                             src={`${item.url}?w=248&fit=crop&auto=format`}
                             alt={item.title}
