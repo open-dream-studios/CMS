@@ -200,14 +200,21 @@ const Projects: React.FC<ProjectsPageProps> = ({
                               whiteSpace: "nowrap",
                               display: "flex",
                               flexDirection: "row",
-                              animationDelay: animateWave
-                                ? `${Math.pow(index, 0.75) * 0.045}s`
-                                : "none",
+                              // animationDelay: animateWave
+                              //   ? `${Math.pow(index, 0.75) * 0.045}s`
+                              //   : "none",
+                              transition: "color 0.8s ease",
                               color: animate
                                 ? "black"
-                                : selectedProject === index
+                                : selectedProject === null
                                 ? "black"
-                                : "#747474",
+                                : projectColors[1][1],
+                              opacity:
+                                selectedProject === null
+                                  ? "1"
+                                  : selectedProject === index
+                                  ? "1"
+                                  : "0.5",
                               transform: animate
                                 ? "translateY(%100)"
                                 : "translateY(0)",
@@ -224,7 +231,13 @@ const Projects: React.FC<ProjectsPageProps> = ({
                               .map((letter: any) => {
                                 return (
                                   <span>
-                                    {letter === " " ? "\u00A0" : letter === "&" ? <span className="abygaer">&</span> : letter}
+                                    {letter === " " ? (
+                                      "\u00A0"
+                                    ) : letter === "&" ? (
+                                      <span className="abygaer">&</span>
+                                    ) : (
+                                      letter
+                                    )}
                                   </span>
                                 );
                               })}
