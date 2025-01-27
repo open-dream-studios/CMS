@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import Home from "./Pages/Home/Home";
+import Home, { CoverEntryImage } from "./Pages/Home/Home";
 import About from "./Pages/About/About";
 import Projects from "./Pages/Projects/Projects";
 import Navbar from "./Components/Navbar/Navbar";
@@ -350,7 +350,7 @@ const App = () => {
         collectNewImages = true;
       }
       const folder = appFile["pages"]["about"]["images"];
-      const mappedImages: Entry[] = Object.keys(project[page])
+      const mappedImages: CoverEntryImage[] = Object.keys(project[page])
         .filter((item) => item !== "blank.png")
         .filter(
           (img: any) =>
@@ -364,7 +364,7 @@ const App = () => {
           return {
             title: img,
             url: BASE_URL + page + "/" + img,
-            index: index,
+            index: folder[index].index,
             width: folder[index].width,
             height: folder[index].height,
           };

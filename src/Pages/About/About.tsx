@@ -5,7 +5,7 @@ import useSelectedProjectState from "../../store/useSelectedProjectStore";
 import useSelectedProjectNameState from "../../store/useSelectedProjectNameStore";
 import usePreloadedImagesStore from "../../store/usePreloadedImagesStore";
 import useProjectAssetsStore from "../../store/useProjectAssetsStore";
-import { CoverEntry } from "../Home/Home";
+import { CoverEntry, CoverEntryImage } from "../Home/Home";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./About.css";
@@ -139,8 +139,8 @@ const About: React.FC<PageProps> = ({ navigate }) => {
   const { projectAssets, setProjectAssets } = useProjectAssetsStore();
   const { preloadedImages, setPreloadedImages } = usePreloadedImagesStore();
 
-  const coversRef = useRef<CoverEntry[] | null>(null);
-  const [coversReady, setCoversReady] = useState<CoverEntry[] | null>(null);
+  const coversRef = useRef<CoverEntryImage[] | null>(null);
+  const [coversReady, setCoversReady] = useState<CoverEntryImage[] | null>(null);
   const contactRef = useRef<HTMLDivElement | null>(null);
   const [aboutText, setAboutText] = useState<any>({});
 
@@ -152,8 +152,8 @@ const About: React.FC<PageProps> = ({ navigate }) => {
       Array.isArray(project["about"]) &&
       project["about"].length > 0
     ) {
-      coversRef.current = project["about"] as CoverEntry[];
-      setCoversReady(project["about"] as CoverEntry[]);
+      coversRef.current = project["about"] as CoverEntryImage[];
+      setCoversReady(project["about"] as CoverEntryImage[]);
       console.log(project["about"])
       let newAboutText = projectAssets as any
       newAboutText = newAboutText["aboutText"]
@@ -260,7 +260,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             <img
               style={{}}
               alt=""
-              src="assets/about/about-flower1.png"
+              src={coversRef.current === null ? "" : coversRef.current[0].url}
               className="w-[calc(150px+10vw)] absolute top-[0] left-[0]"
             />
             <p
@@ -307,7 +307,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
               <img
                 style={{}}
                 alt=""
-                src="assets/about/about-img1.png"
+                src={coversRef.current === null ? "" : coversRef.current[1].url}
                 className="h-[calc(30vw+90px)] lg:h-[calc(10vw+150px)] aspect-[1/1.34] object-cover mt-[17px]"
               />
             </div>
@@ -346,7 +346,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
                   <img
                     style={{}}
                     alt=""
-                    src="assets/about/about-img2.png"
+                    src={coversRef.current === null ? "" : coversRef.current[2].url}
                     className="w-[100%] aspect-[1/1.3] object-cover"
                   />
                 </div>
@@ -354,7 +354,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
                   <img
                     style={{}}
                     alt=""
-                    src="assets/about/about-img2.png"
+                    src={coversRef.current === null ? "" : coversRef.current[3].url}
                     className="w-[100%] aspect-[1/1.3] object-cover"
                   />
                 </div>
@@ -362,7 +362,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
                   <img
                     style={{}}
                     alt=""
-                    src="assets/about/about-img2.png"
+                    src={coversRef.current === null ? "" : coversRef.current[4].url}
                     className="w-[100%] aspect-[1/1.3] object-cover"
                   />
                 </div>
@@ -371,7 +371,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
                     <img
                       style={{}}
                       alt=""
-                      src="assets/about/about-img2.png"
+                      src={coversRef.current === null ? "" : coversRef.current[5].url}
                       className="w-[100%] aspect-[1/1.3] object-cover"
                     />
                   </div>
@@ -379,7 +379,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
                     <img
                       style={{}}
                       alt=""
-                      src="assets/about/about-img2.png"
+                      src={coversRef.current === null ? "" : coversRef.current[5].url}
                       className="w-[100%] aspect-[1/1.3] object-cover"
                     />
                   </div>
@@ -397,28 +397,28 @@ const About: React.FC<PageProps> = ({ navigate }) => {
                 <div className="w-[16%] mr-[25%] aspect-[1/1.3] lg:block hidden">
                   <img
                     alt=""
-                    src="assets/about/about-img2.png"
+                    src={coversRef.current === null ? "" : coversRef.current[5].url}
                     className="w-[100%] aspect-[1/1.3] object-cover"
                   />
                 </div>
                 <div className="w-[16%] aspect-[1/1.3] lg:block hidden">
                   <img
                     alt=""
-                    src="assets/about/about-img2.png"
+                    src={coversRef.current === null ? "" : coversRef.current[5].url}
                     className="w-[100%] aspect-[1/1.3] object-cover"
                   />
                 </div>
                 <div className="lg:w-[41%] w-[66%] aspect-[1/1.3]">
                   <img
                     alt=""
-                    src="assets/about/about-img2.png"
+                    src={coversRef.current === null ? "" : coversRef.current[5].url}
                     className="w-[100%] aspect-[1/1.3] object-cover"
                   />
                 </div>
                 <div className="lg:w-[41%] ml-[1%] w-[32%] aspect-[1/1.3] block lg:hidden">
                   <img
                     alt=""
-                    src="assets/about/about-img2.png"
+                    src={coversRef.current === null ? "" : coversRef.current[5].url}
                     className="w-[100%] aspect-[1/1.3] object-cover"
                   />
                 </div>
@@ -427,7 +427,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
                 <div className="w-[16%] aspect-[1/1.3] hidden lg:block">
                   <img
                     alt=""
-                    src="assets/about/about-img2.png"
+                    src={coversRef.current === null ? "" : coversRef.current[5].url}
                     className="w-[100%] aspect-[1/1.3] object-cover"
                   />
                 </div>
@@ -597,7 +597,7 @@ const About: React.FC<PageProps> = ({ navigate }) => {
             </div>
           </div>
           <div className="w-[100%] mb-[30px] flex relative justify-center h-[auto] px-[calc(2vw+15px)]">
-            <div className="z-[201] px-[calc(2vw+15px)] manrope absolute w-[100%] bottom-[25px] text-[#C9C7C5] text-[calc((12px+0.4vw)*7)] leading-[calc((12px+0.4vw)*6.3)]">
+            <div className="z-[201] px-[calc(2vw+15px)] manrope absolute w-[100%] bottom-[25px] text-[#C9C7C5] text-[calc((12px+0.4vw)*6)] md:text-[calc((12px+0.4vw)*7)] leading-[calc((12px+0.4vw)*6.3)]">
               <p className="text-left">{aboutText.section6.text1}</p>
               <p className="text-right lg:text-center">
                 {aboutText.section6.text2}

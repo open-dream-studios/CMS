@@ -16,6 +16,8 @@ export type CoverEntryImage = {
   title: string;
   index: number;
   url: string;
+  height: number | undefined;
+  width: number | undefined;
 };
 
 export type CoverEntry = {
