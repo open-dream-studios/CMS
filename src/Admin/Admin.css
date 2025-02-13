@@ -1,0 +1,57 @@
+.loginBox {
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  background-color: white;
+}
+
+/* Heading */
+.heading {
+  margin-bottom: 10px;
+  font-size: 24px;
+  color: #333;
+}
+
+/* Input styling */
+.input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+/* Button styling */
+.button {
+  padding: 7px 14px;
+  color: black;
+  border: 1px solid black;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.button:hover {
+  background-color: #BBBBBB;
+}
+
+
+
+
+.simple-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1); 
+  border-top: 4px solid #98d5fd; 
+  border-radius: 50%;
+  width: 33px;
+  height: 33px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
