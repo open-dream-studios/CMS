@@ -510,11 +510,11 @@ const Admin = () => {
   };
 
   return (
-    <div className="flex justify-center items-center absolute left-0 top-0 h-[100vh] w-[100vw] pb-[10vh]">
+    <div className="flex justify-center items-center absolute left-0 top-0 h-[100vh] w-[100vw]">
       {isLoggedIn ? (
         <Dashboard onLogout={handleLogout} />
       ) : (
-        <div className="loginBox">
+        <div className="loginBox pb-[10vh]">
           <h2 className="heading">Admin</h2>
           <form onSubmit={handleLogin}>
             <input
@@ -548,12 +548,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const branch = GIT_KEYS.branch;
   const token = GIT_KEYS.token;
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingText, setLoadingText] = useState<string>("Loading...")
   const [projectImages, setProjectImages] = useState<string[]>([]);
   const [projectFile, setProjectFile] = useState<any>({});
 
   useEffect(() => {
-    getProject();
+    const success = getProject();
+    if (!success) {
+      setLoadingText("Something went wrong")
+    } 
   }, []);
 
   const getProject = async () => {
@@ -566,10 +570,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           Authorization: `Bearer ${token}`,
         },
       });
+
       if (!response.ok) {
         console.error("Failed to fetch repository tree:", response.statusText);
-        return null;
+        return false
       }
+
       const data = await response.json();
       const tree = data.tree.reduce((acc: any, item: any) => {
         const parts = item.path.split("/");
@@ -601,7 +607,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           });
     
           if (!response.ok) {
-            throw new Error(`Failed to fetch blob: ${projectJSONLink}`);
+            return false;
           }
     
           const data = await response.json();
@@ -616,20 +622,27 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             try {
               const parsedContent = JSON.parse(decodedContent);
               setProjectFile(parsedContent);
+              return true
             } catch (error) {
               console.error("Error parsing JSON content:", error);
             }
+          } else {
+            return false
           }
         } catch (error) {
           console.error("Error fetching file contents:", error);
+          return false
         }
+      } else {
+        return false
       }
     } catch (error) {
       console.error("Error fetching repository tree:", error);
-      return null;
+      return false
     }
   };
 
+  const [sideBarOpen, setSideBarOpen] = useState<boolean>(true)
 
 
 
@@ -2904,13 +2917,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  if (!fullProject) {
-    return <div>Loading...</div>;
+  if (projectImages.length === 0 && Object.keys(projectFile).length === 0) {
+    return <div>{loadingText}</div>;
   }
 
   return (
     <div
-      className="w-[100vw] h-[100vh]"
+      className="w-[100vw] h-[100vh] fixed"
       style={{ pointerEvents: loading ? "none" : "all" }}
     >
       {uploadPopup && (
@@ -2945,30 +2958,28 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </div>
       )}
 
-      <div className="overflow-scroll w-[100%] h-[calc(100vh-130px)] absolute left-0 top-[63px] pt-[80px] flex items-center justify-center">
-        {renderContent()}
-      </div>
-
       <div
-        className="z-[998] w-[100%] h-[63px] fixed left-0 top-0"
+        className="z-[998] w-[100%] h-[63px] fixed left-0 top-0 flex flex-row"
         style={{ backgroundColor: "white", borderBottom: "1px solid #CCCCCC" }}
       >
-        {currentPath.length > 0 && (
+        <div className="h-[100%] w-[50px] items-center flex justify-end">
           <button
-            onClick={handleBackClick}
-            className="button absolute top-3 left-3"
+            onClick={()=>{setSideBarOpen(prev => !prev)}}
+            style={{transform: "scale(0.8)"}}
+            className="cursor-pointer absolute flex flex-col gap-[5px] w-[40px] h-[40px] flex items-center justify-center"
           >
-            Back
+            <div className="bg-black w-[30px] h-[3px]"></div>
+            <div className="bg-black w-[30px] h-[3px]"></div>
+            <div className="bg-black w-[30px] h-[3px]"></div>
           </button>
-        )}
+        </div>
 
         <div
-          className={`h-[100%] flex items-center ${
-            currentPath.length > 0 ? "ml-[100px]" : "ml-[26px]"
-          } font-[500] text-[20px]`}
+          className={`h-[100%] flex items-center ml-[11px]
+          font-[500] text-[20px] mt-[-1px]`}
         >
           <div
-            className="mt-[1px] cursor-pointer"
+            className="cursor-pointer"
             onClick={() => {
               handleBackTextClick(0);
             }}
@@ -3028,6 +3039,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         <button onClick={onLogout} className="button absolute top-3 right-3">
           Logout
         </button>
+      </div>
+
+      <div className="overflow absolute w-[100%] h-[calc(100%-63px)] top-[63px] left-0 flex items-center justify-center">
+        <div style={{transform: sideBarOpen ? "translateX(0px)" : "translateX(-120px)", transition: "transform 0.3s ease-in-out", borderRight: "1px solid #BBBBBB"}} className="w-[120px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]">
+          <p className="font-[500] text-[16px] pb-[5px] mb-[5px]" style={{borderBottom: "1px solid #BBB"}}>Pages</p>
+          {Object.keys(projectFile).length > 0 && Object.keys(projectFile).map((item: any) => {
+            return item
+          })} 
+        </div>
+        {/* {renderContent()} */}
       </div>
 
       {currentPath.length > 0 && (
