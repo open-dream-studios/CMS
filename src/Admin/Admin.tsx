@@ -554,13 +554,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [projectFile, setProjectFile] = useState<any>({});
 
   useEffect(() => {
-    const success = getProject();
-    if (!success) {
+    const project = getProject();
+    if (project === null) {
       setLoadingText("Something went wrong")
     } 
   }, []);
 
   const getProject = async () => {
+    const returnedProject: any[] = [null, null]
     const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
     const token = process.env.REACT_APP_GIT_PAT;
 
@@ -573,7 +574,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
       if (!response.ok) {
         console.error("Failed to fetch repository tree:", response.statusText);
-        return false
+        return null
       }
 
       const data = await response.json();
@@ -596,6 +597,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         Object.keys(tree).includes("project.json")
       ) {
         setProjectImages(Object.keys(tree["images"]));
+        returnedProject[0] = Object.keys(tree["images"])
         const projectJSONLink = tree["project.json"]
 
         try {
@@ -607,7 +609,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           });
     
           if (!response.ok) {
-            return false;
+            return null;
           }
     
           const data = await response.json();
@@ -622,28 +624,84 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             try {
               const parsedContent = JSON.parse(decodedContent);
               setProjectFile(parsedContent);
-              return true
+              returnedProject[1] = parsedContent
+              if (returnedProject[0] === null || returnedProject[1] === null) {
+                return null
+              } else {
+                return returnedProject
+              } 
             } catch (error) {
               console.error("Error parsing JSON content:", error);
             }
           } else {
-            return false
+            return null
           }
         } catch (error) {
           console.error("Error fetching file contents:", error);
-          return false
+          return null
         }
       } else {
-        return false
+        return null
       }
     } catch (error) {
       console.error("Error fetching repository tree:", error);
-      return false
+      return null
     }
   };
 
-  const [sideBarOpen, setSideBarOpen] = useState<boolean>(true)
+  const updateProjectFile = async (newProjectFile: any) => {
+    const filePath = "project.json";
+    try {
+      const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+      const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' };
+      const { data: fileInfo } = await axios.get(fileUrl, { headers });
+      const fileSha = fileInfo.sha;
+      console.log(fileInfo)
+      console.log(fileInfo.sha)
+      console.log(fileUrl)
 
+      // Convert the JSON to a UTF-8 encoded Base64 string
+      const updatedContent = btoa(
+        unescape(
+          encodeURIComponent(
+            typeof newProjectFile === "string"
+              ? newProjectFile
+              : JSON.stringify(newProjectFile)
+          )
+        )
+      );
+      const commitMessage = "Update project.json with new content";
+      await axios.put(
+        fileUrl,
+        {
+          message: commitMessage,
+          content: updatedContent,
+          sha: fileSha,
+          branch,
+        },
+        { headers }
+      );
+
+      console.log("Project file updated successfully");
+      return true
+    } catch (error) {
+      console.error("Error updating project file:", error);
+      return false
+    }
+  }
+
+  const [sideBarOpen, setSideBarOpen] = useState<boolean>(true)
+  
+  const handleAddPage = async (pageName: string) => {
+    const project = await getProject()
+    if (project === undefined || project === null) return
+    const projectFileContents = { ...project[1] }
+    if (!Object.keys(projectFileContents).includes(pageName)) {
+      projectFileContents[pageName] = {}
+      const success = await updateProjectFile(projectFileContents)
+      if (success) {setProjectFile(projectFileContents)}
+    }
+  }
 
 
 
@@ -3041,13 +3099,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </button>
       </div>
 
-      <div className="overflow absolute w-[100%] h-[calc(100%-63px)] top-[63px] left-0 flex items-center justify-center">
-        <div style={{transform: sideBarOpen ? "translateX(0px)" : "translateX(-120px)", transition: "transform 0.3s ease-in-out", borderRight: "1px solid #BBBBBB"}} className="w-[120px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]">
+      <div className="overflow absolute w-[100%] h-[calc(100%-63px)] top-[63px] left-0 flex justify-end">
+        <div style={{transform: sideBarOpen ? "translateX(0px)" : "translateX(-120px)", transition: "transform 0.3s ease-in-out", borderRight: "1px solid #BBBBBB"}} className="bg-[white] w-[120px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]">
           <p className="font-[500] text-[16px] pb-[5px] mb-[5px]" style={{borderBottom: "1px solid #BBB"}}>Pages</p>
-          {Object.keys(projectFile).length > 0 && Object.keys(projectFile).map((item: any) => {
-            return item
+          {Object.keys(projectFile).length > 0 && Object.keys(projectFile).map((item: any, index) => {
+            return <div key={index}>{item}</div>
           })} 
+          <div className="w-[calc(100%-24px)] flex justify-center absolute bottom-3">
+            <button
+              onClick={() => {
+                const folderName = window.prompt("New Page Name:");
+                if (folderName && folderName !== "") {
+                  const sanitizedFolderName = folderName
+                    .trim()
+                    .replaceAll(/[^a-zA-Z0-9-&]/g, "_");
+                  handleAddPage(sanitizedFolderName);
+                }
+              }}
+              className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]" style={{borderRadius: "3px", border: "1px solid #999"}}>
+                Add Page
+            </button>
+          </div>
         </div>
+        <div className="h-[100%] bg-[white]" style={{width: sideBarOpen? "calc(100vw - 120px)" : "100vw", transition: "width 0.3s ease-in-out"}}></div>
         {/* {renderContent()} */}
       </div>
 
