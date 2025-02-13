@@ -3,9 +3,9 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Admin from "./Admin/Admin";
 
 export const GIT_KEYS = {
-  owner: "JosephGoff",
-  repo: "js-portfolio",
-  branch: "master",
+  owner: "open-dream-studios",
+  repo: "test-project",
+  branch: "main",
   token: process.env.REACT_APP_GIT_PAT,
 };
 

@@ -11,7 +11,7 @@ import axios from "axios";
 import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
-import { BASE_URL, GIT_KEYS } from "../App";
+import { GIT_KEYS } from "../App";
 
 export function validateColor(input: string) {
   const isColorName = (color: string) => {
@@ -493,7 +493,7 @@ const AboutPopup: React.FC<AboutPopupProps> = ({
 
 const Admin = () => {
   const [password, setPassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
   const handleLogin = (e: any) => {
     e.preventDefault();
@@ -542,23 +542,103 @@ interface FolderStructure {
   [key: string]: FolderStructure | string;
 }
 
-type projectImage = {
-  index: number;
-  name: string;
-  projectCover?: boolean;
-  homeCover?: boolean;
-};
-
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
-  const [loading, setLoading] = useState(false);
-  const [reducedAppFile, setReducedAppFile] = useState<any>({});
-
-  const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
-
   const owner = GIT_KEYS.owner;
   const repo = GIT_KEYS.repo;
   const branch = GIT_KEYS.branch;
   const token = GIT_KEYS.token;
+
+  const [loading, setLoading] = useState(false);
+  const [projectImages, setProjectImages] = useState<string[]>([]);
+  const [projectFile, setProjectFile] = useState<any>({});
+
+  useEffect(() => {
+    getProject();
+  }, []);
+
+  const getProject = async () => {
+    const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+    const token = process.env.REACT_APP_GIT_PAT;
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        console.error("Failed to fetch repository tree:", response.statusText);
+        return null;
+      }
+      const data = await response.json();
+      const tree = data.tree.reduce((acc: any, item: any) => {
+        const parts = item.path.split("/");
+        let current = acc;
+
+        for (const part of parts) {
+          if (!current[part]) {
+            current[part] = item.type === "tree" ? {} : item.url;
+          }
+          current = current[part];
+        }
+        return acc;
+      }, {});
+      
+      if (
+        Object.keys(tree).length > 0 &&
+        Object.keys(tree).includes("images") &&
+        Object.keys(tree).includes("project.json")
+      ) {
+        setProjectImages(Object.keys(tree["images"]));
+        const projectJSONLink = tree["project.json"]
+
+        try {
+          const response = await fetch(projectJSONLink, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/vnd.github.v3+json",
+            },
+          });
+    
+          if (!response.ok) {
+            throw new Error(`Failed to fetch blob: ${projectJSONLink}`);
+          }
+    
+          const data = await response.json();
+    
+          // Correctly decode Base64 content into UTF-8
+          const base64Content = data.content;
+          const decodedContent = new TextDecoder("utf-8").decode(
+            Uint8Array.from(atob(base64Content), (char) => char.charCodeAt(0))
+          );
+    
+          if (decodedContent) {
+            try {
+              const parsedContent = JSON.parse(decodedContent);
+              setProjectFile(parsedContent);
+            } catch (error) {
+              console.error("Error parsing JSON content:", error);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching file contents:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching repository tree:", error);
+      return null;
+    }
+  };
+
+
+
+
+
+
+
+  const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
+  const [appFile, setAppFile] = useState<any>({});
+  const [reducedAppFile, setReducedAppFile] = useState<any>({});
 
   const renameImageFile = async (oldFilePath: string, newFilePath: string) => {
     const getBlobSha = async () => {
@@ -704,9 +784,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       console.error("Error:", error);
     }
   };
-
-  // APP.JSON
-  const [appFile, setAppFile] = useState<any>({});
 
   const fetchAppFileContents = async (blobUrl: string) => {
     try {
@@ -897,10 +974,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       await fetchAppFileContents(appFileURL);
     }
   };
-
-  useEffect(() => {
-    getRepoTree();
-  }, []);
 
   const [currentPath, setCurrentPath] = useState<string[]>([]);
 
