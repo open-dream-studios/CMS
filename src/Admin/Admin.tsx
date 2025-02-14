@@ -11,69 +11,18 @@ import axios from "axios";
 import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
-import { GIT_KEYS } from "../App";
-
-export function validateColor(input: string) {
-  const isColorName = (color: string) => {
-    const testElement = document.createElement("div");
-    testElement.style.color = color;
-    return testElement.style.color !== "";
-  };
-  const isHexCode = (color: string) =>
-    /^#?[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(color);
-  if (isColorName(input)) {
-    return input;
-  }
-  if (isHexCode(input)) {
-    return input.startsWith("#") ? input : `#${input}`;
-  }
-  return "white";
-}
-
-export function isColor(input: string) {
-  const isColorName = (color: string) => {
-    const testElement = document.createElement("div");
-    testElement.style.color = color;
-    return testElement.style.color !== "";
-  };
-  const isHexCode = (color: string) =>
-    /^#?[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(color);
-  if (isColorName(input)) {
-    return input;
-  }
-  if (isHexCode(input)) {
-    return input.startsWith("#") ? input : `#${input}`;
-  }
-  return null;
-}
-
-const unSanitizeTitle = (title: string, subTitle: boolean) => {
-  if (subTitle) {
-    title = title.toUpperCase();
-  } else {
-    title = title
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join("_");
-  }
-  const newTitle = title.replaceAll("_", " ").trim();
-  return newTitle;
-};
-
-const sanitizeTitle = (title: string) => {
-  return title.trim().replaceAll(" ", "_").toLowerCase();
-};
-
-const extractAfterIndex = (str: string) => {
-  const regex = /^\d+--/;
-  return regex.test(str) ? str.replace(regex, "") : str;
-};
-
-const extractBeforeIndex = (str: string) => {
-  const regex = /^(\d+)--/;
-  const match = str.match(regex);
-  return match ? match[1] : null;
-};
+import { GIT_KEYS } from "../config";
+import {
+  renameImageFile,
+  uploadBlankImageToGitHub,
+} from "../utils/gitFunctions";
+import {
+  extractAfterIndex,
+  extractBeforeIndex,
+  isColor,
+  sanitizeTitle,
+  unSanitizeTitle,
+} from "../utils/helperFunctions";
 
 interface PopupProps {
   isOpen: boolean;
@@ -543,27 +492,27 @@ interface FolderStructure {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
-  const owner = GIT_KEYS.owner;
-  const repo = GIT_KEYS.repo;
-  const branch = GIT_KEYS.branch;
-  const token = GIT_KEYS.token;
+  const { owner, repo, branch, token } = GIT_KEYS;
 
   const [loading, setLoading] = useState<boolean>(false);
-  const [loadingText, setLoadingText] = useState<string>("Loading...")
+  const [loadingText, setLoadingText] = useState<string>("Loading...");
   const [projectImages, setProjectImages] = useState<string[]>([]);
   const [projectFile, setProjectFile] = useState<any>({});
 
   useEffect(() => {
-    const project = getProject();
-    if (project === null) {
-      setLoadingText("Something went wrong")
-    } 
+    const fetchProject = async () => {
+      const project = await getProject();
+      if (project === null) {
+        setLoadingText("Something went wrong");
+      }
+    };
+
+    fetchProject();
   }, []);
 
   const getProject = async () => {
-    const returnedProject: any[] = [null, null]
-    const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
-    const token = process.env.REACT_APP_GIT_PAT;
+    const returnedProject: any[] = [null, null];
+    const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1&t=${new Date().getTime()}`;
 
     try {
       const response = await fetch(url, {
@@ -574,7 +523,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
       if (!response.ok) {
         console.error("Failed to fetch repository tree:", response.statusText);
-        return null
+        return null;
       }
 
       const data = await response.json();
@@ -590,15 +539,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         }
         return acc;
       }, {});
-      
+
       if (
         Object.keys(tree).length > 0 &&
         Object.keys(tree).includes("images") &&
         Object.keys(tree).includes("project.json")
       ) {
         setProjectImages(Object.keys(tree["images"]));
-        returnedProject[0] = Object.keys(tree["images"])
-        const projectJSONLink = tree["project.json"]
+        returnedProject[0] = Object.keys(tree["images"]);
+        const projectJSONLink = tree["project.json"];
 
         try {
           const response = await fetch(projectJSONLink, {
@@ -607,45 +556,45 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               Accept: "application/vnd.github.v3+json",
             },
           });
-    
+
           if (!response.ok) {
             return null;
           }
-    
+
           const data = await response.json();
-    
+
           // Correctly decode Base64 content into UTF-8
           const base64Content = data.content;
           const decodedContent = new TextDecoder("utf-8").decode(
             Uint8Array.from(atob(base64Content), (char) => char.charCodeAt(0))
           );
-    
+
           if (decodedContent) {
             try {
               const parsedContent = JSON.parse(decodedContent);
               setProjectFile(parsedContent);
-              returnedProject[1] = parsedContent
+              returnedProject[1] = parsedContent;
               if (returnedProject[0] === null || returnedProject[1] === null) {
-                return null
+                return null;
               } else {
-                return returnedProject
-              } 
+                return returnedProject;
+              }
             } catch (error) {
               console.error("Error parsing JSON content:", error);
             }
           } else {
-            return null
+            return null;
           }
         } catch (error) {
           console.error("Error fetching file contents:", error);
-          return null
+          return null;
         }
       } else {
-        return null
+        return null;
       }
     } catch (error) {
       console.error("Error fetching repository tree:", error);
-      return null
+      return null;
     }
   };
 
@@ -653,12 +602,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     const filePath = "project.json";
     try {
       const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-      const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' };
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+      };
       const { data: fileInfo } = await axios.get(fileUrl, { headers });
       const fileSha = fileInfo.sha;
-      console.log(fileInfo)
-      console.log(fileInfo.sha)
-      console.log(fileUrl)
 
       // Convert the JSON to a UTF-8 encoded Base64 string
       const updatedContent = btoa(
@@ -683,274 +632,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       );
 
       console.log("Project file updated successfully");
-      return true
+      return true;
     } catch (error) {
       console.error("Error updating project file:", error);
-      return false
+      return false;
     }
-  }
+  };
 
-  const [sideBarOpen, setSideBarOpen] = useState<boolean>(true)
-  
+  const [sideBarOpen, setSideBarOpen] = useState<boolean>(true);
+
+  const handlePageClick = async (pageName: string) => {
+    setCurrentPath([pageName]);
+  };
+
   const handleAddPage = async (pageName: string) => {
-    const project = await getProject()
-    if (project === undefined || project === null) return
-    const projectFileContents = { ...project[1] }
+    const project = await getProject();
+    if (project === undefined || project === null) return;
+    const projectFileContents = { ...project[1] };
     if (!Object.keys(projectFileContents).includes(pageName)) {
-      projectFileContents[pageName] = {}
-      const success = await updateProjectFile(projectFileContents)
-      if (success) {setProjectFile(projectFileContents)}
+      projectFileContents[pageName] = {};
+      const success = await updateProjectFile(projectFileContents);
+      if (success) {
+        setProjectFile(projectFileContents);
+      }
     }
-  }
-
-
-
-
+  };
 
   const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
   const [appFile, setAppFile] = useState<any>({});
   const [reducedAppFile, setReducedAppFile] = useState<any>({});
-
-  const renameImageFile = async (oldFilePath: string, newFilePath: string) => {
-    const getBlobSha = async () => {
-      const response = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${oldFilePath}`,
-        {
-          headers: {
-            Authorization: `token ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to get blob SHA: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.sha;
-    };
-
-    try {
-      // Step 1: Get the current reference (SHA of the latest commit)
-      const refResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`,
-        {
-          headers: {
-            Authorization: `token ${token}`,
-          },
-        }
-      );
-
-      if (!refResponse.ok) {
-        throw new Error(
-          `Failed to fetch branch reference: ${refResponse.statusText}`
-        );
-      }
-
-      const refData = await refResponse.json();
-      const latestCommitSha = refData.object.sha;
-
-      // Step 2: Get the tree associated with the latest commit
-      const commitResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/git/commits/${latestCommitSha}`,
-        {
-          headers: {
-            Authorization: `token ${token}`,
-          },
-        }
-      );
-
-      if (!commitResponse.ok) {
-        throw new Error(`Failed to fetch commit: ${commitResponse.statusText}`);
-      }
-
-      const commitData = await commitResponse.json();
-      const treeSha = commitData.tree.sha;
-
-      // Step 3: Create a new tree with the renamed file
-      const treeResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/git/trees`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `token ${token}`,
-          },
-          body: JSON.stringify({
-            base_tree: treeSha,
-            tree: [
-              {
-                path: newFilePath,
-                mode: "100644",
-                type: "blob",
-                sha: await getBlobSha(), // Get the blob SHA of the old file
-              },
-              {
-                path: oldFilePath,
-                mode: "100644",
-                type: "blob",
-                sha: null, // Remove the old file
-              },
-            ],
-          }),
-        }
-      );
-
-      if (!treeResponse.ok) {
-        throw new Error(
-          `Failed to create new tree: ${treeResponse.statusText}`
-        );
-      }
-
-      const treeData = await treeResponse.json();
-
-      // Step 4: Create a new commit
-      const commitResponse2 = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/git/commits`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `token ${token}`,
-          },
-          body: JSON.stringify({
-            message: `Rename ${oldFilePath} to ${newFilePath}`,
-            tree: treeData.sha,
-            parents: [latestCommitSha],
-          }),
-        }
-      );
-
-      if (!commitResponse2.ok) {
-        throw new Error(
-          `Failed to create new commit: ${commitResponse2.statusText}`
-        );
-      }
-
-      const commitData2 = await commitResponse2.json();
-
-      // Step 5: Update the branch reference to point to the new commit
-      const updateRefResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `token ${token}`,
-          },
-          body: JSON.stringify({
-            sha: commitData2.sha,
-          }),
-        }
-      );
-
-      if (!updateRefResponse.ok) {
-        throw new Error(
-          `Failed to update branch reference: ${updateRefResponse.statusText}`
-        );
-      }
-
-      console.log("File renamed successfully!");
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  const fetchAppFileContents = async (blobUrl: string) => {
-    try {
-      const response = await fetch(blobUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch blob: ${blobUrl}`);
-      }
-
-      const data = await response.json();
-
-      // Correctly decode Base64 content into UTF-8
-      const base64Content = data.content;
-      const decodedContent = new TextDecoder("utf-8").decode(
-        Uint8Array.from(atob(base64Content), (char) => char.charCodeAt(0))
-      );
-
-      if (decodedContent) {
-        try {
-          const parsedContent = JSON.parse(decodedContent);
-          setAppFile(parsedContent);
-
-          if (parsedContent["pages"] !== undefined) {
-            const indexMap = Object.values(parsedContent["pages"])
-              .flat()
-              .reduce((map: any, item: any) => {
-                map[item.id] = item.title;
-                return map;
-              }, {});
-            setReducedAppFile(indexMap);
-          }
-        } catch (error) {
-          console.error("Error parsing JSON content:", error);
-        }
-      }
-
-      return decodedContent;
-    } catch (error) {
-      console.error("Error fetching file contents:", error);
-    }
-  };
-
-  async function updateAppFile(appFileCopy: any) {
-    const filePath = "src/app.json";
-
-    try {
-      const fileInfoUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-      const headers = { Authorization: `Bearer ${token}` };
-      const { data: fileInfo } = await axios.get(fileInfoUrl, { headers });
-      const fileSha = fileInfo.sha;
-
-      // Convert the JSON to a UTF-8 encoded Base64 string
-      const updatedContent = btoa(
-        unescape(
-          encodeURIComponent(
-            typeof appFileCopy === "string"
-              ? appFileCopy
-              : JSON.stringify(appFileCopy)
-          )
-        )
-      );
-
-      const updateFileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-      const commitMessage = "Update app.json with new content";
-
-      await axios.put(
-        updateFileUrl,
-        {
-          message: commitMessage,
-          content: updatedContent,
-          sha: fileSha,
-          branch,
-        },
-        { headers }
-      );
-
-      console.log("File updated successfully");
-    } catch (error) {
-      console.error("Error updating the file:", error);
-    }
-
-    if (appFileCopy["pages"] !== undefined) {
-      const indexMap = Object.values(appFileCopy["pages"])
-        .flat()
-        .reduce((map: any, item: any) => {
-          map[item.id] = item.title;
-          return map;
-        }, {});
-      setReducedAppFile(indexMap);
-    }
-  }
 
   const getFolderItem = (key: string) => {
     const pageName =
@@ -987,72 +697,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  const updateAppData = async (appFileCopy: any) => {
-    setLoading(true);
-    await updateAppFile(appFileCopy);
-    await getRepoTree();
-    setLoading(false);
-  };
-
-  // FULL REPOSITORY
-  const fetchFullRepoTree = async (
-    owner: string,
-    repo: string,
-    branch = "master"
-  ) => {
-    const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
-    const token = process.env.REACT_APP_GIT_PAT;
-
-    try {
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        console.error("Failed to fetch repository tree:", response.statusText);
-        return null;
-      }
-      const data = await response.json();
-      const tree = data.tree.reduce((acc: any, item: any) => {
-        const parts = item.path.split("/");
-        let current = acc;
-
-        for (const part of parts) {
-          if (!current[part]) {
-            current[part] = item.type === "tree" ? {} : item.url;
-          }
-          current = current[part];
-        }
-        return acc;
-      }, {});
-
-      return tree;
-    } catch (error) {
-      console.error("Error fetching repository tree:", error);
-      return null;
-    }
-  };
-
-  const getRepoTree = async () => {
-    const fullRepo = await fetchFullRepoTree("JosephGoff", "js-portfolio");
-    if (fullRepo && fullRepo["public"]?.["assets"]) {
-      const { icons, ...filteredProject } = fullRepo["public"]["assets"];
-      setFullProject(filteredProject);
-    }
-    if (fullRepo["src"]["app.json"]) {
-      const appFileURL = fullRepo["src"]["app.json"];
-      await fetchAppFileContents(appFileURL);
-    }
-  };
-
   const [currentPath, setCurrentPath] = useState<string[]>([]);
 
   const getCurrentFolder = (): FolderStructure | string => {
-    if (!fullProject) return {};
+    if (!projectFile) return {};
     return currentPath.reduce(
       (acc: FolderStructure, key) => acc[key] as FolderStructure,
-      fullProject
+      projectFile
     );
   };
 
@@ -1187,165 +838,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         path.split("/").pop().includes(".")
       );
       console.log(appFileCopy);
-      updateAppData(appFileCopy);
+      updateProjectFile(appFileCopy);
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const copyFolderOnGithub = async (
-    sourcePath: string,
-    destinationPath: string
-  ) => {
-    try {
-      const baseURL = `https://api.github.com/repos/${owner}/${repo}/contents`;
-      const headers = {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
-      };
-
-      const fetchFolderContents = async (path: string) => {
-        const response = await axios.get(`${baseURL}/${path}?ref=${branch}`, {
-          headers,
-        });
-        if (response.status !== 200)
-          throw new Error(`Failed to fetch folder: ${path}`);
-        return response.data;
-      };
-
-      const fetchFileContent = async (path: string) => {
-        const response = await axios.get(`${baseURL}/${path}?ref=${branch}`, {
-          headers,
-        });
-        if (response.status !== 200)
-          throw new Error(`Failed to fetch file: ${path}`);
-        return response.data.content; // This is base64 encoded.
-      };
-
-      const uploadFile = async (path: string, content: any) => {
-        const data = {
-          message: `Copying file to ${path}`,
-          content, // base64 encoded
-          branch,
-        };
-        const response = await axios.put(`${baseURL}/${path}`, data, {
-          headers,
-        });
-        if (response.status !== 201)
-          throw new Error(`Failed to upload file: ${path}`);
-      };
-
-      const processFolder = async (source: any, destination: any) => {
-        const folderContents = await fetchFolderContents(source);
-        for (const item of folderContents) {
-          if (item.type === "dir") {
-            // Recurse into subfolders.
-            await processFolder(
-              `${source}/${item.name}`,
-              `${destination}/${item.name}`
-            );
-          } else if (item.type === "file") {
-            // Fetch and upload the file.
-            const fileContent = await fetchFileContent(
-              `${source}/${item.name}`
-            );
-            await uploadFile(`${destination}/${item.name}`, fileContent);
-          }
-        }
-      };
-
-      console.log(`Starting to copy from ${sourcePath} to ${destinationPath}`);
-      await processFolder(sourcePath, destinationPath);
-      console.log("Folder copy completed successfully!");
-    } catch (error) {
-      console.error("An error occurred during the folder copy:", error);
-      if (error) {
-        console.error("Response data:", error);
-      }
-    }
-  };
-
-  const copyImageOnGithub = async (
-    sourcePath: string,
-    destinationPath: string
-  ) => {
-    const baseURL = `https://api.github.com/repos/${owner}/${repo}/contents`;
-    const headers = {
-      Authorization: `token ${token}`,
-      Accept: "application/vnd.github.v3+json",
-    };
-
-    const uploadFile = async (path: string, content: any) => {
-      const data = {
-        message: `Uploading file to ${path}`,
-        content, // Base64-encoded content
-        branch,
-      };
-
-      const response = await axios.put(`${baseURL}/${path}`, data, { headers });
-      if (response.status !== 201 && response.status !== 200) {
-        throw new Error(`Failed to upload file: ${path}`);
-      }
-
-      // console.log(`File uploaded successfully to: ${path}`);
-    };
-
-    const fetchFileContent = async (path: string) => {
-      try {
-        // console.log(`Fetching file content from: ${path}`);
-        const response = await axios.get(`${baseURL}/${path}?ref=${branch}`, {
-          headers,
-        });
-
-        // console.log("Fetch response:", response);
-
-        if (response.status !== 200) {
-          throw new Error(`Failed to fetch file metadata: ${path}`);
-        }
-
-        // If content is empty, fall back to download_url
-        if (!response.data.content) {
-          // console.log("Content field is empty. Fetching from download_url...");
-          const downloadResponse = await axios.get(response.data.download_url, {
-            responseType: "arraybuffer", // Ensure raw binary data
-          });
-
-          // console.log("Fetched file content from download_url.");
-          return btoa(
-            Array.from(new Uint8Array(downloadResponse.data))
-              .map((byte) => String.fromCharCode(byte))
-              .join("")
-          );
-        }
-
-        // console.log("Fetched file content (base64):", response.data.content);
-        return response.data.content; // Base64 encoded content
-      } catch (error) {
-        console.error("Error fetching file content:", error);
-        throw error;
-      }
-    };
-
-    setLoading(true);
-    try {
-      console.log(
-        `Starting to copy image from ${sourcePath} to ${destinationPath}`
-      );
-      const fileContent = await fetchFileContent(sourcePath);
-
-      if (!fileContent) {
-        throw new Error("Fetched file content is empty or undefined");
-      }
-
-      // console.log("Fetched file content:", fileContent);
-
-      await uploadFile(destinationPath, fileContent);
-
-      console.log("Image file copy completed successfully!");
-    } catch (error) {
-      console.error("An error occurred during the image copy:", error);
     } finally {
       setLoading(false);
     }
@@ -1500,7 +995,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         appFileCopy["pages"][pageName][index].description3 = newDesc3;
       }
       // setAppFile(appFileCopy);
-      await updateAppData(appFileCopy);
+      await updateProjectFile(appFileCopy);
     } else {
       const folderContents = collectImgNames();
       const originalName = popupKey + "." + popupExtention;
@@ -1560,9 +1055,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         }
         console.log(appFileCopy);
         // setAppFile(appFileCopy);
-        await updateAppData(appFileCopy);
+        await updateProjectFile(appFileCopy);
       }
-      await getRepoTree();
     }
   };
 
@@ -1593,7 +1087,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
 
     // setAppFile(appFileCopy);
-    await updateAppData(appFileCopy);
+    await updateProjectFile(appFileCopy);
   };
 
   const handleProjectColorsChange = async (key: string) => {
@@ -1621,7 +1115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       if (colorToChange[1] !== null && pageName === "projects") {
         appFileCopy["pages"][pageName][index].text_color = colorToChange[1];
       }
-      await updateAppData(appFileCopy);
+      await updateProjectFile(appFileCopy);
     }
     setChangedColorItems({});
     setColorToChange([null, null]);
@@ -1678,7 +1172,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     const newPath = "public/assets/" + currentPath.join("/") + "/" + newKey;
     console.log(originalPath, newPath);
     await renameImageFile(originalPath, newPath);
-    await getRepoTree();
   };
 
   const [changedArchiveImageColorItems, setChangedArchiveImageColorItems] =
@@ -1781,8 +1274,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
       // Rename the first image again
       await renameImageFile(path1Filler, newPath1);
-
-      await getRepoTree();
     }
   };
 
@@ -1816,7 +1307,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       appFileCopy["pages"][currentPath[0]][index2].index = storedIndex1;
 
       // setAppFile(appFileCopy);
-      await updateAppData(appFileCopy);
+      await updateProjectFile(appFileCopy);
     }
     setFolderSwapActive(false);
     setFolderSwapItems([null, null]);
@@ -1959,664 +1450,877 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       });
     }
 
-    await updateAppData(appFileCopy);
+    await updateProjectFile(appFileCopy);
     setCurrentImageSwapIndex(-1);
     setSwapItems([null, null]);
     setSwapActive(false);
   };
 
+  // const renderContent = () => {
+  //   const currentFolder = getCurrentFolder();
+  //   const githubBaseUrl =
+  //     "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/";
+  //   if (typeof currentFolder === "string") {
+  //     return <></>;
+  //   }
+
+  //   // Render folders or multiple items, including images
+  //   return (
+  //     <div
+  //       className={`flex ${
+  //         currentPath.length <= 1 &&
+  //         !(currentPath.length === 1 && currentPath[0] === "about")
+  //           ? "justify-left flex-col"
+  //           : "justify-center flex-wrap"
+  //       } gap-6 mt-6 ${
+  //         currentPath[0] === "about" ||
+  //         (currentPath[0] === "projects" && currentPath.length > 1) ||
+  //         (currentPath[0] === "archives" && currentPath.length > 1)
+  //           ? "pb-[95px] top-0 left-0 "
+  //           : ""
+  //       } absolute px-[22px]`}
+  //       // style={{ backgroundColor: "red" }}
+  //     >
+  //       {Object.keys(currentFolder)
+  //         .sort((a, b) => {
+  //           let indexMap: any = {};
+  //           if (appFile["pages"] !== undefined) {
+  //             indexMap = Object.values(appFile["pages"])
+  //               .flat()
+  //               .reduce((map: any, item: any) => {
+  //                 map[item.id] = item.index;
+  //                 return map;
+  //               }, {});
+  //           }
+
+  //           // // First sort (your existing logic)
+  //           // const indexA = extractBeforeIndex(a);
+  //           // const indexB = extractBeforeIndex(b);
+  //           // const numA = indexA !== null ? Number(indexA) : Infinity;
+  //           // const numB = indexB !== null ? Number(indexB) : Infinity;
+
+  //           // const primarySort = numA - numB;
+
+  //           // if (primarySort !== 0) {
+  //           //   return primarySort;
+  //           // }
+
+  //           // Second sort (based on the index from JSON)
+  //           const folderIndexA = indexMap[a] ?? Infinity;
+  //           const folderIndexB = indexMap[b] ?? Infinity;
+  //           return folderIndexA - folderIndexB;
+  //         })
+  //         .sort((a, b) => {
+  //           let images: any[] = [];
+  //           if (appFile !== null) {
+  //             if (currentPath[0] === "about") {
+  //               images = appFile["pages"]["about"]["images"];
+  //             } else if (
+  //               currentPath[0] === "projects" &&
+  //               currentPath.length === 2
+  //             ) {
+  //               const projectItem = appFile["pages"]["projects"].filter(
+  //                 (item: any) => item.id === currentPath[1]
+  //               );
+  //               if (projectItem.length > 0) {
+  //                 images = projectItem[0].images;
+  //               }
+  //             } else if (
+  //               currentPath[0] === "archives" &&
+  //               currentPath.length === 2
+  //             ) {
+  //               const projectItem = appFile["pages"]["archives"].filter(
+  //                 (item: any) => item.id === currentPath[1]
+  //               );
+
+  //               if (projectItem.length > 0) {
+  //                 images = projectItem[0].images;
+  //               }
+  //             }
+  //           }
+
+  //           const imageA: any = images.filter((item) => item.name === a);
+  //           const imageB: any = images.filter((item) => item.name === b);
+  //           if (imageA.length > 0 && imageB.length > 0) {
+  //             const indexA = imageA[0].index;
+  //             const indexB = imageB[0].index;
+  //             return indexA - indexB;
+  //           }
+  //           return 0;
+  //         })
+  //         .map((key, index) => {
+  //           if (key === "blank.png" || key === "fallback.jpeg") return <></>;
+  //           const isSecondaryFolder =
+  //             typeof currentFolder[key] !== "string" &&
+  //             ((currentPath[0] === "projects" && key !== "covers") ||
+  //               currentPath[0] === "archives");
+
+  //           const isProjectFolder =
+  //             typeof currentFolder[key] !== "string" &&
+  //             currentPath[0] === "projects";
+
+  //           let projectFound = true;
+  //           const projectItem = getFolderItem(key);
+  //           // console.log(projectItem);
+  //           if (projectItem === null) {
+  //             projectFound = false;
+  //           }
+
+  //           // Archive Image Coloring Logic
+  //           let defaultImgColor = "#CCCCCC";
+  //           if (currentPath.length === 2 && currentPath[0] === "archives") {
+  //             const imgName = key.split(".")[0];
+  //             const imgColor = imgName.split("--").pop();
+  //             if (
+  //               imgColor &&
+  //               imgName.split("--").length >= 2 &&
+  //               isColor(imgColor) !== null
+  //             ) {
+  //               defaultImgColor = isColor(imgColor) || "#CCCCCC";
+  //             }
+  //           }
+
+  //           let starTrue = false;
+  //           if (currentPath.length === 1 && projectItem) {
+  //             starTrue = projectItem.home_page;
+  //           }
+  //           if (currentPath.length === 2 && projectItem) {
+  //             starTrue = projectItem.projectCover;
+  //           }
+  //           const pageName = currentPath[0];
+
+  //           // if (currentPath.length > 0 && currentPath[0] !== "about")
+  //           //   return <></>;
+  //           let projectIndex = -1;
+  //           if (currentPath.length > 0) {
+  //             if (currentPath.length === 2) {
+  //               projectIndex = appFile["pages"][pageName].findIndex(
+  //                 (item: any) => item.id === currentPath[1]
+  //               );
+  //               if (projectIndex === -1) return <></>;
+  //             }
+  //           }
+
+  //           let showRightSwapDiv = false;
+  //           if (
+  //             currentPath.length === 1 &&
+  //             pageName === "about" &&
+  //             index === appFile["pages"][pageName].images.length - 1
+  //           ) {
+  //             showRightSwapDiv = true;
+  //           } else if (
+  //             currentPath.length === 2 &&
+  //             (pageName === "projects" || pageName === "archives") &&
+  //             index ===
+  //               appFile["pages"][pageName][projectIndex].images.length - 1
+  //           ) {
+  //             showRightSwapDiv = true;
+  //           }
+
+  //           return (
+  //             <div
+  //               key={key}
+  //               style={{
+  //                 display: key === "blank.png" ? "none" : "all",
+  //                 border: swapActive ? "1px solid red" : "1px solid #bbb",
+  //               }}
+  //               className={`min-w-[150px] ${
+  //                 currentPath.length === 1
+  //                   ? currentPath[0] === "about"
+  //                     ? ""
+  //                     : currentPath[0] === "projects"
+  //                     ? "h-[105px] pl-[17px]"
+  //                     : "h-[80px] pl-[17px]"
+  //                   : ""
+  //               } flex ${
+  //                 currentPath.length === 1 && currentPath[0] !== "about"
+  //                   ? "flex-col w-[300px]"
+  //                   : "items-center justify-center max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
+  //               } relative p-2 bg-[#f9f9f9]  rounded-lg ${
+  //                 !swapActive ? "cursor-pointer" : ""
+  //               }`}
+  //               onClick={() =>
+  //                 (currentPath.length === 2 && swapActive) ||
+  //                 (currentPath.length === 1 &&
+  //                   currentPath[0] === "about" &&
+  //                   swapActive)
+  //                   ? () => {}
+  //                   : handleFolderClick(key)
+  //               }
+  //             >
+  //               <>
+  //                 {key !== "about" &&
+  //                   key !== "archives" &&
+  //                   key !== "projects" && (
+  //                     <div className="z-[10]">
+  //                       {typeof currentFolder[key] !== "string" && (
+  //                         <button
+  //                           className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+  //                           onClick={(e) => {
+  //                             e.stopPropagation();
+  //                             const basePath = `${currentPath.join("/")}/`;
+  //                             openPopup(key, basePath);
+  //                           }}
+  //                         >
+  //                           <BiSolidPencil
+  //                             className="ml-[-0.5px]"
+  //                             color={"black"}
+  //                             size={13}
+  //                           />
+  //                         </button>
+  //                       )}
+
+  //                       {!swapActive && (
+  //                         <button
+  //                           className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+  //                           onClick={(e) => {
+  //                             e.stopPropagation();
+  //                             if (window.confirm(`Delete item?`)) {
+  //                               const fullPath = `${currentPath.join(
+  //                                 "/"
+  //                               )}/${key}`;
+  //                               handleDeleteItem(fullPath);
+  //                             }
+  //                           }}
+  //                         >
+  //                           <FaTrash
+  //                             className="ml-[0px]"
+  //                             color={"black"}
+  //                             size={11}
+  //                           />
+  //                         </button>
+  //                       )}
+
+  //                       {isProjectFolder && projectFound && (
+  //                         <button
+  //                           className="absolute bottom-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+  //                           onClick={async (e) => {
+  //                             e.stopPropagation();
+  //                             await handleStarChange(key);
+
+  //                           }}
+  //                         >
+  //                           {starTrue ? (
+  //                             <IoStar
+  //                               className="mt-[-1px]"
+  //                               color={"green"}
+  //                               size={15}
+  //                             />
+  //                           ) : (
+  //                             <IoStarOutline
+  //                               className="mt-[-1px]"
+  //                               color={"#888"}
+  //                               size={15}
+  //                             />
+  //                           )}
+  //                         </button>
+  //                       )}
+  //                     </div>
+  //                   )}
+  //                 {key === "about" && (
+  //                   <button
+  //                     className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+  //                     onClick={(e) => {
+  //                       e.stopPropagation();
+  //                       setAboutPopupOpen(true);
+  //                     }}
+  //                   >
+  //                     <BiSolidPencil
+  //                       className="ml-[-0.5px]"
+  //                       color={"black"}
+  //                       size={13}
+  //                     />
+  //                   </button>
+  //                 )}
+
+  //                 {currentPath.length === 2 &&
+  //                   currentPath[0] === "projects" && (
+  //                     <button
+  //                       className="z-[12] absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+  //                       onClick={async (e) => {
+  //                         e.stopPropagation();
+  //                         await handleStarChange(key);
+  //                       }}
+  //                     >
+  //                       {starTrue ? (
+  //                         <IoStar
+  //                           className="mt-[-1px]"
+  //                           color={"green"}
+  //                           size={15}
+  //                         />
+  //                       ) : (
+  //                         <IoStarOutline
+  //                           className="mt-[-1px]"
+  //                           color={"#888"}
+  //                           size={15}
+  //                         />
+  //                       )}
+  //                     </button>
+  //                   )}
+
+  //                 {typeof currentFolder[key] === "string" &&
+  //                   swapActive &&
+  //                   currentImageSwapIndex !== -1 &&
+  //                   index !== currentImageSwapIndex && (
+  //                     <>
+  //                       {index !== currentImageSwapIndex + 1 && (
+  //                         <div
+  //                           className={`${
+  //                             swapActive ? "cursor-pointer" : ""
+  //                           } z-[9] w-[25px] bg-red-400 h-[100%] absolute left-[-25px] top-0`}
+  //                           style={{ borderRadius: "5px" }}
+  //                           onClick={() => {
+  //                             handleMoveImageItem(key, index, 0);
+  //                           }}
+  //                         ></div>
+  //                       )}
+
+  //                       {showRightSwapDiv && (
+  //                         <div
+  //                           className={`${
+  //                             swapActive ? "cursor-pointer" : ""
+  //                           } z-[9] w-[25px] bg-red-400 h-[100%] absolute right-[-25px] top-0`}
+  //                           style={{ borderRadius: "5px" }}
+  //                           onClick={() => {
+  //                             handleMoveImageItem(key, index, 1);
+  //                           }}
+  //                         ></div>
+  //                       )}
+  //                     </>
+  //                   )}
+
+  //                 {typeof currentFolder[key] === "string" && (
+  //                   <div className="z-[9]">
+  //                     <div
+  //                       className="z-[9] min-w-[100%] min-h-[200px] items-center flex"
+  //                       style={{
+  //                         opacity: swapActive && swapItems[0] !== key ? 0.3 : 1,
+  //                       }}
+  //                     >
+  //                       <img
+  //                         src={`${githubBaseUrl}${currentPath.join(
+  //                           "/"
+  //                         )}/${key}`}
+  //                         alt={key}
+  //                         className="w-full h-auto"
+  //                       />
+  //                       {/* <div className="bottom-0 left-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
+  //                         <span className="truncate overflow-hidden text-ellipsis w-[100%]text-center">
+  //                           {key}
+  //                         </span>
+  //                       </div> */}
+
+  //                       <button
+  //                         style={{
+  //                           opacity: swapActive && swapItems[0] !== key ? 0 : 1,
+  //                           border: !swapActive
+  //                             ? "1px solid black"
+  //                             : "1px solid #00BBFC",
+  //                         }}
+  //                         className="rounded-full absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+  //                         onClick={async (e) => {
+  //                           e.stopPropagation();
+  //                           if (!swapActive) {
+  //                             setSwapActive(true);
+  //                             const swapItemsCopy = swapItems;
+  //                             swapItemsCopy[0] = key;
+  //                             setSwapItems(swapItemsCopy);
+  //                             setCurrentImageSwapIndex(index);
+  //                           } else {
+  //                             if (key === swapItems[0]) {
+  //                               setSwapItems([null, null]);
+  //                               setSwapActive(false);
+  //                               setCurrentImageSwapIndex(-1);
+  //                               return;
+  //                             }
+  //                             const swapItemsCopy = swapItems;
+  //                             swapItemsCopy[1] = key;
+  //                             setSwapItems(swapItemsCopy);
+  //                             await handleSwapItems();
+  //                           }
+  //                         }}
+  //                       >
+  //                         <GrPowerCycle
+  //                           color={swapActive ? "#00BBFC" : "black"}
+  //                           size={15}
+  //                           className="ml-[-0.5px]"
+  //                         />
+  //                       </button>
+
+  //                       {/* {currentPath.length > 1 &&
+  //                       currentPath[0] === "archives" && (
+  //                         <>
+  //                           <button
+  //                             className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
+  //                             style={{ borderRadius: "50%" }}
+  //                             onClick={async (e) => {
+  //                               e.stopPropagation();
+  //                             }}
+  //                           >
+  //                             <div className="w-[25px] h-[25px] rounded-full overflow-hidden">
+  //                               <ColorPicker
+  //                                 initialColor={defaultImgColor}
+  //                                 primary={true}
+  //                                 onColorChange={(
+  //                                   primary: boolean,
+  //                                   newValue: string
+  //                                 ) => handleImageColorChange(key, newValue)}
+  //                               />
+  //                             </div>
+
+  //                             <div
+  //                               style={{
+  //                                 border: "2px solid white",
+  //                                 pointerEvents: "none",
+  //                               }}
+  //                               className="absolute top-0 left-0 w-[23px] h-[23px] rounded-full overflow-hidden"
+  //                             ></div>
+  //                             <div
+  //                               style={{
+  //                                 border: "1px solid #CCCCCC",
+  //                                 pointerEvents: "none",
+  //                               }}
+  //                               className="absolute top-[-1px] left-[-1px] w-[25px] h-[25px] rounded-full overflow-hidden"
+  //                             ></div>
+  //                           </button>
+
+  //                           {changedArchiveImageColorItems[key] && (
+  //                             <button
+  //                               style={{ border: "1px solid green" }}
+  //                               className="rounded-full absolute bottom-[-10px] right-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+  //                               onClick={async (e) => {
+  //                                 e.stopPropagation();
+  //                                 handleArchiveImageColorChange(key);
+  //                               }}
+  //                             >
+  //                               <FaCheck
+  //                                 color={"green"}
+  //                                 size={15}
+  //                                 className="ml-[-0.5px]"
+  //                               />
+  //                             </button>
+  //                           )}
+  //                         </>
+  //                       )} */}
+  //                     </div>
+  //                   </div>
+  //                 )}
+  //                 {typeof currentFolder[key] !== "string" &&
+  //                   currentPath[0] === "projects" && (
+  //                     <div className="h-[200px] w-[auto]">
+  //                       {!projectFound ? (
+  //                         <>{key}</>
+  //                       ) : (
+  //                         <div
+  //                           className="flex flex-col"
+  //                           style={{
+  //                             wordWrap: "break-word",
+  //                             whiteSpace: "normal",
+  //                           }}
+  //                         >
+  //                           <p className="truncate overflow-hidden text-ellipsis">
+  //                             {unSanitizeTitle(projectItem.title, false)}
+  //                           </p>
+
+  //                           <p className="truncate overflow-hidden text-ellipsis">
+  //                             {unSanitizeTitle(projectItem.description, true)}
+  //                           </p>
+
+  //                           <div className="flex flex-row gap-2 mt-[7px]">
+  //                             <div
+  //                               onClick={(e: any) => e.stopPropagation()}
+  //                               className="w-[25px] h-[25px] relative"
+  //                             >
+  //                               <ColorPicker
+  //                                 initialColor={projectItem.bg_color}
+  //                                 primary={true}
+  //                                 onColorChange={(
+  //                                   primary: boolean,
+  //                                   newValue: string
+  //                                 ) =>
+  //                                   handleColorChange(key, primary, newValue)
+  //                                 }
+  //                               />
+  //                             </div>
+  //                             <div
+  //                               onClick={(e: any) => e.stopPropagation()}
+  //                               className="w-[25px] h-[25px] relative"
+  //                             >
+  //                               <ColorPicker
+  //                                 initialColor={projectItem.text_color}
+  //                                 primary={false}
+  //                                 onColorChange={(
+  //                                   primary: boolean,
+  //                                   newValue: string
+  //                                 ) =>
+  //                                   handleColorChange(key, primary, newValue)
+  //                                 }
+  //                               />
+  //                             </div>
+
+  //                             {changedColorItems[key] && (
+  //                               <button
+  //                                 className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
+  //                                 style={{
+  //                                   color: "black",
+  //                                   border: "1px solid black",
+  //                                 }}
+  //                                 onClick={(e: any) => {
+  //                                   e.stopPropagation();
+  //                                   handleProjectColorsChange(key);
+  //                                 }}
+  //                               >
+  //                                 Done
+  //                               </button>
+  //                             )}
+  //                           </div>
+  //                         </div>
+  //                       )}
+  //                     </div>
+  //                   )}
+  //                 {typeof currentFolder[key] !== "string" &&
+  //                   currentPath[0] === "archives" && (
+  //                     <div className="h-[200px] w-[auto]">
+  //                       {!projectFound ? (
+  //                         <>{key}</>
+  //                       ) : (
+  //                         <div>
+  //                           <p>{unSanitizeTitle(projectItem.title, false)}</p>
+  //                           <div className="flex flex-row mt-[7px] ">
+  //                             <div
+  //                               onClick={(e: any) => e.stopPropagation()}
+  //                               className="w-[25px] h-[25px] relative"
+  //                             >
+  //                               <ColorPicker
+  //                                 initialColor={projectItem.bg_color}
+  //                                 primary={true}
+  //                                 onColorChange={(
+  //                                   primary: boolean,
+  //                                   newValue: string
+  //                                 ) =>
+  //                                   handleColorChange(key, primary, newValue)
+  //                                 }
+  //                               />
+  //                             </div>
+
+  //                             {changedColorItems[key] && (
+  //                               <button
+  //                                 className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
+  //                                 style={{
+  //                                   color: "black",
+  //                                   border: "1px solid black",
+  //                                 }}
+  //                                 onClick={(e: any) => {
+  //                                   e.stopPropagation();
+  //                                   handleProjectColorsChange(key);
+  //                                 }}
+  //                               >
+  //                                 Done
+  //                               </button>
+  //                             )}
+  //                           </div>
+  //                         </div>
+  //                       )}
+  //                     </div>
+  //                   )}
+  //                 {typeof currentFolder[key] !== "string" &&
+  //                   (currentPath[0] !== "projects" || key === "covers") &&
+  //                   currentPath[0] !== "archives" && (
+  //                     <span className="">{key}</span>
+  //                   )}
+
+  //                 {typeof currentFolder[key] !== "string" &&
+  //                   currentPath.length === 1 &&
+  //                   (currentPath[0] === "archives" ||
+  //                     currentPath[0] === "projects") && (
+  //                     <button
+  //                       style={{
+  //                         border:
+  //                           folderSwapActive && folderSwapItems[0] !== key
+  //                             ? "1px solid #00BBFC"
+  //                             : "1px solid black",
+  //                       }}
+  //                       className="rounded-full absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
+  //                       onClick={async (e) => {
+  //                         e.stopPropagation();
+  //                         if (!folderSwapActive) {
+  //                           setFolderSwapActive(true);
+  //                           const folderSwapItemsCopy = folderSwapItems;
+  //                           folderSwapItemsCopy[0] = key;
+  //                           setFolderSwapItems(folderSwapItemsCopy);
+  //                         } else {
+  //                           if (key === folderSwapItems[0]) {
+  //                             setFolderSwapItems([null, null]);
+  //                             setFolderSwapActive(false);
+  //                             return;
+  //                           }
+  //                           const folderSwapItemsCopy = folderSwapItems;
+  //                           folderSwapItemsCopy[1] = key;
+  //                           setFolderSwapItems(folderSwapItemsCopy);
+  //                           await handleFolderSwapItems();
+  //                         }
+  //                       }}
+  //                     >
+  //                       <GrPowerCycle
+  //                         color={
+  //                           folderSwapActive && folderSwapItems[0] !== key
+  //                             ? "#00BBFC"
+  //                             : "black"
+  //                         }
+  //                         size={15}
+  //                         className="ml-[-0.5px]"
+  //                       />
+  //                     </button>
+  //                   )}
+  //               </>
+  //             </div>
+  //           );
+  //         })}
+  //       <Popup
+  //         isOpen={popupOpen}
+  //         onClose={() => {
+  //           setPopupOpen(false);
+  //         }}
+  //         title={popupTitle}
+  //         desc={popupDesc}
+  //         desc2={popupDesc2}
+  //         desc3={popupDesc3}
+  //         popupExtention={popupExtention}
+  //         onRename={handleRename}
+  //         popupTrigger={popupTrigger}
+  //         currentPath={currentPath}
+  //       />
+  //       <AboutPopup
+  //         isOpen={aboutPopupOpen}
+  //         onClose={() => {
+  //           setAboutPopupOpen(false);
+  //         }}
+  //         appFile={appFile}
+  //         onAppFileChange={handleAppFileChange}
+  //       />
+  //     </div>
+  //   );
+  // };
+
   const renderContent = () => {
+    if (currentPath.length === 0) {
+      return <></>;
+    }
     const currentFolder = getCurrentFolder();
-    const githubBaseUrl =
-      "https://raw.githubusercontent.com/JosephGoff/js-portfolio/refs/heads/master/public/assets/";
     if (typeof currentFolder === "string") {
       return <></>;
     }
 
-    // Render folders or multiple items, including images
     return (
-      <div
-        className={`flex ${
-          currentPath.length <= 1 &&
-          !(currentPath.length === 1 && currentPath[0] === "about")
-            ? "justify-left flex-col"
-            : "justify-center flex-wrap"
-        } gap-6 mt-6 ${
-          currentPath[0] === "about" ||
-          (currentPath[0] === "projects" && currentPath.length > 1) ||
-          (currentPath[0] === "archives" && currentPath.length > 1)
-            ? "pb-[95px] top-0 left-0 "
-            : ""
-        } absolute px-[22px]`}
-        // style={{ backgroundColor: "red" }}
-      >
-        {Object.keys(currentFolder)
-          .sort((a, b) => {
-            let indexMap: any = {};
-            if (appFile["pages"] !== undefined) {
-              indexMap = Object.values(appFile["pages"])
-                .flat()
-                .reduce((map: any, item: any) => {
-                  map[item.id] = item.index;
-                  return map;
-                }, {});
-            }
-
-            // // First sort (your existing logic)
-            // const indexA = extractBeforeIndex(a);
-            // const indexB = extractBeforeIndex(b);
-            // const numA = indexA !== null ? Number(indexA) : Infinity;
-            // const numB = indexB !== null ? Number(indexB) : Infinity;
-
-            // const primarySort = numA - numB;
-
-            // if (primarySort !== 0) {
-            //   return primarySort;
-            // }
-
-            // Second sort (based on the index from JSON)
-            const folderIndexA = indexMap[a] ?? Infinity;
-            const folderIndexB = indexMap[b] ?? Infinity;
-            return folderIndexA - folderIndexB;
-          })
-          .sort((a, b) => {
-            let images: any[] = [];
-            if (appFile !== null) {
-              if (currentPath[0] === "about") {
-                images = appFile["pages"]["about"]["images"];
-              } else if (
-                currentPath[0] === "projects" &&
-                currentPath.length === 2
-              ) {
-                const projectItem = appFile["pages"]["projects"].filter(
-                  (item: any) => item.id === currentPath[1]
-                );
-                if (projectItem.length > 0) {
-                  images = projectItem[0].images;
-                }
-              } else if (
-                currentPath[0] === "archives" &&
-                currentPath.length === 2
-              ) {
-                const projectItem = appFile["pages"]["archives"].filter(
-                  (item: any) => item.id === currentPath[1]
-                );
-
-                if (projectItem.length > 0) {
-                  images = projectItem[0].images;
-                }
-              }
-            }
-
-            const imageA: any = images.filter((item) => item.name === a);
-            const imageB: any = images.filter((item) => item.name === b);
-            if (imageA.length > 0 && imageB.length > 0) {
-              const indexA = imageA[0].index;
-              const indexB = imageB[0].index;
-              return indexA - indexB;
-            }
-            return 0;
-          })
-          .map((key, index) => {
-            if (key === "blank.png" || key === "fallback.jpeg") return <></>;
-            const isSecondaryFolder =
-              typeof currentFolder[key] !== "string" &&
-              ((currentPath[0] === "projects" && key !== "covers") ||
-                currentPath[0] === "archives");
-
-            const isProjectFolder =
-              typeof currentFolder[key] !== "string" &&
-              currentPath[0] === "projects";
-
-            let projectFound = true;
-            const projectItem = getFolderItem(key);
-            // console.log(projectItem);
-            if (projectItem === null) {
-              projectFound = false;
-            }
-
-            // Archive Image Coloring Logic
-            let defaultImgColor = "#CCCCCC";
-            if (currentPath.length === 2 && currentPath[0] === "archives") {
-              const imgName = key.split(".")[0];
-              const imgColor = imgName.split("--").pop();
-              if (
-                imgColor &&
-                imgName.split("--").length >= 2 &&
-                isColor(imgColor) !== null
-              ) {
-                defaultImgColor = isColor(imgColor) || "#CCCCCC";
-              }
-            }
-
-            let starTrue = false;
-            if (currentPath.length === 1 && projectItem) {
-              starTrue = projectItem.home_page;
-            }
-            if (currentPath.length === 2 && projectItem) {
-              starTrue = projectItem.projectCover;
-            }
-            const pageName = currentPath[0];
-
-            // if (currentPath.length > 0 && currentPath[0] !== "about")
-            //   return <></>;
-            let projectIndex = -1;
-            if (currentPath.length > 0) {
-              if (currentPath.length === 2) {
-                projectIndex = appFile["pages"][pageName].findIndex(
-                  (item: any) => item.id === currentPath[1]
-                );
-                if (projectIndex === -1) return <></>;
-              }
-            }
-
-            let showRightSwapDiv = false;
-            if (
-              currentPath.length === 1 &&
-              pageName === "about" &&
-              index === appFile["pages"][pageName].images.length - 1
-            ) {
-              showRightSwapDiv = true;
-            } else if (
-              currentPath.length === 2 &&
-              (pageName === "projects" || pageName === "archives") &&
-              index ===
-                appFile["pages"][pageName][projectIndex].images.length - 1
-            ) {
-              showRightSwapDiv = true;
-            }
-
-            return (
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-[15px] w-full h-auto bg-green-200 p-[15px]">
+        {currentFolder.type === "folder" &&
+          Object.keys(currentFolder.children).map(
+            (item: any, index: number) => (
               <div
-                key={key}
-                style={{
-                  display: key === "blank.png" ? "none" : "all",
-                  border: swapActive ? "1px solid red" : "1px solid #bbb",
-                }}
-                className={`min-w-[150px] ${
-                  currentPath.length === 1
-                    ? currentPath[0] === "about"
-                      ? ""
-                      : currentPath[0] === "projects"
-                      ? "h-[105px] pl-[17px]"
-                      : "h-[80px] pl-[17px]"
-                    : ""
-                } flex ${
-                  currentPath.length === 1 && currentPath[0] !== "about"
-                    ? "flex-col w-[300px]"
-                    : "items-center justify-center max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
-                } relative p-2 bg-[#f9f9f9]  rounded-lg ${
-                  !swapActive ? "cursor-pointer" : ""
-                }`}
-                onClick={() =>
-                  (currentPath.length === 2 && swapActive) ||
-                  (currentPath.length === 1 &&
-                    currentPath[0] === "about" &&
-                    swapActive)
-                    ? () => {}
-                    : handleFolderClick(key)
-                }
+                key={index}
+                className="cursor-pointer h-[200px] bg-red-100 border border-gray-400 rounded-md"
               >
-                <>
-                  {key !== "about" &&
-                    key !== "archives" &&
-                    key !== "projects" && (
-                      <div className="z-[10]">
-                        {typeof currentFolder[key] !== "string" && (
-                          <button
-                            className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const basePath = `${currentPath.join("/")}/`;
-                              openPopup(key, basePath);
-                            }}
-                          >
-                            <BiSolidPencil
-                              className="ml-[-0.5px]"
-                              color={"black"}
-                              size={13}
-                            />
-                          </button>
-                        )}
-
-                        {!swapActive && (
-                          <button
-                            className="absolute top-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm(`Delete item?`)) {
-                                const fullPath = `${currentPath.join(
-                                  "/"
-                                )}/${key}`;
-                                handleDeleteItem(fullPath);
-                              }
-                            }}
-                          >
-                            <FaTrash
-                              className="ml-[0px]"
-                              color={"black"}
-                              size={11}
-                            />
-                          </button>
-                        )}
-
-                        {isProjectFolder && projectFound && (
-                          <button
-                            className="absolute bottom-[-10px] right-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              await handleStarChange(key);
-                              await getRepoTree();
-                            }}
-                          >
-                            {starTrue ? (
-                              <IoStar
-                                className="mt-[-1px]"
-                                color={"green"}
-                                size={15}
-                              />
-                            ) : (
-                              <IoStarOutline
-                                className="mt-[-1px]"
-                                color={"#888"}
-                                size={15}
-                              />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  {key === "about" && (
-                    <button
-                      className="absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setAboutPopupOpen(true);
-                      }}
-                    >
-                      <BiSolidPencil
-                        className="ml-[-0.5px]"
-                        color={"black"}
-                        size={13}
-                      />
-                    </button>
-                  )}
-
-                  {currentPath.length === 2 &&
-                    currentPath[0] === "projects" && (
-                      <button
-                        className="z-[12] absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await handleStarChange(key);
-                          await getRepoTree();
-                        }}
-                      >
-                        {starTrue ? (
-                          <IoStar
-                            className="mt-[-1px]"
-                            color={"green"}
-                            size={15}
-                          />
-                        ) : (
-                          <IoStarOutline
-                            className="mt-[-1px]"
-                            color={"#888"}
-                            size={15}
-                          />
-                        )}
-                      </button>
-                    )}
-
-                  {typeof currentFolder[key] === "string" &&
-                    swapActive &&
-                    currentImageSwapIndex !== -1 &&
-                    index !== currentImageSwapIndex && (
-                      <>
-                        {index !== currentImageSwapIndex + 1 && (
-                          <div
-                            className={`${
-                              swapActive ? "cursor-pointer" : ""
-                            } z-[9] w-[25px] bg-red-400 h-[100%] absolute left-[-25px] top-0`}
-                            style={{ borderRadius: "5px" }}
-                            onClick={() => {
-                              handleMoveImageItem(key, index, 0);
-                            }}
-                          ></div>
-                        )}
-
-                        {showRightSwapDiv && (
-                          <div
-                            className={`${
-                              swapActive ? "cursor-pointer" : ""
-                            } z-[9] w-[25px] bg-red-400 h-[100%] absolute right-[-25px] top-0`}
-                            style={{ borderRadius: "5px" }}
-                            onClick={() => {
-                              handleMoveImageItem(key, index, 1);
-                            }}
-                          ></div>
-                        )}
-                      </>
-                    )}
-
-                  {typeof currentFolder[key] === "string" && (
-                    <div className="z-[9]">
-                      <div
-                        className="z-[9] min-w-[100%] min-h-[200px] items-center flex"
-                        style={{
-                          opacity: swapActive && swapItems[0] !== key ? 0.3 : 1,
-                        }}
-                      >
-                        <img
-                          src={`${githubBaseUrl}${currentPath.join(
-                            "/"
-                          )}/${key}`}
-                          alt={key}
-                          className="w-full h-auto"
-                        />
-                        {/* <div className="bottom-0 left-0 absolute w-[100%] h-[30px] flex justify-center px-[3px]">
-                          <span className="truncate overflow-hidden text-ellipsis w-[100%]text-center">
-                            {key}
-                          </span>
-                        </div> */}
-
-                        <button
-                          style={{
-                            opacity: swapActive && swapItems[0] !== key ? 0 : 1,
-                            border: !swapActive
-                              ? "1px solid black"
-                              : "1px solid #00BBFC",
-                          }}
-                          className="rounded-full absolute top-[-10px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (!swapActive) {
-                              setSwapActive(true);
-                              const swapItemsCopy = swapItems;
-                              swapItemsCopy[0] = key;
-                              setSwapItems(swapItemsCopy);
-                              setCurrentImageSwapIndex(index);
-                            } else {
-                              if (key === swapItems[0]) {
-                                setSwapItems([null, null]);
-                                setSwapActive(false);
-                                setCurrentImageSwapIndex(-1);
-                                return;
-                              }
-                              const swapItemsCopy = swapItems;
-                              swapItemsCopy[1] = key;
-                              setSwapItems(swapItemsCopy);
-                              await handleSwapItems();
-                            }
-                          }}
-                        >
-                          <GrPowerCycle
-                            color={swapActive ? "#00BBFC" : "black"}
-                            size={15}
-                            className="ml-[-0.5px]"
-                          />
-                        </button>
-
-                        {/* {currentPath.length > 1 &&
-                        currentPath[0] === "archives" && (
-                          <>
-                            <button
-                              className="absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white border border-black rounded-full flex items-center justify-center cursor-pointer"
-                              style={{ borderRadius: "50%" }}
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                              }}
-                            >
-                              <div className="w-[25px] h-[25px] rounded-full overflow-hidden">
-                                <ColorPicker
-                                  initialColor={defaultImgColor}
-                                  primary={true}
-                                  onColorChange={(
-                                    primary: boolean,
-                                    newValue: string
-                                  ) => handleImageColorChange(key, newValue)}
-                                />
-                              </div>
-
-                              <div
-                                style={{
-                                  border: "2px solid white",
-                                  pointerEvents: "none",
-                                }}
-                                className="absolute top-0 left-0 w-[23px] h-[23px] rounded-full overflow-hidden"
-                              ></div>
-                              <div
-                                style={{
-                                  border: "1px solid #CCCCCC",
-                                  pointerEvents: "none",
-                                }}
-                                className="absolute top-[-1px] left-[-1px] w-[25px] h-[25px] rounded-full overflow-hidden"
-                              ></div>
-                            </button>
-
-                            {changedArchiveImageColorItems[key] && (
-                              <button
-                                style={{ border: "1px solid green" }}
-                                className="rounded-full absolute bottom-[-10px] right-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  handleArchiveImageColorChange(key);
-                                }}
-                              >
-                                <FaCheck
-                                  color={"green"}
-                                  size={15}
-                                  className="ml-[-0.5px]"
-                                />
-                              </button>
-                            )}
-                          </>
-                        )} */}
-                      </div>
-                    </div>
-                  )}
-                  {typeof currentFolder[key] !== "string" &&
-                    currentPath[0] === "projects" && (
-                      <div className="h-[200px] w-[auto]">
-                        {!projectFound ? (
-                          <>{key}</>
-                        ) : (
-                          <div
-                            className="flex flex-col"
-                            style={{
-                              wordWrap: "break-word",
-                              whiteSpace: "normal",
-                            }}
-                          >
-                            <p className="truncate overflow-hidden text-ellipsis">
-                              {unSanitizeTitle(projectItem.title, false)}
-                            </p>
-
-                            <p className="truncate overflow-hidden text-ellipsis">
-                              {unSanitizeTitle(projectItem.description, true)}
-                            </p>
-
-                            <div className="flex flex-row gap-2 mt-[7px]">
-                              <div
-                                onClick={(e: any) => e.stopPropagation()}
-                                className="w-[25px] h-[25px] relative"
-                              >
-                                <ColorPicker
-                                  initialColor={projectItem.bg_color}
-                                  primary={true}
-                                  onColorChange={(
-                                    primary: boolean,
-                                    newValue: string
-                                  ) =>
-                                    handleColorChange(key, primary, newValue)
-                                  }
-                                />
-                              </div>
-                              <div
-                                onClick={(e: any) => e.stopPropagation()}
-                                className="w-[25px] h-[25px] relative"
-                              >
-                                <ColorPicker
-                                  initialColor={projectItem.text_color}
-                                  primary={false}
-                                  onColorChange={(
-                                    primary: boolean,
-                                    newValue: string
-                                  ) =>
-                                    handleColorChange(key, primary, newValue)
-                                  }
-                                />
-                              </div>
-
-                              {changedColorItems[key] && (
-                                <button
-                                  className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
-                                  style={{
-                                    color: "black",
-                                    border: "1px solid black",
-                                  }}
-                                  onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    handleProjectColorsChange(key);
-                                  }}
-                                >
-                                  Done
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  {typeof currentFolder[key] !== "string" &&
-                    currentPath[0] === "archives" && (
-                      <div className="h-[200px] w-[auto]">
-                        {!projectFound ? (
-                          <>{key}</>
-                        ) : (
-                          <div>
-                            <p>{unSanitizeTitle(projectItem.title, false)}</p>
-                            <div className="flex flex-row mt-[7px] ">
-                              <div
-                                onClick={(e: any) => e.stopPropagation()}
-                                className="w-[25px] h-[25px] relative"
-                              >
-                                <ColorPicker
-                                  initialColor={projectItem.bg_color}
-                                  primary={true}
-                                  onColorChange={(
-                                    primary: boolean,
-                                    newValue: string
-                                  ) =>
-                                    handleColorChange(key, primary, newValue)
-                                  }
-                                />
-                              </div>
-
-                              {changedColorItems[key] && (
-                                <button
-                                  className="hover-dim7 ml-2 px-2 py-[2px] rounded text-[13px]"
-                                  style={{
-                                    color: "black",
-                                    border: "1px solid black",
-                                  }}
-                                  onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    handleProjectColorsChange(key);
-                                  }}
-                                >
-                                  Done
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  {typeof currentFolder[key] !== "string" &&
-                    (currentPath[0] !== "projects" || key === "covers") &&
-                    currentPath[0] !== "archives" && (
-                      <span className="">{key}</span>
-                    )}
-
-                  {typeof currentFolder[key] !== "string" &&
-                    currentPath.length === 1 &&
-                    (currentPath[0] === "archives" ||
-                      currentPath[0] === "projects") && (
-                      <button
-                        style={{
-                          border:
-                            folderSwapActive && folderSwapItems[0] !== key
-                              ? "1px solid #00BBFC"
-                              : "1px solid black",
-                        }}
-                        className="rounded-full absolute bottom-[-10px] left-[-10px] w-[25px] h-[25px] bg-white flex items-center justify-center cursor-pointer"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (!folderSwapActive) {
-                            setFolderSwapActive(true);
-                            const folderSwapItemsCopy = folderSwapItems;
-                            folderSwapItemsCopy[0] = key;
-                            setFolderSwapItems(folderSwapItemsCopy);
-                          } else {
-                            if (key === folderSwapItems[0]) {
-                              setFolderSwapItems([null, null]);
-                              setFolderSwapActive(false);
-                              return;
-                            }
-                            const folderSwapItemsCopy = folderSwapItems;
-                            folderSwapItemsCopy[1] = key;
-                            setFolderSwapItems(folderSwapItemsCopy);
-                            await handleFolderSwapItems();
-                          }
-                        }}
-                      >
-                        <GrPowerCycle
-                          color={
-                            folderSwapActive && folderSwapItems[0] !== key
-                              ? "#00BBFC"
-                              : "black"
-                          }
-                          size={15}
-                          className="ml-[-0.5px]"
-                        />
-                      </button>
-                    )}
-                </>
+                {item}
               </div>
-            );
-          })}
-        <Popup
-          isOpen={popupOpen}
-          onClose={() => {
-            setPopupOpen(false);
-          }}
-          title={popupTitle}
-          desc={popupDesc}
-          desc2={popupDesc2}
-          desc3={popupDesc3}
-          popupExtention={popupExtention}
-          onRename={handleRename}
-          popupTrigger={popupTrigger}
-          currentPath={currentPath}
-        />
-        <AboutPopup
-          isOpen={aboutPopupOpen}
-          onClose={() => {
-            setAboutPopupOpen(false);
-          }}
-          appFile={appFile}
-          onAppFileChange={handleAppFileChange}
-        />
+            )
+          )}
       </div>
     );
+
+    // return (
+    //   <div
+    //     className={`flex ${
+    //       currentPath.length <= 1 &&
+    //       !(currentPath.length === 1 && currentPath[0] === "about")
+    //         ? "justify-left flex-col"
+    //         : "justify-center flex-wrap"
+    //     } gap-6 mt-6 ${
+    //       currentPath[0] === "about" ||
+    //       (currentPath[0] === "projects" && currentPath.length > 1) ||
+    //       (currentPath[0] === "archives" && currentPath.length > 1)
+    //         ? "pb-[95px] top-0 left-0 "
+    //         : ""
+    //     } absolute px-[22px]`}
+    //     // style={{ backgroundColor: "red" }}
+    //   >
+    //     {Object.keys(currentFolder)
+    //       .sort((a, b) => {
+    //         let indexMap: any = {};
+    //         if (appFile["pages"] !== undefined) {
+    //           indexMap = Object.values(appFile["pages"])
+    //             .flat()
+    //             .reduce((map: any, item: any) => {
+    //               map[item.id] = item.index;
+    //               return map;
+    //             }, {});
+    //         }
+
+    //         // // First sort (your existing logic)
+    //         // const indexA = extractBeforeIndex(a);
+    //         // const indexB = extractBeforeIndex(b);
+    //         // const numA = indexA !== null ? Number(indexA) : Infinity;
+    //         // const numB = indexB !== null ? Number(indexB) : Infinity;
+
+    //         // const primarySort = numA - numB;
+
+    //         // if (primarySort !== 0) {
+    //         //   return primarySort;
+    //         // }
+
+    //         // Second sort (based on the index from JSON)
+    //         const folderIndexA = indexMap[a] ?? Infinity;
+    //         const folderIndexB = indexMap[b] ?? Infinity;
+    //         return folderIndexA - folderIndexB;
+    //       })
+    //       .sort((a, b) => {
+    //         let images: any[] = [];
+    //         if (appFile !== null) {
+    //           if (currentPath[0] === "about") {
+    //             images = appFile["pages"]["about"]["images"];
+    //           } else if (
+    //             currentPath[0] === "projects" &&
+    //             currentPath.length === 2
+    //           ) {
+    //             const projectItem = appFile["pages"]["projects"].filter(
+    //               (item: any) => item.id === currentPath[1]
+    //             );
+    //             if (projectItem.length > 0) {
+    //               images = projectItem[0].images;
+    //             }
+    //           } else if (
+    //             currentPath[0] === "archives" &&
+    //             currentPath.length === 2
+    //           ) {
+    //             const projectItem = appFile["pages"]["archives"].filter(
+    //               (item: any) => item.id === currentPath[1]
+    //             );
+
+    //             if (projectItem.length > 0) {
+    //               images = projectItem[0].images;
+    //             }
+    //           }
+    //         }
+
+    //         const imageA: any = images.filter((item) => item.name === a);
+    //         const imageB: any = images.filter((item) => item.name === b);
+    //         if (imageA.length > 0 && imageB.length > 0) {
+    //           const indexA = imageA[0].index;
+    //           const indexB = imageB[0].index;
+    //           return indexA - indexB;
+    //         }
+    //         return 0;
+    //       })
+    //       .map((key, index) => {
+    //         if (key === "blank.png" || key === "fallback.jpeg") return <></>;
+    //         const isSecondaryFolder =
+    //           typeof currentFolder[key] !== "string" &&
+    //           ((currentPath[0] === "projects" && key !== "covers") ||
+    //             currentPath[0] === "archives");
+
+    //         const isProjectFolder =
+    //           typeof currentFolder[key] !== "string" &&
+    //           currentPath[0] === "projects";
+
+    //         let projectFound = true;
+    //         const projectItem = getFolderItem(key);
+    //         // console.log(projectItem);
+    //         if (projectItem === null) {
+    //           projectFound = false;
+    //         }
+
+    //         // Archive Image Coloring Logic
+    //         let defaultImgColor = "#CCCCCC";
+    //         if (currentPath.length === 2 && currentPath[0] === "archives") {
+    //           const imgName = key.split(".")[0];
+    //           const imgColor = imgName.split("--").pop();
+    //           if (
+    //             imgColor &&
+    //             imgName.split("--").length >= 2 &&
+    //             isColor(imgColor) !== null
+    //           ) {
+    //             defaultImgColor = isColor(imgColor) || "#CCCCCC";
+    //           }
+    //         }
+
+    //         let starTrue = false;
+    //         if (currentPath.length === 1 && projectItem) {
+    //           starTrue = projectItem.home_page;
+    //         }
+    //         if (currentPath.length === 2 && projectItem) {
+    //           starTrue = projectItem.projectCover;
+    //         }
+    //         const pageName = currentPath[0];
+
+    //         // if (currentPath.length > 0 && currentPath[0] !== "about")
+    //         //   return <></>;
+    //         let projectIndex = -1;
+    //         if (currentPath.length > 0) {
+    //           if (currentPath.length === 2) {
+    //             projectIndex = appFile["pages"][pageName].findIndex(
+    //               (item: any) => item.id === currentPath[1]
+    //             );
+    //             if (projectIndex === -1) return <></>;
+    //           }
+    //         }
+
+    //         let showRightSwapDiv = false;
+    //         if (
+    //           currentPath.length === 1 &&
+    //           pageName === "about" &&
+    //           index === appFile["pages"][pageName].images.length - 1
+    //         ) {
+    //           showRightSwapDiv = true;
+    //         } else if (
+    //           currentPath.length === 2 &&
+    //           (pageName === "projects" || pageName === "archives") &&
+    //           index ===
+    //             appFile["pages"][pageName][projectIndex].images.length - 1
+    //         ) {
+    //           showRightSwapDiv = true;
+    //         }
+
+    //         return (
+    //           <div
+    //             key={key}
+    //             style={{
+    //               display: key === "blank.png" ? "none" : "all",
+    //               border: swapActive ? "1px solid red" : "1px solid #bbb",
+    //             }}
+    //             className={`min-w-[150px] ${
+    //               currentPath.length === 1
+    //                 ? currentPath[0] === "about"
+    //                   ? ""
+    //                   : currentPath[0] === "projects"
+    //                   ? "h-[105px] pl-[17px]"
+    //                   : "h-[80px] pl-[17px]"
+    //                 : ""
+    //             } flex ${
+    //               currentPath.length === 1 && currentPath[0] !== "about"
+    //                 ? "flex-col w-[300px]"
+    //                 : "items-center justify-center max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
+    //             } relative p-2 bg-[#f9f9f9]  rounded-lg ${
+    //               !swapActive ? "cursor-pointer" : ""
+    //             }`}
+    //             onClick={() =>
+    //               (currentPath.length === 2 && swapActive) ||
+    //               (currentPath.length === 1 &&
+    //                 currentPath[0] === "about" &&
+    //                 swapActive)
+    //                 ? () => {}
+    //                 : handleFolderClick(key)
+    //             }
+    //           ></div>
+    //         );
+    //       })}
+    //   </div>
+    // );
   };
 
   const [aboutPopupOpen, setAboutPopupOpen] = useState(false);
   const handleAppFileChange = (newAppFile: string) => {
     if (Object.keys(newAppFile).length > 0) {
       setAppFile(newAppFile);
-      updateAppData(newAppFile);
+      updateProjectFile(newAppFile);
     }
   };
 
@@ -2635,91 +2339,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  // const uploadToGitHub = async (images: { name: string; src: string }[]) => {
-  //   const currentBase = currentPath.join("/");
-  //   try {
-  //     for (const image of images) {
-  //       const response = await fetch(
-  //         `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${currentBase}/${image.name}`,
-  //         {
-  //           method: "PUT",
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //             "Content-Type": "application/json",
-  //           },
-  //           body: JSON.stringify({
-  //             message: `Add ${image.name}`,
-  //             content: image.src.split(",")[1],
-  //             branch: branch,
-  //           }),
-  //         }
-  //       );
-
-  //       if (!response.ok) {
-  //         throw new Error(
-  //           `Failed to upload ${image.name}: ${response.statusText}`
-  //         );
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error uploading to GitHub:", error);
-  //     alert("Failed to upload images to GitHub. Check console for details.");
-  //   }
-  // };
-
-  const uploadBlankImageToGitHub = async (folderName: string) => {
-    if (currentPath.length === 0) return;
-    try {
-      const response = await fetch(`${window.location.origin}/blank.png`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch the image from the public folder.");
-      }
-      const blob = await response.blob();
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const result = reader.result;
-
-        if (typeof result === "string") {
-          const base64Content = result.split(",")[1];
-          if (
-            currentPath.length === 1 &&
-            (currentPath[0] === "projects" || currentPath[0] === "archives")
-          ) {
-            const githubResponse = await fetch(
-              `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${currentPath[0]}/${folderName}/blank.png`,
-              {
-                method: "PUT",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  message: "Add blank.png",
-                  content: base64Content,
-                  branch: branch,
-                }),
-              }
-            );
-
-            if (!githubResponse.ok) {
-              throw new Error(
-                `Failed to upload blank.png: ${githubResponse.statusText}`
-              );
-            }
-          }
-          console.log("upload successful");
-        } else {
-          throw new Error("Failed to read the image as a base64 string.");
-        }
-      };
-
-      reader.readAsDataURL(blob);
-    } catch (error) {
-      console.error("Error uploading to GitHub:", error);
-      alert("Failed to upload blank.png to GitHub. Check console for details.");
-    }
-  };
 
   type FileImage = {
     name: string;
@@ -2876,7 +2495,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         })
         .then(() => {
           setLoading(false);
-          updateAppData(appFileCopy);
+          updateProjectFile(appFileCopy);
         });
     } else {
       alert("Only image files are allowed!");
@@ -2962,12 +2581,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         });
       }
       // setAppFile(appFileCopy);
-      await updateAppData(appFileCopy);
+      await updateProjectFile(appFileCopy);
 
-      await uploadBlankImageToGitHub(nextTitle);
-      setTimeout(async () => {
-        await getRepoTree();
-      }, 1000);
+      await uploadBlankImageToGitHub(nextTitle, currentPath);
+      // setTimeout(async () => {
+      //   await getRepoTree();
+      // }, 1000);
     } catch (error) {
       console.error(error);
     } finally {
@@ -3022,8 +2641,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       >
         <div className="h-[100%] w-[50px] items-center flex justify-end">
           <button
-            onClick={()=>{setSideBarOpen(prev => !prev)}}
-            style={{transform: "scale(0.8)"}}
+            onClick={() => {
+              setSideBarOpen((prev) => !prev);
+            }}
+            style={{ transform: "scale(0.8)" }}
             className="cursor-pointer absolute flex flex-col gap-[5px] w-[40px] h-[40px] flex items-center justify-center"
           >
             <div className="bg-black w-[30px] h-[3px]"></div>
@@ -3099,12 +2720,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </button>
       </div>
 
-      <div className="overflow absolute w-[100%] h-[calc(100%-63px)] top-[63px] left-0 flex justify-end">
-        <div style={{transform: sideBarOpen ? "translateX(0px)" : "translateX(-120px)", transition: "transform 0.3s ease-in-out", borderRight: "1px solid #BBBBBB"}} className="bg-[white] w-[120px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]">
-          <p className="font-[500] text-[16px] pb-[5px] mb-[5px]" style={{borderBottom: "1px solid #BBB"}}>Pages</p>
-          {Object.keys(projectFile).length > 0 && Object.keys(projectFile).map((item: any, index) => {
-            return <div key={index}>{item}</div>
-          })} 
+      <div className="absolute w-[100%] h-[calc(100%-63px)] top-[63px] left-0 flex justify-end">
+        <div
+          style={{
+            transform: sideBarOpen ? "translateX(0px)" : "translateX(-120px)",
+            transition: "transform 0.3s ease-in-out",
+            borderRight: "1px solid #BBBBBB",
+          }}
+          className="bg-[white] w-[120px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]"
+        >
+          <p
+            className="font-[500] text-[16px] pb-[5px] mb-[5px]"
+            style={{ borderBottom: "1px solid #BBB" }}
+          >
+            Pages
+          </p>
+          {Object.keys(projectFile).length > 0 &&
+            Object.keys(projectFile).map((item: any, index) => {
+              return (
+                <div
+                  key={index}
+                  className="cursor-pointer hover-dim"
+                  onClick={() => {
+                    handlePageClick(item);
+                  }}
+                >
+                  {item}
+                </div>
+              );
+            })}
           <div className="w-[calc(100%-24px)] flex justify-center absolute bottom-3">
             <button
               onClick={() => {
@@ -3116,13 +2760,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   handleAddPage(sanitizedFolderName);
                 }
               }}
-              className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]" style={{borderRadius: "3px", border: "1px solid #999"}}>
-                Add Page
+              className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]"
+              style={{ borderRadius: "3px", border: "1px solid #999" }}
+            >
+              Add Page
             </button>
           </div>
         </div>
-        <div className="h-[100%] bg-[white]" style={{width: sideBarOpen? "calc(100vw - 120px)" : "100vw", transition: "width 0.3s ease-in-out"}}></div>
-        {/* {renderContent()} */}
+        <div
+          className="h-[100%] bg-white"
+          style={{
+            paddingLeft: sideBarOpen ? "120px" : 0,
+            width: "100vw",
+            transition: "padding-left 0.25s ease-in-out",
+          }}
+        >
+          <div className="w-full h-full">{renderContent()}</div>
+        </div>
       </div>
 
       {currentPath.length > 0 && (
