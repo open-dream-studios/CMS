@@ -12,10 +12,7 @@ import { FaCheck } from "react-icons/fa6";
 import { GrPowerCycle } from "react-icons/gr";
 import { GoChevronRight } from "react-icons/go";
 import { GIT_KEYS } from "../config";
-import {
-  renameImageFile,
-  uploadBlankImageToGitHub,
-} from "../utils/gitFunctions";
+import { renameImageFile } from "../utils/gitFunctions";
 import {
   extractAfterIndex,
   extractBeforeIndex,
@@ -23,6 +20,7 @@ import {
   sanitizeTitle,
   unSanitizeTitle,
 } from "../utils/helperFunctions";
+import _ from "lodash";
 
 interface PopupProps {
   isOpen: boolean;
@@ -632,6 +630,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       );
 
       console.log("Project file updated successfully");
+      setProjectFile(newProjectFile)
       return true;
     } catch (error) {
       console.error("Error updating project file:", error);
@@ -639,7 +638,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [sideBarOpen, setSideBarOpen] = useState<boolean>(true);
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
+
+  const handleSideBarToggle = () => {
+    setSideBarOpen((prev) => !prev);
+    if (sidebarRef.current) {
+      sidebarRef.current.style.transition = "padding-left 0.25s ease-in-out";
+      setTimeout(() => {
+        if (sidebarRef.current) {
+          sidebarRef.current.style.transition = "none";
+        }
+      }, 500);
+    }
+  };
 
   const handlePageClick = async (pageName: string) => {
     setCurrentPath([pageName]);
@@ -648,19 +661,96 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const handleAddPage = async (pageName: string) => {
     const project = await getProject();
     if (project === undefined || project === null) return;
-    const projectFileContents = { ...project[1] };
+    const projectFileObject = structuredClone(project[1])
+    const projectFileContents = projectFileObject.children;
     if (!Object.keys(projectFileContents).includes(pageName)) {
-      projectFileContents[pageName] = {};
-      const success = await updateProjectFile(projectFileContents);
-      if (success) {
-        setProjectFile(projectFileContents);
+      let highestIndex = 0;
+      for (let i = 0; i < Object.keys(projectFileContents).length; i++) {
+        if (
+          projectFileContents[Object.keys(projectFileContents)[i]].index >
+          highestIndex
+        ) {
+          highestIndex =
+            projectFileContents[Object.keys(projectFileContents)[i]].index;
+        }
       }
+      const newIndex = highestIndex + 1;
+      projectFileContents[pageName] = {
+        type: "folder",
+        index: newIndex,
+        children: {},
+      };
+      projectFileObject.children = projectFileContents;
+      const success = await updateProjectFile(projectFileObject);
+      if (success) {
+        setProjectFile(projectFileObject);
+      }
+    } else {
+      alert("That page name is already being used");
+      return;
     }
   };
 
-  const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
-  const [appFile, setAppFile] = useState<any>({});
-  const [reducedAppFile, setReducedAppFile] = useState<any>({});
+  const getCurrentFolder = () => {
+    if (!projectFile) return null;
+
+    let currentFolder = projectFile;
+
+    if (currentPath.length === 0) {
+      return currentFolder.children;
+    }
+    for (let i = 0; i < currentPath.length; i++) {
+      currentFolder = currentFolder.children[currentPath[i]];
+    }
+    return currentFolder;
+  };
+
+  const handleFolderClick = (folderName: string) => {
+    setCurrentPath([...currentPath, folderName]);
+  };
+
+  const handleAddFolder = async (folderName: string) => {
+    setLoading(true);
+    const currentFolder = getCurrentFolder();
+
+    if (
+      currentFolder !== null &&
+      typeof currentFolder === "object" &&
+      "children" in currentFolder
+    ) {
+      if (Object.keys(currentFolder.children).includes(folderName)) {
+        alert("That page name is already being used");
+        return;
+      } else {
+        const project = await getProject();
+        if (project === undefined || project === null) return;
+        const projectFileObject = structuredClone(project[1])
+        const children = currentFolder.children;
+        let highestIndex = 0;
+        let newIndex = 0
+        for (const key in children) {
+          if (children[key].index >= highestIndex) {
+            highestIndex = children[key].index;
+            newIndex = highestIndex + 1
+          }
+        }
+
+        const newEntryData = { type: "folder", index: newIndex, children: {} }; 
+        const getTargetObject = (obj: any, path: string[]) => {
+          return path.reduce((acc, key) => acc?.children?.[key], obj);
+        };
+        const targetObject = getTargetObject(projectFileObject, currentPath);
+        if (targetObject && targetObject.children) {
+          targetObject.children[folderName] = newEntryData; 
+        } else {
+          return
+        }
+
+        await updateProjectFile(projectFileObject);
+        setLoading(false);
+      }
+    }
+  };
 
   const getFolderItem = (key: string) => {
     const pageName =
@@ -697,45 +787,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  const [currentPath, setCurrentPath] = useState<string[]>([]);
+  const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
+  const [appFile, setAppFile] = useState<any>({});
+  const [reducedAppFile, setReducedAppFile] = useState<any>({});
 
-  const getCurrentFolder = (): FolderStructure | string => {
-    if (!projectFile) return {};
-    return currentPath.reduce(
-      (acc: FolderStructure, key) => acc[key] as FolderStructure,
-      projectFile
-    );
-  };
-
-  const getCurrentFolderIndex = (): FolderStructure | string => {
-    if (!fullProject) return {};
-    if (currentPath.length === 2) {
-      console.log("eee", appFile["pages"][currentPath[0]][currentPath[1]]);
-      const projectFiltered = appFile["pages"][currentPath[0]][
-        currentPath[1]
-      ].filter((item: any) => item.id === currentPath[1]);
-      console.log(projectFiltered);
-      if (projectFiltered.length > 0) {
-        console.log(projectFiltered[0].index);
-      }
-    }
-    return {};
-  };
-
-  const handleFolderClick = (folderName: string) => {
-    if (folderName.includes(".")) {
-      const imagePath = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branch}/public/assets/${
-        currentPath.join("/") + "/" + folderName
-      }`;
-      window.location.href = imagePath;
-      return;
-    }
-    setCurrentPath([...currentPath, folderName]);
-  };
-
-  const handleBackClick = () => {
-    setCurrentPath(currentPath.slice(0, -1));
-  };
+  // const getCurrentFolderIndex = (): FolderStructure | string => {
+  //   if (!fullProject) return {};
+  //   if (currentPath.length === 2) {
+  //     console.log("eee", appFile["pages"][currentPath[0]][currentPath[1]]);
+  //     const projectFiltered = appFile["pages"][currentPath[0]][
+  //       currentPath[1]
+  //     ].filter((item: any) => item.id === currentPath[1]);
+  //     console.log(projectFiltered);
+  //     if (projectFiltered.length > 0) {
+  //       console.log(projectFiltered[0].index);
+  //     }
+  //   }
+  //   return {};
+  // };
 
   const handleBackTextClick = (end: number) => {
     setCurrentPath(currentPath.slice(0, end));
@@ -2107,23 +2176,55 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       return <></>;
     }
     const currentFolder = getCurrentFolder();
-    if (typeof currentFolder === "string") {
+    // console.log(currentFolder);
+    if (
+      currentFolder === null ||
+      currentFolder === undefined ||
+      typeof currentFolder === "string"
+    ) {
       return <></>;
     }
 
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-[15px] w-full h-auto bg-green-200 p-[15px]">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-[15px] w-full h-auto p-[15px]">
         {currentFolder.type === "folder" &&
-          Object.keys(currentFolder.children).map(
-            (item: any, index: number) => (
-              <div
-                key={index}
-                className="cursor-pointer h-[200px] bg-red-100 border border-gray-400 rounded-md"
-              >
-                {item}
-              </div>
+          Object.keys(currentFolder.children).length > 0 &&
+          Object.keys(currentFolder.children)
+            .sort(
+              (a, b) =>
+                currentFolder.children[a].index -
+                currentFolder.children[b].index
             )
-          )}
+            .map((item: any, index: number) => {
+              const folderChildren = currentFolder.children as any;
+              return (
+                <div
+                  onClick={() => {
+                    if (folderChildren[item].type !== "image") {
+                      handleFolderClick(item);
+                    }
+                  }}
+                  key={index}
+                  className={`cursor-pointer ${
+                    folderChildren[item].type === "image"
+                      ? "h-[200px]"
+                      : "h-[48px]"
+                  } bg-[#EEEEEE] border border-gray-400 rounded-md justify-center flex p-[10px]`}
+                >
+                  {folderChildren[item].type === "image" ? (
+                    <a href={folderChildren[item].link}>
+                      <img
+                        alt=""
+                        className="w-[100%] h-[100%] object-contain"
+                        src={folderChildren[item].link}
+                      />
+                    </a>
+                  ) : (
+                    <>{item[0].toUpperCase() + item.slice(1)}</>
+                  )}
+                </div>
+              );
+            })}
       </div>
     );
 
@@ -2502,98 +2603,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  const handleAddFolder = async (folderName: string) => {
-    setLoading(true);
-    try {
-      const pageName =
-        currentPath[0] === "archives"
-          ? "archives"
-          : currentPath[0] === "projects"
-          ? "projects"
-          : null;
-      if (pageName === null) return;
-      const getPage = () => {
-        if (
-          currentPath &&
-          currentPath.length === 1 &&
-          fullProject &&
-          fullProject[currentPath[0]]
-        ) {
-          const pageObject = fullProject[currentPath[0]] as any;
-          if (currentPath[0] === "projects" || currentPath[0] === "archives") {
-            delete pageObject["blank.png"];
-            return pageObject;
-          }
-        }
-        return null;
-      };
-      const pageObject = getPage();
-      if (pageObject === null) return;
-
-      const folderNames = Object.keys(pageObject).map(
-        (item, index) => appFile["pages"][pageName][index].title
-      );
-      if (folderNames.includes(sanitizeTitle(folderName))) {
-        alert("That folder name is already being used");
-        return;
-      }
-
-      // Now get the app.json
-      const appFileCopy = appFile;
-      if (Object.keys(appFile).length === 0) return null;
-      const pages = appFile["pages"];
-      if (!pages || Object.keys(pages).length === 0) return null;
-      const page = pages[pageName];
-      if (!page || page.length === 0) return null;
-
-      const itemLetter = pageName === "projects" ? "p" : "a";
-      const titleNumbers = Object.keys(pageObject).map((item: string) =>
-        parseInt(item.replaceAll("p", "").replaceAll("a", ""))
-      );
-      const highestIndexObject = page.reduce((maxObj: any, currentObj: any) =>
-        currentObj.index > maxObj.index ? currentObj : maxObj
-      );
-      const nextIndex = highestIndexObject.index + 1;
-      const nextTitle = itemLetter + (Math.max(...titleNumbers) + 1);
-
-      if (pageName === "projects") {
-        appFileCopy["pages"][pageName].push({
-          index: nextIndex,
-          id: nextTitle,
-          title: sanitizeTitle(folderName),
-          description: "default_description",
-          bg_color: "white",
-          text_color: "black",
-          home_page: false,
-          images: [],
-        });
-      }
-      if (pageName === "archives") {
-        appFileCopy["pages"][pageName].push({
-          index: nextIndex,
-          id: nextTitle,
-          title: sanitizeTitle(folderName),
-          bg_color: "white",
-          description: "BEHANDLET_EGETRAE",
-          description2: "MUNDVANDSDRIVENDE_KAFFERISTNING",
-          description3: "MINIMALISTISK_INERIOR",
-          images: [],
-        });
-      }
-      // setAppFile(appFileCopy);
-      await updateProjectFile(appFileCopy);
-
-      await uploadBlankImageToGitHub(nextTitle, currentPath);
-      // setTimeout(async () => {
-      //   await getRepoTree();
-      // }, 1000);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (projectImages.length === 0 && Object.keys(projectFile).length === 0) {
     return <div>{loadingText}</div>;
   }
@@ -2641,11 +2650,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       >
         <div className="h-[100%] w-[50px] items-center flex justify-end">
           <button
-            onClick={() => {
-              setSideBarOpen((prev) => !prev);
-            }}
+            onClick={handleSideBarToggle}
             style={{ transform: "scale(0.8)" }}
-            className="cursor-pointer absolute flex flex-col gap-[5px] w-[40px] h-[40px] flex items-center justify-center"
+            className="cursor-pointer absolute flex-col gap-[5px] w-[40px] h-[40px] flex items-center justify-center"
           >
             <div className="bg-black w-[30px] h-[3px]"></div>
             <div className="bg-black w-[30px] h-[3px]"></div>
@@ -2660,55 +2667,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           <div
             className="cursor-pointer"
             onClick={() => {
-              handleBackTextClick(0);
+              setCurrentPath([]);
             }}
           >
             Project Dashboard
           </div>
-          <div
-            className="ml-[30px] flex flex-row mt-[1px] cursor-pointer"
-            onClick={() => {
-              handleBackTextClick(1);
-            }}
-          >
-            {currentPath.length > 0 && (
-              <>
-                <p style={{ color: "#AAAAAA" }}>{currentPath[0]}</p>
-                <GoChevronRight
-                  className="mt-[1px] mx-[1px]"
-                  color={"#AAAAAA"}
-                  size={30}
-                />
-              </>
-            )}
-          </div>
-
-          <div
-            className="flex flex-row mt-[1px] cursor-pointer"
-            onClick={() => {
-              handleBackTextClick(2);
-            }}
-          >
-            {currentPath.length > 1 &&
-              Object.keys(reducedAppFile).length > 0 &&
-              reducedAppFile[currentPath[1]] && (
-                <>
-                  <p style={{ color: "#AAAAAA" }}>
-                    {reducedAppFile[currentPath[1]]}
-                  </p>
-                  <GoChevronRight
-                    className="mt-[1px] mx-[1px]"
-                    color={"#AAAAAA"}
-                    size={30}
-                  />
-                </>
-              )}
-          </div>
-
-          <div className="flex flex-row mt-[1px] cursor-pointer">
-            {currentPath.length > 2 && (
-              <p style={{ color: "#AAAAAA" }}>covers</p>
-            )}
+          <div className="ml-[30px] flex flex-row">
+            {currentPath.map((item: any, index: number) => (
+              <div
+                className="ml-[5px] flex flex-row mt-[1px] cursor-pointer"
+                onClick={() => {
+                  setCurrentPath(currentPath.slice(0, index + 1));
+                }}
+              >
+                <p style={{ color: "#AAAAAA" }}>{currentPath[index]}</p>
+                {currentPath.length - 1 > 0 &&
+                  index !== currentPath.length - 1 && (
+                    <GoChevronRight
+                      className="mt-[1px] mx-[1px]"
+                      color={"#AAAAAA"}
+                      size={29}
+                    />
+                  )}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -2723,11 +2705,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       <div className="absolute w-[100%] h-[calc(100%-63px)] top-[63px] left-0 flex justify-end">
         <div
           style={{
-            transform: sideBarOpen ? "translateX(0px)" : "translateX(-120px)",
+            transform: sideBarOpen
+              ? "translateX(0px)"
+              : window.innerWidth > 1024
+              ? "translateX(-180px)"
+              : "translateX(-140px)",
             transition: "transform 0.3s ease-in-out",
             borderRight: "1px solid #BBBBBB",
           }}
-          className="bg-[white] w-[120px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]"
+          className="z-[999] bg-[white] w-[140px] lg:w-[180px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]"
         >
           <p
             className="font-[500] text-[16px] pb-[5px] mb-[5px]"
@@ -2736,89 +2722,112 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             Pages
           </p>
           {Object.keys(projectFile).length > 0 &&
-            Object.keys(projectFile).map((item: any, index) => {
-              return (
-                <div
-                  key={index}
-                  className="cursor-pointer hover-dim"
+            projectFile.children &&
+            Object.keys(projectFile.children)
+              .sort(
+                (a, b) =>
+                  projectFile.children[a].index - projectFile.children[b].index
+              )
+              .map((key, index) => {
+                return (
+                  <div
+                    key={index}
+                    style={{ borderRadius: "3px" }}
+                    className={`cursor-pointer hover-dim pl-[6px] pt-[2px] pb-[3px] ${
+                      currentPath.length > 0 &&
+                      currentPath[0] === key &&
+                      "bg-[#DDDDDD]"
+                    }`}
+                    onClick={() => {
+                      handlePageClick(key);
+                    }}
+                  >
+                    {key[0].toUpperCase() + key.slice(1)}
+                  </div>
+                );
+              })}
+          {Object.keys(projectFile).includes("projectDetails") &&
+            Object.keys(projectFile["projectDetails"]).includes("pagesLock") &&
+            !projectFile.projectDetails.pagesLock && (
+              <div className="w-[calc(100%-24px)] flex justify-center absolute bottom-[15px]">
+                <button
                   onClick={() => {
-                    handlePageClick(item);
+                    const folderName = window.prompt("New Page Name:");
+                    if (folderName && folderName !== "") {
+                      const sanitizedFolderName = folderName
+                        .trim()
+                        .replaceAll(/[^a-zA-Z0-9-&]/g, "_");
+                      handleAddPage(sanitizedFolderName);
+                    }
                   }}
+                  className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]"
+                  style={{ borderRadius: "3px", border: "1px solid #999" }}
                 >
-                  {item}
-                </div>
-              );
-            })}
-          <div className="w-[calc(100%-24px)] flex justify-center absolute bottom-3">
-            <button
-              onClick={() => {
-                const folderName = window.prompt("New Page Name:");
-                if (folderName && folderName !== "") {
-                  const sanitizedFolderName = folderName
-                    .trim()
-                    .replaceAll(/[^a-zA-Z0-9-&]/g, "_");
-                  handleAddPage(sanitizedFolderName);
-                }
-              }}
-              className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]"
-              style={{ borderRadius: "3px", border: "1px solid #999" }}
-            >
-              Add Page
-            </button>
-          </div>
+                  Add Page
+                </button>
+              </div>
+            )}
         </div>
         <div
-          className="h-[100%] bg-white"
-          style={{
-            paddingLeft: sideBarOpen ? "120px" : 0,
-            width: "100vw",
-            transition: "padding-left 0.25s ease-in-out",
-          }}
+          ref={sidebarRef}
+          className={`h-[100%] w-[100vw] bg-white ${
+            sideBarOpen ? "pl-[140px] lg:pl-[180px]" : "pl-0"
+          }`}
         >
           <div className="w-full h-full">{renderContent()}</div>
         </div>
+
+        {currentPath.length > 0 && (
+          <div
+            className="z-[998] w-[100%] h-[63px] fixed left-0 bottom-0 flex justify-end py-[12px] pr-[13px] gap-[10px]"
+            style={{ backgroundColor: "white", borderTop: "1px solid #CCCCCC" }}
+          >
+            {currentPath.length > 0 &&
+              getCurrentFolder() !== null &&
+              Object.keys(getCurrentFolder()).includes("children") &&
+              (Object.keys(getCurrentFolder()["children"]).length === 0 ||
+                (Object.keys(getCurrentFolder()["children"]).length > 0 &&
+                  getCurrentFolder()["children"][
+                    Object.keys(getCurrentFolder()["children"])[0]
+                  ].type !== "image")) && (
+                <button
+                  onClick={() => {
+                    const folderName = window.prompt("Folder Name:");
+                    if (folderName && folderName !== "") {
+                      const sanitizedFolderName = folderName
+                        .trim()
+                        .replace(/[^a-zA-Z0-9-&]/g, "_");
+                      handleAddFolder(sanitizedFolderName);
+                    }
+                  }}
+                  className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]"
+                  style={{ borderRadius: "3px", border: "1px solid #999" }}
+                >
+                  Add Folder
+                </button>
+              )}
+
+            {currentPath.length > 0 &&
+              getCurrentFolder() !== null &&
+              Object.keys(getCurrentFolder()).includes("children") &&
+              (Object.keys(getCurrentFolder()["children"]).length === 0 ||
+                (Object.keys(getCurrentFolder()["children"]).length > 0 &&
+                  getCurrentFolder()["children"][
+                    Object.keys(getCurrentFolder()["children"])[0]
+                  ].type === "image")) && (
+                <button
+                  onClick={() => {
+                    setUploadPopup(true);
+                  }}
+                  className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]"
+                  style={{ borderRadius: "3px", border: "1px solid #999" }}
+                >
+                  Upload
+                </button>
+              )}
+          </div>
+        )}
       </div>
-
-      {currentPath.length > 0 && (
-        <div
-          className="z-[998] w-[100%] h-[63px] fixed left-0 bottom-0"
-          style={{ backgroundColor: "white", borderTop: "1px solid #CCCCCC" }}
-        >
-          {currentPath.length === 1 &&
-            (currentPath[0] === "archives" ||
-              currentPath[0] === "projects") && (
-              <button
-                onClick={() => {
-                  const folderName = window.prompt("Folder Name:");
-                  if (folderName && folderName !== "") {
-                    const sanitizedFolderName = folderName
-                      .trim()
-                      .replace(/[^a-zA-Z0-9-&]/g, "_");
-                    handleAddFolder(sanitizedFolderName);
-                  }
-                }}
-                className="button absolute bottom-3 right-3"
-              >
-                Add Folder
-              </button>
-            )}
-
-          {currentPath.length > 0 &&
-            (currentPath[0] === "about" ||
-              (currentPath[0] === "archives" && currentPath.length === 2) ||
-              (currentPath[0] === "projects" &&
-                (currentPath.length === 2 || currentPath.length === 3))) && (
-              <button
-                onClick={() => {
-                  setUploadPopup(true);
-                }}
-                className="button absolute bottom-3 right-3"
-              >
-                Upload
-              </button>
-            )}
-        </div>
-      )}
     </div>
   );
 };
