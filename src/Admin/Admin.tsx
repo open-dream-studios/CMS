@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Admin.css";
 import { BiSolidPencil } from "react-icons/bi";
-import { FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import { IoCloseOutline } from "react-icons/io5";
 import { IoStar } from "react-icons/io5";
 import { IoStarOutline } from "react-icons/io5";
@@ -597,6 +597,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const updateProjectFile = async (newProjectFile: any) => {
+    setLoading(true);
     const filePath = "project.json";
     try {
       const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
@@ -630,11 +631,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       );
 
       console.log("Project file updated successfully");
-      setProjectFile(newProjectFile)
+      setProjectFile(newProjectFile);
       return true;
     } catch (error) {
       console.error("Error updating project file:", error);
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -659,9 +662,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   };
 
   const handleAddPage = async (pageName: string) => {
+    setLoading(true);
     const project = await getProject();
     if (project === undefined || project === null) return;
-    const projectFileObject = structuredClone(project[1])
+    const projectFileObject = structuredClone(project[1]);
     const projectFileContents = projectFileObject.children;
     if (!Object.keys(projectFileContents).includes(pageName)) {
       let highestIndex = 0;
@@ -689,6 +693,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       alert("That page name is already being used");
       return;
     }
+    setLoading(false);
   };
 
   const getCurrentFolder = () => {
@@ -697,7 +702,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     let currentFolder = projectFile;
 
     if (currentPath.length === 0) {
-      return currentFolder.children;
+      return currentFolder;
     }
     for (let i = 0; i < currentPath.length; i++) {
       currentFolder = currentFolder.children[currentPath[i]];
@@ -724,33 +729,64 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       } else {
         const project = await getProject();
         if (project === undefined || project === null) return;
-        const projectFileObject = structuredClone(project[1])
+        const projectFileObject = structuredClone(project[1]);
         const children = currentFolder.children;
         let highestIndex = 0;
-        let newIndex = 0
+        let newIndex = 0;
         for (const key in children) {
           if (children[key].index >= highestIndex) {
             highestIndex = children[key].index;
-            newIndex = highestIndex + 1
+            newIndex = highestIndex + 1;
           }
         }
 
-        const newEntryData = { type: "folder", index: newIndex, children: {} }; 
+        const newEntryData = { type: "folder", index: newIndex, children: {} };
         const getTargetObject = (obj: any, path: string[]) => {
           return path.reduce((acc, key) => acc?.children?.[key], obj);
         };
         const targetObject = getTargetObject(projectFileObject, currentPath);
         if (targetObject && targetObject.children) {
-          targetObject.children[folderName] = newEntryData; 
+          targetObject.children[folderName] = newEntryData;
         } else {
-          return
+          return;
         }
 
         await updateProjectFile(projectFileObject);
-        setLoading(false);
       }
     }
+    setLoading(false);
   };
+
+  const handleDeleteItem = async (folderName: string) => {
+    setLoading(true);
+    const currentFolder = getCurrentFolder();
+    if (
+      currentFolder !== null &&
+      typeof currentFolder === "object" &&
+      "children" in currentFolder
+    ) {
+      if (Object.keys(currentFolder.children).includes(folderName)) {
+        const project = await getProject();
+        if (project === undefined || project === null) return;
+        const projectFileObject = structuredClone(project[1]);
+        const getTargetObject = (obj: any, path: string[]) => {
+          return path.reduce((acc, key) => acc?.children?.[key], obj);
+        };
+        const targetObject = getTargetObject(projectFileObject, currentPath);
+        if (targetObject && targetObject.children) {
+          delete targetObject.children[folderName];
+        }
+        await updateProjectFile(projectFileObject);
+      }
+    }
+    setLoading(false);
+  };
+
+  const [editMode, setEditMode] = useState<boolean>(false);
+
+  const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
+  const [appFile, setAppFile] = useState<any>({});
+  const [reducedAppFile, setReducedAppFile] = useState<any>({});
 
   const getFolderItem = (key: string) => {
     const pageName =
@@ -785,29 +821,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       if (!projectItem) return null;
       return projectItem;
     }
-  };
-
-  const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
-  const [appFile, setAppFile] = useState<any>({});
-  const [reducedAppFile, setReducedAppFile] = useState<any>({});
-
-  // const getCurrentFolderIndex = (): FolderStructure | string => {
-  //   if (!fullProject) return {};
-  //   if (currentPath.length === 2) {
-  //     console.log("eee", appFile["pages"][currentPath[0]][currentPath[1]]);
-  //     const projectFiltered = appFile["pages"][currentPath[0]][
-  //       currentPath[1]
-  //     ].filter((item: any) => item.id === currentPath[1]);
-  //     console.log(projectFiltered);
-  //     if (projectFiltered.length > 0) {
-  //       console.log(projectFiltered[0].index);
-  //     }
-  //   }
-  //   return {};
-  // };
-
-  const handleBackTextClick = (end: number) => {
-    setCurrentPath(currentPath.slice(0, end));
   };
 
   // POPUP
@@ -861,110 +874,110 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setPopupOpen(true);
   };
 
-  const handleDeleteItem = async (path: any) => {
-    setLoading(true);
-    try {
-      let pageName = currentPath[0];
-      let folderIndex = null;
-      if (Object.keys(appFile).length === 0) return null;
-      const pages = appFile["pages"];
-      if (Object.keys(pages).length === 0) return null;
+  // const handleDeleteItem = async (path: any) => {
+  //   setLoading(true);
+  //   try {
+  //     let pageName = currentPath[0];
+  //     let folderIndex = null;
+  //     if (Object.keys(appFile).length === 0) return null;
+  //     const pages = appFile["pages"];
+  //     if (Object.keys(pages).length === 0) return null;
 
-      if (currentPath[0] !== "about") {
-        const page = pages[currentPath[0]];
-        if (!page || page.length === 0) return null;
-        folderIndex = page.findIndex(
-          (item: any) => item.id === path.split("/")[1]
-        );
-        if (folderIndex === -1) return null;
-      }
+  //     if (currentPath[0] !== "about") {
+  //       const page = pages[currentPath[0]];
+  //       if (!page || page.length === 0) return null;
+  //       folderIndex = page.findIndex(
+  //         (item: any) => item.id === path.split("/")[1]
+  //       );
+  //       if (folderIndex === -1) return null;
+  //     }
 
-      const appFileCopy = JSON.parse(JSON.stringify(appFile));
+  //     const appFileCopy = JSON.parse(JSON.stringify(appFile));
 
-      if (!path.split("/").pop().includes(".")) {
-        appFileCopy["pages"][pageName].splice(folderIndex, 1);
-      } else {
-        if (pageName === "about") {
-          const imageIndex = appFileCopy["pages"][pageName].images.findIndex(
-            (img: any) => img.name === path.split("/").pop()
-          );
-          if (imageIndex === -1) return;
-          appFileCopy["pages"][pageName].images.splice(imageIndex, 1);
-        } else {
-          const imageIndex = appFileCopy["pages"][pageName][
-            folderIndex
-          ].images.findIndex((img: any) => img.name === path.split("/").pop());
-          if (imageIndex === -1) return;
-          appFileCopy["pages"][pageName][folderIndex].images.splice(
-            imageIndex,
-            1
-          );
-        }
-      }
-      // setAppFile(appFileCopy);
-      await deleteItem(
-        "public/assets/" + path,
-        path.split("/").pop().includes(".")
-      );
-      console.log(appFileCopy);
-      updateProjectFile(appFileCopy);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     if (!path.split("/").pop().includes(".")) {
+  //       appFileCopy["pages"][pageName].splice(folderIndex, 1);
+  //     } else {
+  //       if (pageName === "about") {
+  //         const imageIndex = appFileCopy["pages"][pageName].images.findIndex(
+  //           (img: any) => img.name === path.split("/").pop()
+  //         );
+  //         if (imageIndex === -1) return;
+  //         appFileCopy["pages"][pageName].images.splice(imageIndex, 1);
+  //       } else {
+  //         const imageIndex = appFileCopy["pages"][pageName][
+  //           folderIndex
+  //         ].images.findIndex((img: any) => img.name === path.split("/").pop());
+  //         if (imageIndex === -1) return;
+  //         appFileCopy["pages"][pageName][folderIndex].images.splice(
+  //           imageIndex,
+  //           1
+  //         );
+  //       }
+  //     }
+  //     // setAppFile(appFileCopy);
+  //     await deleteItem(
+  //       "public/assets/" + path,
+  //       path.split("/").pop().includes(".")
+  //     );
+  //     console.log(appFileCopy);
+  //     updateProjectFile(appFileCopy);
+  //   } catch (error) {
+  //     console.error(error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const deleteItem = async (path: string, isImage: boolean) => {
-    try {
-      const response = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        }
-      );
+  // const deleteItem = async (path: string, isImage: boolean) => {
+  //   try {
+  //     const response = await fetch(
+  //       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           Accept: "application/vnd.github.v3+json",
+  //         },
+  //       }
+  //     );
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch folder contents for path: ${path}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch folder contents for path: ${path}`);
+  //     }
 
-      const files = await response.json();
+  //     const files = await response.json();
 
-      if (isImage) {
-        const deleteResponse = await fetch(
-          `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/vnd.github.v3+json",
-            },
-            body: JSON.stringify({
-              message: `Deleting file ${path}`,
-              sha: files.sha,
-              branch,
-            }),
-          }
-        );
+  //     if (isImage) {
+  //       const deleteResponse = await fetch(
+  //         `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+  //         {
+  //           method: "DELETE",
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             Accept: "application/vnd.github.v3+json",
+  //           },
+  //           body: JSON.stringify({
+  //             message: `Deleting file ${path}`,
+  //             sha: files.sha,
+  //             branch,
+  //           }),
+  //         }
+  //       );
 
-        if (!deleteResponse.ok) {
-          throw new Error(`Failed to delete file: ${path}`);
-        }
-        console.log(`Successfully deleted image file: ${path}`);
-      } else {
-        console.log(`Deleting folder and its contents: ${path}`);
-        for (const file of files) {
-          await deleteItem(file.path, file.type === "file");
-        }
-        console.log(`Successfully deleted all contents of folder: ${path}`);
-      }
-    } catch (error) {
-      console.error(`Error while deleting item at path: ${path}`, error);
-    }
-  };
+  //       if (!deleteResponse.ok) {
+  //         throw new Error(`Failed to delete file: ${path}`);
+  //       }
+  //       console.log(`Successfully deleted image file: ${path}`);
+  //     } else {
+  //       console.log(`Deleting folder and its contents: ${path}`);
+  //       for (const file of files) {
+  //         await deleteItem(file.path, file.type === "file");
+  //       }
+  //       console.log(`Successfully deleted all contents of folder: ${path}`);
+  //     }
+  //   } catch (error) {
+  //     console.error(`Error while deleting item at path: ${path}`, error);
+  //   }
+  // };
 
   const collectImgNames = () => {
     let namesList: string[] = [];
@@ -2176,7 +2189,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       return <></>;
     }
     const currentFolder = getCurrentFolder();
-    // console.log(currentFolder);
     if (
       currentFolder === null ||
       currentFolder === undefined ||
@@ -2209,8 +2221,28 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     folderChildren[item].type === "image"
                       ? "h-[200px]"
                       : "h-[48px]"
-                  } bg-[#EEEEEE] border border-gray-400 rounded-md justify-center flex p-[10px]`}
+                  } bg-[#EEEEEE] relative border border-gray-400 rounded-md justify-center flex p-[10px]`}
                 >
+                  {editMode && (
+                    <button
+                      className="absolute top-[-10px] right-[-10px] w-[23px] h-[23px] border border-[#999] bg-[#FFFFFF] rounded-full flex items-center justify-center cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log(folderChildren[item].type);
+                        if (
+                          window.confirm(
+                            folderChildren[item].type === "image"
+                              ? "Delete image?"
+                              : `Delete ${item}?`
+                          )
+                        ) {
+                          handleDeleteItem(item);
+                        }
+                      }}
+                    >
+                      <FaTrash color={"#222"} size={11} />
+                    </button>
+                  )}
                   {folderChildren[item].type === "image" ? (
                     <a href={folderChildren[item].link}>
                       <img
@@ -2672,7 +2704,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           >
             Project Dashboard
           </div>
-          <div className="ml-[30px] flex flex-row">
+          <div className="ml-[25px] flex flex-row">
             {currentPath.map((item: any, index: number) => (
               <div
                 className="ml-[5px] flex flex-row mt-[1px] cursor-pointer"
@@ -2697,7 +2729,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         {loading && (
           <div className="absolute top-4 right-[107px] simple-spinner"></div>
         )}
-        <button onClick={onLogout} className="button absolute top-3 right-3">
+        <button
+          onClick={onLogout}
+          className="button absolute top-3 right-[12px]"
+        >
           Logout
         </button>
       </div>
@@ -2715,12 +2750,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           }}
           className="z-[999] bg-[white] w-[140px] lg:w-[180px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]"
         >
-          <p
-            className="font-[500] text-[16px] pb-[5px] mb-[5px]"
-            style={{ borderBottom: "1px solid #BBB" }}
-          >
-            Pages
-          </p>
+          <div className="relative select-none">
+            <p
+              className="font-[500] text-[16px] pb-[5px] mb-[5px]"
+              style={{ borderBottom: "1px solid #BBB" }}
+            >
+              Pages
+            </p>
+
+            <BiSolidPencil
+              onClick={() => {
+                setEditMode((prev) => !prev);
+              }}
+              color={"#222"}
+              size={24}
+              className={`p-[3px] right-[1px] border-[#999] ${
+                editMode && "bg-[#DDDDDD]"
+              }  absolute top-0 cursor-pointer`}
+              style={{ borderRadius: "8px", border: "0.1px solid #999" }}
+            />
+          </div>
           {Object.keys(projectFile).length > 0 &&
             projectFile.children &&
             Object.keys(projectFile.children)
@@ -2733,7 +2782,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   <div
                     key={index}
                     style={{ borderRadius: "3px" }}
-                    className={`cursor-pointer hover-dim pl-[6px] pt-[2px] pb-[3px] ${
+                    className={`cursor-pointer hover-dim pl-[6px] pt-[2px] pb-[3px] relative flex flex-row ${
                       currentPath.length > 0 &&
                       currentPath[0] === key &&
                       "bg-[#DDDDDD]"
@@ -2742,7 +2791,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                       handlePageClick(key);
                     }}
                   >
-                    {key[0].toUpperCase() + key.slice(1)}
+                    <p>{key[0].toUpperCase() + key.slice(1)}</p>
+                    {editMode && (
+                      <button
+                        className="absolute bg-white right-[10px] w-[23px] h-[23px] border rounded-full flex items-center justify-center cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete page: ${key}?`)) {
+                            handleDeleteItem(key);
+                          }
+                        }}
+                      >
+                        <FaTrash color={"#222"} size={11} />
+                      </button>
+                    )}
                   </div>
                 );
               })}
