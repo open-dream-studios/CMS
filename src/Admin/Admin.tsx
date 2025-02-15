@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Admin.css";
-import { BiSolidPencil } from "react-icons/bi";
+import { BiPlus, BiSolidPencil } from "react-icons/bi";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { IoCloseOutline } from "react-icons/io5";
 import { IoStar } from "react-icons/io5";
@@ -641,6 +641,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [editDetailsMode, setEditDetailsMode] = useState<boolean>(false);
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [sideBarOpen, setSideBarOpen] = useState<boolean>(true);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
@@ -740,7 +742,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           }
         }
 
-        const newEntryData = { type: "folder", index: newIndex, children: {} };
+        const newEntryData = {
+          type: "folder",
+          index: newIndex,
+          children: {},
+          details: {
+            colors: [],
+            text: [],
+          },
+        };
         const getTargetObject = (obj: any, path: string[]) => {
           return path.reduce((acc, key) => acc?.children?.[key], obj);
         };
@@ -782,7 +792,100 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setLoading(false);
   };
 
-  const [editMode, setEditMode] = useState<boolean>(false);
+  const handleDeleteFolderDetail = async (
+    objectType: string,
+    index: number
+  ) => {
+    setLoading(true);
+    const currentFolder = getCurrentFolder();
+    if (
+      currentFolder !== null &&
+      typeof currentFolder === "object" &&
+      Object.keys(currentFolder).includes("details") &&
+      Object.keys(currentFolder["details"]).includes(objectType) &&
+      currentFolder["details"][objectType].findIndex(
+        (item: any) => item.index === index
+      ) !== -1
+    ) {
+      const project = await getProject();
+      if (project === undefined || project === null) return;
+      const projectFileObject = structuredClone(project[1]);
+      const getTargetObject = (obj: any, path: string[]) => {
+        return path.reduce((acc, key) => acc?.children?.[key], obj);
+      };
+      const targetObject = getTargetObject(projectFileObject, currentPath);
+      if (
+        targetObject &&
+        Object.keys(targetObject).includes("details") &&
+        Object.keys(targetObject["details"]).includes(objectType) &&
+        targetObject["details"][objectType].findIndex(
+          (item: any) => item.index === index
+        ) !== -1
+      ) {
+        const foundIndex = targetObject["details"][objectType].findIndex(
+          (item: any) => item.index === index
+        );
+        targetObject["details"][objectType] = targetObject["details"][
+          objectType
+        ].filter((item: any, index: number) => index !== foundIndex);
+      }
+      await updateProjectFile(projectFileObject);
+    }
+    setLoading(false);
+  };
+
+  const handleAddFolderDetail = async (objectType: string) => {
+    setLoading(true);
+    const currentFolder = getCurrentFolder();
+    if (
+      currentFolder !== null &&
+      typeof currentFolder === "object" &&
+      Object.keys(currentFolder).includes("details") &&
+      Object.keys(currentFolder["details"]).includes(objectType)
+    ) {
+      const project = await getProject();
+      if (project === undefined || project === null) return;
+      const projectFileObject = structuredClone(project[1]);
+      const getTargetObject = (obj: any, path: string[]) => {
+        return path.reduce((acc, key) => acc?.children?.[key], obj);
+      };
+      const targetObject = getTargetObject(projectFileObject, currentPath);
+      if (
+        targetObject &&
+        Object.keys(targetObject).includes("details") &&
+        Object.keys(targetObject["details"]).includes(objectType)
+      ) {
+        let highestIndex = 0;
+        let newIndex = 0;
+        for (let i = 0; i < targetObject["details"][objectType].length; i++) {
+          if (targetObject["details"][objectType][i].index >= highestIndex) {
+            highestIndex = targetObject["details"][objectType][i].index;
+            newIndex = highestIndex + 1;
+          }
+        }
+
+        const newEntry =
+          objectType === "colors"
+            ? {
+                name: "Color " + newIndex,
+                value: "#999999",
+                index: newIndex,
+              }
+            : {
+                name: "Text " + newIndex,
+                value: "New Text",
+                index: newIndex,
+              };
+
+        console.log(newEntry);
+
+        targetObject["details"][objectType].push(newEntry);
+      }
+      console.log(targetObject);
+      await updateProjectFile(projectFileObject);
+    }
+    setLoading(false);
+  };
 
   const [fullProject, setFullProject] = useState<FolderStructure | null>(null);
   const [appFile, setAppFile] = useState<any>({});
@@ -2198,7 +2301,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
 
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-[15px] w-full h-auto p-[15px]">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[15px] w-full h-auto p-[15px]">
         {currentFolder.type === "folder" &&
           Object.keys(currentFolder.children).length > 0 &&
           Object.keys(currentFolder.children)
@@ -2228,7 +2331,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                       className="absolute top-[-10px] right-[-10px] w-[23px] h-[23px] border border-[#999] bg-[#FFFFFF] rounded-full flex items-center justify-center cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log(folderChildren[item].type);
                         if (
                           window.confirm(
                             folderChildren[item].type === "image"
@@ -2259,203 +2361,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             })}
       </div>
     );
-
-    // return (
-    //   <div
-    //     className={`flex ${
-    //       currentPath.length <= 1 &&
-    //       !(currentPath.length === 1 && currentPath[0] === "about")
-    //         ? "justify-left flex-col"
-    //         : "justify-center flex-wrap"
-    //     } gap-6 mt-6 ${
-    //       currentPath[0] === "about" ||
-    //       (currentPath[0] === "projects" && currentPath.length > 1) ||
-    //       (currentPath[0] === "archives" && currentPath.length > 1)
-    //         ? "pb-[95px] top-0 left-0 "
-    //         : ""
-    //     } absolute px-[22px]`}
-    //     // style={{ backgroundColor: "red" }}
-    //   >
-    //     {Object.keys(currentFolder)
-    //       .sort((a, b) => {
-    //         let indexMap: any = {};
-    //         if (appFile["pages"] !== undefined) {
-    //           indexMap = Object.values(appFile["pages"])
-    //             .flat()
-    //             .reduce((map: any, item: any) => {
-    //               map[item.id] = item.index;
-    //               return map;
-    //             }, {});
-    //         }
-
-    //         // // First sort (your existing logic)
-    //         // const indexA = extractBeforeIndex(a);
-    //         // const indexB = extractBeforeIndex(b);
-    //         // const numA = indexA !== null ? Number(indexA) : Infinity;
-    //         // const numB = indexB !== null ? Number(indexB) : Infinity;
-
-    //         // const primarySort = numA - numB;
-
-    //         // if (primarySort !== 0) {
-    //         //   return primarySort;
-    //         // }
-
-    //         // Second sort (based on the index from JSON)
-    //         const folderIndexA = indexMap[a] ?? Infinity;
-    //         const folderIndexB = indexMap[b] ?? Infinity;
-    //         return folderIndexA - folderIndexB;
-    //       })
-    //       .sort((a, b) => {
-    //         let images: any[] = [];
-    //         if (appFile !== null) {
-    //           if (currentPath[0] === "about") {
-    //             images = appFile["pages"]["about"]["images"];
-    //           } else if (
-    //             currentPath[0] === "projects" &&
-    //             currentPath.length === 2
-    //           ) {
-    //             const projectItem = appFile["pages"]["projects"].filter(
-    //               (item: any) => item.id === currentPath[1]
-    //             );
-    //             if (projectItem.length > 0) {
-    //               images = projectItem[0].images;
-    //             }
-    //           } else if (
-    //             currentPath[0] === "archives" &&
-    //             currentPath.length === 2
-    //           ) {
-    //             const projectItem = appFile["pages"]["archives"].filter(
-    //               (item: any) => item.id === currentPath[1]
-    //             );
-
-    //             if (projectItem.length > 0) {
-    //               images = projectItem[0].images;
-    //             }
-    //           }
-    //         }
-
-    //         const imageA: any = images.filter((item) => item.name === a);
-    //         const imageB: any = images.filter((item) => item.name === b);
-    //         if (imageA.length > 0 && imageB.length > 0) {
-    //           const indexA = imageA[0].index;
-    //           const indexB = imageB[0].index;
-    //           return indexA - indexB;
-    //         }
-    //         return 0;
-    //       })
-    //       .map((key, index) => {
-    //         if (key === "blank.png" || key === "fallback.jpeg") return <></>;
-    //         const isSecondaryFolder =
-    //           typeof currentFolder[key] !== "string" &&
-    //           ((currentPath[0] === "projects" && key !== "covers") ||
-    //             currentPath[0] === "archives");
-
-    //         const isProjectFolder =
-    //           typeof currentFolder[key] !== "string" &&
-    //           currentPath[0] === "projects";
-
-    //         let projectFound = true;
-    //         const projectItem = getFolderItem(key);
-    //         // console.log(projectItem);
-    //         if (projectItem === null) {
-    //           projectFound = false;
-    //         }
-
-    //         // Archive Image Coloring Logic
-    //         let defaultImgColor = "#CCCCCC";
-    //         if (currentPath.length === 2 && currentPath[0] === "archives") {
-    //           const imgName = key.split(".")[0];
-    //           const imgColor = imgName.split("--").pop();
-    //           if (
-    //             imgColor &&
-    //             imgName.split("--").length >= 2 &&
-    //             isColor(imgColor) !== null
-    //           ) {
-    //             defaultImgColor = isColor(imgColor) || "#CCCCCC";
-    //           }
-    //         }
-
-    //         let starTrue = false;
-    //         if (currentPath.length === 1 && projectItem) {
-    //           starTrue = projectItem.home_page;
-    //         }
-    //         if (currentPath.length === 2 && projectItem) {
-    //           starTrue = projectItem.projectCover;
-    //         }
-    //         const pageName = currentPath[0];
-
-    //         // if (currentPath.length > 0 && currentPath[0] !== "about")
-    //         //   return <></>;
-    //         let projectIndex = -1;
-    //         if (currentPath.length > 0) {
-    //           if (currentPath.length === 2) {
-    //             projectIndex = appFile["pages"][pageName].findIndex(
-    //               (item: any) => item.id === currentPath[1]
-    //             );
-    //             if (projectIndex === -1) return <></>;
-    //           }
-    //         }
-
-    //         let showRightSwapDiv = false;
-    //         if (
-    //           currentPath.length === 1 &&
-    //           pageName === "about" &&
-    //           index === appFile["pages"][pageName].images.length - 1
-    //         ) {
-    //           showRightSwapDiv = true;
-    //         } else if (
-    //           currentPath.length === 2 &&
-    //           (pageName === "projects" || pageName === "archives") &&
-    //           index ===
-    //             appFile["pages"][pageName][projectIndex].images.length - 1
-    //         ) {
-    //           showRightSwapDiv = true;
-    //         }
-
-    //         return (
-    //           <div
-    //             key={key}
-    //             style={{
-    //               display: key === "blank.png" ? "none" : "all",
-    //               border: swapActive ? "1px solid red" : "1px solid #bbb",
-    //             }}
-    //             className={`min-w-[150px] ${
-    //               currentPath.length === 1
-    //                 ? currentPath[0] === "about"
-    //                   ? ""
-    //                   : currentPath[0] === "projects"
-    //                   ? "h-[105px] pl-[17px]"
-    //                   : "h-[80px] pl-[17px]"
-    //                 : ""
-    //             } flex ${
-    //               currentPath.length === 1 && currentPath[0] !== "about"
-    //                 ? "flex-col w-[300px]"
-    //                 : "items-center justify-center max-w-[33%] sm:w-[calc(18%-1rem)] sm:max-w-[20%] min-w-[150px] "
-    //             } relative p-2 bg-[#f9f9f9]  rounded-lg ${
-    //               !swapActive ? "cursor-pointer" : ""
-    //             }`}
-    //             onClick={() =>
-    //               (currentPath.length === 2 && swapActive) ||
-    //               (currentPath.length === 1 &&
-    //                 currentPath[0] === "about" &&
-    //                 swapActive)
-    //                 ? () => {}
-    //                 : handleFolderClick(key)
-    //             }
-    //           ></div>
-    //         );
-    //       })}
-    //   </div>
-    // );
   };
 
   const [aboutPopupOpen, setAboutPopupOpen] = useState(false);
-  const handleAppFileChange = (newAppFile: string) => {
-    if (Object.keys(newAppFile).length > 0) {
-      setAppFile(newAppFile);
-      updateProjectFile(newAppFile);
-    }
-  };
 
   const [uploadPopup, setUploadPopup] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
@@ -2711,6 +2619,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 onClick={() => {
                   setCurrentPath(currentPath.slice(0, index + 1));
                 }}
+                key={index}
               >
                 <p style={{ color: "#AAAAAA" }}>{currentPath[index]}</p>
                 {currentPath.length - 1 > 0 &&
@@ -2832,12 +2741,215 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </div>
         <div
           ref={sidebarRef}
-          className={`h-[100%] w-[100vw] bg-white ${
-            sideBarOpen ? "pl-[140px] lg:pl-[180px]" : "pl-0"
-          }`}
+          className={`h-[100%] w-[100vw] ${
+            currentPath.length > 0 &&
+            getCurrentFolder() !== null &&
+            Object.keys(getCurrentFolder()).includes("details")
+              ? "pr-[240px] lg:pr-[280px]"
+              : "pr-0"
+          } bg-white ${sideBarOpen ? "pl-[140px] lg:pl-[180px]" : "pl-0"}`}
         >
           <div className="w-full h-full">{renderContent()}</div>
         </div>
+
+        {currentPath.length > 0 &&
+          getCurrentFolder() !== null &&
+          Object.keys(getCurrentFolder()).includes("details") && (
+            <div
+              style={{
+                borderLeft: "1px solid #BBBBBB",
+              }}
+              className="overflow-scroll bg-[white] w-[240px] lg:w-[280px] h-[calc(100%-63px)] absolute top-0 right-[2px]"
+            >
+              <div
+                className="fixed w-[240px] lg:w-[280px] z-[102] h-[50px] bg-white"
+                style={{ borderBottom: "1px solid #BBBBBB" }}
+              >
+                <div className="relative w-[100%] h-[50px] flex flex-row items-center ">
+                  <p className="font-[600] text-[18px] text-[#888] pb-[1px] pl-[14px] w-[calc(100%-47px)] mr-[5px]">
+                    {currentPath.length > 0 &&
+                      currentPath[currentPath.length - 1]}{" "}
+                    Folder
+                  </p>
+                  <BiSolidPencil
+                    onClick={() => {
+                      setEditDetailsMode((prev) => !prev);
+                    }}
+                    color={"#222"}
+                    size={24}
+                    className={`p-[3px] border-[#999] ${
+                      editDetailsMode && "bg-[#DDDDDD]"
+                    } cursor-pointer`}
+                    style={{ borderRadius: "8px", border: "0.1px solid #999" }}
+                  />
+                </div>
+              </div>
+              {Object.keys(getCurrentFolder()["details"]).includes(
+                "colors"
+              ) && (
+                <div className="mt-[59px] w-[100%] px-[15px]">
+                  {getCurrentFolder()["details"]["colors"].length > 0 && (
+                    <div className="relative pb-[15px] overflow-scroll flex flex-col gap-[6px]">
+                      <p className="select-none font-[500] text-[18px] text-[#888] pb-[1px]">
+                        Colors
+                      </p>
+
+                      <BiPlus
+                        onClick={() => {
+                          handleAddFolderDetail("colors");
+                        }}
+                        color={"#999"}
+                        size={24}
+                        className={`absolute right-0 top-[1px] p-[3px] border-[#999] cursor-pointer rounded-full`}
+                        style={{ border: "0.1px solid #999" }}
+                      />
+
+                      {getCurrentFolder()
+                        ["details"]["colors"].sort((a: any, b: any) => {
+                          if (a === null || b === null) {
+                            return 0;
+                          } else {
+                            return a.index - b.index;
+                          }
+                        })
+                        .map((colorObject: any, index: number) => (
+                          <div
+                            key={index}
+                            className="flex flex-row w-full gap-[5px] items-center"
+                          >
+                            {colorObject !== null &&
+                              Object.keys(colorObject).includes("name") &&
+                              Object.keys(colorObject).includes("value") && (
+                                <div className="w-[100%] h-[38px] rounded-[5px] gap-[6px] border border-[#BBBBBB] flex items-center px-[9px] text-[#888] font-[500]">
+                                  <input
+                                    type="text"
+                                    value={colorObject["name"]}
+                                    className="border-none w-[calc(100%-31px)] outline-none"
+                                  />
+
+                                  <div
+                                    onClick={(e: any) => e.stopPropagation()}
+                                    className="w-[25px] h-[25px] relative rounded-[5px]"
+                                  >
+                                    <ColorPicker
+                                      initialColor={colorObject["value"]}
+                                      primary={true}
+                                      onColorChange={(
+                                        primary: boolean,
+                                        newValue: string
+                                      ) =>
+                                        // handleColorChange(key, primary, newValue)
+                                        {}
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                            {editDetailsMode && (
+                              <button
+                                className="w-[28px] h-[25px] border border-[#999] bg-[#FFFFFF] rounded-full flex items-center justify-center cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (
+                                    window.confirm(
+                                      `Delete ${colorObject["name"]}?`
+                                    )
+                                  ) {
+                                    handleDeleteFolderDetail(
+                                      "colors",
+                                      colorObject.index
+                                    );
+                                  }
+                                }}
+                              >
+                                <FaTrash color={"#222"} size={11} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="w-ful h-[1px] mt-[3px] mb-[8px] bg-[#BBBBBB]"></div>
+
+              {Object.keys(getCurrentFolder()["details"]).includes("text") && (
+                <div className="mt-[5px] pb-[10px] w-[100%] px-[15px]">
+                  {getCurrentFolder()["details"]["text"].length > 0 && (
+                    <div className="relative overflow-scroll flex flex-col gap-[6px]">
+                      <p className="select-none font-[500] text-[18px] text-[#888] pb-[1px]">
+                        Text
+                      </p>
+                      <BiPlus
+                        onClick={() => {
+                          handleAddFolderDetail("text");
+                        }}
+                        color={"#999"}
+                        size={24}
+                        className={`absolute right-0 top-[1px] p-[3px] border-[#999] cursor-pointer rounded-full`}
+                        style={{ border: "0.1px solid #999" }}
+                      />
+                      {getCurrentFolder()
+                        ["details"]["text"].sort((a: any, b: any) => {
+                          if (a === null || b === null) {
+                            return 0;
+                          } else {
+                            return a.index - b.index;
+                          }
+                        })
+                        .map((textObject: any, index: number) => (
+                          <div
+                            key={index}
+                            className="flex flex-row w-full gap-[5px] items-center"
+                          >
+                            {textObject !== null &&
+                              Object.keys(textObject).includes("name") &&
+                              Object.keys(textObject).includes("value") && (
+                                <div className="flex flex-col mb-[4px]">
+                                  <input
+                                    type="text"
+                                    value={textObject["name"]}
+                                    className="text-[15px] text-[#777] outline-none border-none"
+                                  />{" "}
+                                  <div className="flex flex-row items-center h-[auto] w-full gap-[5px]">
+                                    <textarea
+                                      value={textObject["value"]}
+                                      className="mt-[2px] w-full border text-[#888] font-[500] border-[#BBBBBB] rounded-[5px] h-[auto] p-2 outline-none resize-none whitespace-pre-wrap break-words"
+                                    ></textarea>
+
+                                    {editDetailsMode && (
+                                      <button
+                                        className="w-[28px] h-[25px] border border-[#999] bg-[#FFFFFF] rounded-full flex items-center justify-center cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (
+                                            window.confirm(
+                                              `Delete ${textObject["name"]}?`
+                                            )
+                                          ) {
+                                            handleDeleteFolderDetail(
+                                              "text",
+                                              textObject.index
+                                            );
+                                          }
+                                        }}
+                                      >
+                                        <FaTrash color={"#222"} size={11} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
         {currentPath.length > 0 && (
           <div
