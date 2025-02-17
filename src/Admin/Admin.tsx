@@ -16,6 +16,7 @@ import {
   sanitizeTitle,
   unSanitizeTitle,
 } from "../utils/helperFunctions";
+import Draggable from "react-draggable";
 
 const Admin = () => {
   const [password, setPassword] = useState("");
@@ -230,12 +231,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const handleSideBarToggle = () => {
     setSideBarOpen((prev) => !prev);
     if (sidebarRef.current) {
-      sidebarRef.current.style.transition = "padding-left 0.25s ease-in-out";
+      sidebarRef.current.style.transition =
+        "left 0.25s ease-in-out, width 0.25s ease-in-out";
       setTimeout(() => {
         if (sidebarRef.current) {
           sidebarRef.current.style.transition = "none";
         }
-      }, 500);
+      }, 250);
     }
   };
 
@@ -694,6 +696,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     setLoading(false);
   };
 
+  const handleDrag = (x: number, y: number) => {
+    console.log(x, y);
+    if (renderContentParentRef.current && divRefs.current[0] !== null) {
+      const objectWidth = divRefs.current[0].offsetWidth
+      // setPositions((prev: any) => ({
+      //   ...prev,
+      //   "1": { x: -objectWidth - 15, y: 0 },
+      // }));
+    }
+  };
+
+  const divRefs = useRef<HTMLDivElement[] | null[]>([]);
+  const renderContentParentRef = useRef<HTMLDivElement>(null);
+  const [positions, setPositions] = useState<any>({});
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
+
   const renderContent = () => {
     if (currentPath.length === 0) {
       return <></>;
@@ -708,7 +726,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
 
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[15px] w-full h-auto p-[15px]">
+      <div
+        ref={renderContentParentRef}
+        className="overflow-scroll max-h-[calc(100vh-124px)] grid grid-cols-2 lg:grid-cols-4 gap-[15px] w-full h-[auto] p-[15px]"
+      >
         {currentFolder.type === "folder" &&
           Object.keys(currentFolder.children).length > 0 &&
           Object.keys(currentFolder.children)
@@ -719,51 +740,80 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             )
             .map((item: any, index: number) => {
               const folderChildren = currentFolder.children as any;
+              if (!positions[item]) {
+                setPositions((prev: any) => ({
+                  ...prev,
+                  [item]: { x: 0, y: 0 },
+                }));
+              }
+
               return (
-                <div
-                  onClick={() => {
-                    if (folderChildren[item].type !== "image") {
-                      handleFolderClick(item);
-                    }
-                  }}
+                <Draggable
                   key={index}
-                  className={`cursor-pointer ${
-                    folderChildren[item].type === "image"
-                      ? "h-[200px]"
-                      : "h-[48px]"
-                  } bg-[#EEEEEE] relative border border-gray-400 rounded-md justify-center flex p-[10px]`}
+                  bounds="parent"
+                  position={positions[item]}
+                  onDrag={(e, data) => {
+                    setDraggedItem(item);
+                    handleDrag(data.x, data.y);
+                  }}
+                  onStop={() => {
+                    setPositions((prev: any) => ({
+                      ...prev,
+                      [item]: { x: 0, y: 0 },
+                    }));
+                    if (draggedItem === null) {
+                      if (folderChildren[item].type === "image") {
+                        window.location.href =
+                          currentFolder.children[item].link;
+                      } else {
+                        handleFolderClick(item);
+                      }
+                    }
+                    setDraggedItem(null);
+                  }}
                 >
-                  {editDetailsMode && (
-                    <button
-                      className="absolute top-[-10px] right-[-10px] w-[23px] h-[23px] border border-[#999] bg-[#FFFFFF] rounded-full flex items-center justify-center cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (
-                          window.confirm(
-                            folderChildren[item].type === "image"
-                              ? "Delete image?"
-                              : `Delete ${item}?`
-                          )
-                        ) {
-                          handleDeleteItem(item);
-                        }
-                      }}
-                    >
-                      <FaTrash color={"#222"} size={11} />
-                    </button>
-                  )}
-                  {folderChildren[item].type === "image" ? (
-                    <a href={folderChildren[item].link}>
+                  <div
+                    ref={(el) => (divRefs.current[index] = el)}
+                    className={`${
+                      draggedItem === item ? "z-[103]" : ""
+                    } cursor-pointer ${
+                      folderChildren[item].type === "image"
+                        ? "h-[200px]"
+                        : "h-[48px]"
+                    } bg-[#EEEEEE] relative border border-gray-400 rounded-md justify-center flex p-[10px] select-none`}
+                  >
+                    {editDetailsMode && (
+                      <button
+                        className="absolute top-[-10px] right-[-10px] w-[23px] h-[23px] border border-[#999] bg-[#FFFFFF] rounded-full flex items-center justify-center cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (
+                            window.confirm(
+                              folderChildren[item].type === "image"
+                                ? "Delete image?"
+                                : `Delete ${item}?`
+                            )
+                          ) {
+                            handleDeleteItem(item);
+                          }
+                        }}
+                      >
+                        <FaTrash color={"#222"} size={11} />
+                      </button>
+                    )}
+                    {folderChildren[item].type === "image" ? (
                       <img
                         alt=""
-                        className="w-[100%] h-[100%] object-contain"
+                        draggable="false"
+                        onDragStart={(event) => event.preventDefault()}
+                        className="select-none pointer-events-none w-[100%] h-[100%] object-contain"
                         src={folderChildren[item].link}
                       />
-                    </a>
-                  ) : (
-                    <>{folderChildren[item].name}</>
-                  )}
-                </div>
+                    ) : (
+                      <>{folderChildren[item].name}</>
+                    )}
+                  </div>
+                </Draggable>
               );
             })}
       </div>
@@ -1164,14 +1214,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </div>
         <div
           ref={sidebarRef}
-          className={`h-[100%] w-[100vw] ${
+          className={`h-[100%] absolute ${
             currentPath.length > 0 &&
             getCurrentFolder() !== null &&
             getCurrentFolder() !== undefined &&
             Object.keys(getCurrentFolder()).includes("details")
-              ? "pr-[240px] lg:pr-[280px]"
-              : "pr-0"
-          } bg-white ${sideBarOpen ? "pl-[140px] lg:pl-[180px]" : "pl-0"}`}
+              ? sideBarOpen
+                ? "w-[calc(100vw-240px-140px)] lg:w-[calc(100vw-280px-180px)]"
+                : "w-[calc(100vw-240px)] lg:w-[calc(100vw-280px)]"
+              : sideBarOpen
+              ? "w-[calc(100vw-140px)] lg:w-[calc(100vw-180px)]"
+              : "w-[100vw]"
+          } bg-white ${
+            sideBarOpen ? "left-[140px] lg:left-[180px]" : "left-0"
+          }`}
         >
           <div className="w-full h-full">{renderContent()}</div>
         </div>
