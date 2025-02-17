@@ -639,10 +639,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
-  const handleReorganizeItem = async (
-    startingIndex: number,
-    finalIndex: number
-  ) => {
+  const handleReorganizeItem = async (item: any) => {
+    if (finalDraggedIndex === null) return;
     setLoading(true);
     const currentFolder = getCurrentFolder();
     if (
@@ -675,6 +673,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 .index;
           }
         }
+        const startingIndex = currentFolder.children[item].index;
+        let finalIndex = finalDraggedIndex;
+        if (highestIndex < finalDraggedIndex) {
+          finalIndex = highestIndex;
+        }
+        setPositions((prev: any) => ({
+          ...prev,
+          [item]: finalDragPosition,
+        }));
 
         for (let i = 0; i < Object.keys(targetObject.children).length; i++) {
           let item =
@@ -691,19 +698,98 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           }
         }
       }
+
       await updateProjectFile(projectFileObject);
+      setFinalDragPosition({ x: 0, y: 0 });
+      setFinalDraggedIndex(null);
+      setPositions((prev: any) => {
+        const newPositions = { ...prev };
+        for (let i = 0; i < Object.keys(currentFolder.children).length; i++) {
+          const itemKey = Object.keys(currentFolder.children)[i];
+          newPositions[itemKey].x = 0;
+          newPositions[itemKey].y = 0;
+        }
+        return newPositions;
+      });
     }
     setLoading(false);
   };
 
-  const handleDrag = (x: number, y: number) => {
-    console.log(x, y);
+  const [finalDraggedIndex, setFinalDraggedIndex] = useState<number | null>(
+    null
+  );
+
+  const handleDrag = (x: number, y: number, item: string, itemObject: any) => {
+    const gridColumns = window.innerWidth > 1024 ? 4 : 2;
     if (renderContentParentRef.current && divRefs.current[0] !== null) {
-      const objectWidth = divRefs.current[0].offsetWidth
-      // setPositions((prev: any) => ({
-      //   ...prev,
-      //   "1": { x: -objectWidth - 15, y: 0 },
-      // }));
+      const itemWidth = divRefs.current[0].offsetWidth;
+      const itemHeight = divRefs.current[0].offsetHeight;
+      const parentWidth = renderContentParentRef.current.offsetWidth - 30;
+
+      const halfY = y > 0 ? 0.5 : -0.5;
+      let spacesVertical = y / (itemHeight + 15) + halfY;
+      spacesVertical =
+        spacesVertical > 0
+          ? Math.floor(spacesVertical)
+          : Math.ceil(spacesVertical);
+
+      const halfX = x > 0 ? 0.5 : -0.5;
+      let spacesHorizontal = x / (itemWidth + 15) + halfX;
+      spacesHorizontal =
+        spacesHorizontal > 0
+          ? Math.floor(spacesHorizontal)
+          : Math.ceil(spacesHorizontal);
+
+      const startingIndex = itemObject[item].index;
+      const finalIndex =
+        itemObject[item].index +
+        spacesHorizontal +
+        spacesVertical * gridColumns;
+      if (finalDraggedIndex !== finalIndex) {
+        setFinalDraggedIndex(finalIndex);
+      }
+
+      setFinalDragPosition({
+        x: spacesHorizontal * (itemWidth + 14.5),
+        y: spacesVertical * (itemHeight + 15),
+      });
+
+      setPositions((prev: any) => {
+        const newPositions = { ...prev };
+        for (let i = 0; i < Object.keys(itemObject).length; i++) {
+          const itemKey = Object.keys(itemObject)[i];
+          if (itemKey === item) continue;
+          if (
+            itemObject[itemKey].index > startingIndex &&
+            itemObject[itemKey].index <= finalIndex
+          ) {
+            newPositions[itemKey].x =
+              itemObject[itemKey].index % gridColumns === 0
+                ? parentWidth - itemWidth
+                : -itemWidth - 14.5;
+            newPositions[itemKey].y =
+              itemObject[itemKey].index % gridColumns === 0
+                ? -itemHeight - 15
+                : 0;
+          } else if (
+            itemObject[itemKey].index < startingIndex &&
+            itemObject[itemKey].index >= finalIndex
+          ) {
+            newPositions[itemKey].x =
+              (itemObject[itemKey].index + 1) % gridColumns === 0
+                ? -parentWidth + itemWidth
+                : itemWidth + 14.5;
+            newPositions[itemKey].y =
+              (itemObject[itemKey].index + 1) % gridColumns === 0
+                ? itemHeight + 15
+                : 0;
+          } else {
+            newPositions[itemKey].x = 0;
+            newPositions[itemKey].y = 0;
+          }
+        }
+        return newPositions;
+      });
     }
   };
 
@@ -711,6 +797,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const renderContentParentRef = useRef<HTMLDivElement>(null);
   const [positions, setPositions] = useState<any>({});
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [finalDragPosition, setFinalDragPosition] = useState<any>({
+    x: 0,
+    y: 0,
+  });
 
   const renderContent = () => {
     if (currentPath.length === 0) {
@@ -728,7 +818,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     return (
       <div
         ref={renderContentParentRef}
-        className="overflow-scroll max-h-[calc(100vh-124px)] grid grid-cols-2 lg:grid-cols-4 gap-[15px] w-full h-[auto] p-[15px]"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-[15px] w-full h-[auto] p-[15px]"
       >
         {currentFolder.type === "folder" &&
           Object.keys(currentFolder.children).length > 0 &&
@@ -753,14 +843,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   bounds="parent"
                   position={positions[item]}
                   onDrag={(e, data) => {
-                    setDraggedItem(item);
-                    handleDrag(data.x, data.y);
+                    if (draggedItem === null) {
+                      setDraggedItem(item);
+                    }
+                    handleDrag(data.x, data.y, item, currentFolder.children);
                   }}
                   onStop={() => {
-                    setPositions((prev: any) => ({
-                      ...prev,
-                      [item]: { x: 0, y: 0 },
-                    }));
                     if (draggedItem === null) {
                       if (folderChildren[item].type === "image") {
                         window.location.href =
@@ -770,6 +858,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                       }
                     }
                     setDraggedItem(null);
+                    handleReorganizeItem(item);
                   }}
                 >
                   <div
@@ -1229,7 +1318,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             sideBarOpen ? "left-[140px] lg:left-[180px]" : "left-0"
           }`}
         >
-          <div className="w-full h-full">{renderContent()}</div>
+          <div className="w-full h-full max-h-[calc(100vh-124px)] overflow-scroll">
+            {renderContent()}
+          </div>
         </div>
 
         {currentPath.length > 0 &&
