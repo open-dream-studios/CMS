@@ -247,9 +247,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const handleAddPage = async (pageName: string) => {
     setLoading(true);
-    const project = projectFile;
-    if (project === undefined || project === null) return;
-    const projectFileObject = structuredClone(project);
+    if (projectFile === undefined || projectFile === null) return;
+    const projectFileObject = structuredClone(projectFile);
     const projectFileContents = projectFileObject.children;
     if (!Object.keys(projectFileContents).includes(pageName)) {
       let highestIndex = 0;
@@ -339,9 +338,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         alert("That page name is already being used");
         return;
       } else {
-        const project = projectFile;
-        if (project === undefined || project === null) return;
-        const projectFileObject = structuredClone(project);
+        if (projectFile === undefined || projectFile === null) return;
+        const projectFileObject = structuredClone(projectFile);
         const children = currentFolder.children;
         let highestIndex = 0;
         let newIndex = 0;
@@ -397,9 +395,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       "children" in currentFolder
     ) {
       if (Object.keys(currentFolder.children).includes(folderName)) {
-        const project = projectFile;
-        if (project === undefined || project === null) return;
-        const projectFileObject = structuredClone(project);
+        if (projectFile === undefined || projectFile === null) return;
+        const projectFileObject = structuredClone(projectFile);
         const getTargetObject = (obj: any, path: string[]) => {
           return path.reduce((acc, key) => acc?.children?.[key], obj);
         };
@@ -444,9 +441,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         (item: any) => item.index === index
       ) !== -1
     ) {
-      const project = projectFile;
-      if (project === undefined || project === null) return;
-      const projectFileObject = structuredClone(project);
+      if (projectFile === undefined || projectFile === null) return;
+      const projectFileObject = structuredClone(projectFile);
       const getTargetObject = (obj: any, path: string[]) => {
         return path.reduce((acc, key) => acc?.children?.[key], obj);
       };
@@ -481,9 +477,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       Object.keys(currentFolder).includes("details") &&
       Object.keys(currentFolder["details"]).includes(objectType)
     ) {
-      const project = projectFile;
-      if (project === undefined || project === null) return;
-      const projectFileObject = structuredClone(project);
+      if (projectFile === undefined || projectFile === null) return;
+      const projectFileObject = structuredClone(projectFile);
       const getTargetObject = (obj: any, path: string[]) => {
         return path.reduce((acc, key) => acc?.children?.[key], obj);
       };
@@ -535,9 +530,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         (item: any) => item.index === index
       ) !== -1
     ) {
-      const project = projectFile;
-      if (project === undefined || project === null) return;
-      const projectFileObject = structuredClone(project);
+      if (projectFile === undefined || projectFile === null) return;
+      const projectFileObject = structuredClone(projectFile);
       const getTargetObject = (obj: any, path: string[]) => {
         return path.reduce((acc, key) => acc?.children?.[key], obj);
       };
@@ -569,12 +563,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     ) {
       return;
     }
-
-    const prevProjectFile = projectFile;
-    const newProjectFile = { ...prevProjectFile };
+    const newProjectFile = { ...projectFile };
     let node = newProjectFile;
     for (let i = 0; i < currentPath.length; i++) {
-      if (!node.children[currentPath[i]]) return prevProjectFile;
+      if (!node.children[currentPath[i]]) return projectFile;
       node.children[currentPath[i]] = { ...node.children[currentPath[i]] };
       node = node.children[currentPath[i]];
     }
@@ -641,7 +633,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const handleReorganizeItem = async (item: any) => {
     if (finalDraggedIndex === null) return;
-    setLoading(true);
+
     const currentFolder = getCurrentFolder();
     if (
       currentFolder !== null &&
@@ -678,6 +670,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         if (highestIndex < finalDraggedIndex) {
           finalIndex = highestIndex;
         }
+        if (finalIndex === startingIndex) return;
+
+        setLoading(true);
         setPositions((prev: any) => ({
           ...prev,
           [item]: finalDragPosition,
@@ -714,10 +709,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
     setLoading(false);
   };
-
-  const [finalDraggedIndex, setFinalDraggedIndex] = useState<number | null>(
-    null
-  );
 
   const handleDrag = (x: number, y: number, item: string, itemObject: any) => {
     const gridColumns = window.innerWidth > 1024 ? 4 : 2;
@@ -797,6 +788,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const renderContentParentRef = useRef<HTMLDivElement>(null);
   const [positions, setPositions] = useState<any>({});
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [finalDraggedIndex, setFinalDraggedIndex] = useState<number | null>(
+    null
+  );
   const [finalDragPosition, setFinalDragPosition] = useState<any>({
     x: 0,
     y: 0,
@@ -848,17 +842,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     }
                     handleDrag(data.x, data.y, item, currentFolder.children);
                   }}
+                  disabled={editDetailsMode}
                   onStop={() => {
-                    if (draggedItem === null) {
-                      if (folderChildren[item].type === "image") {
-                        window.location.href =
-                          currentFolder.children[item].link;
-                      } else {
-                        handleFolderClick(item);
+                    if (!editDetailsMode) {
+                      if (draggedItem === null) {
+                        if (folderChildren[item].type === "image") {
+                          window.location.href =
+                            currentFolder.children[item].link;
+                        } else {
+                          handleFolderClick(item);
+                        }
                       }
+                      setDraggedItem(null);
+                      handleReorganizeItem(item);
                     }
-                    setDraggedItem(null);
-                    handleReorganizeItem(item);
                   }}
                 >
                   <div
@@ -909,183 +906,161 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     );
   };
 
-  // const [uploadPopup, setUploadPopup] = useState(false);
-  // const divRef = useRef<HTMLDivElement>(null);
+  const [uploadPopup, setUploadPopup] = useState(false);
+  const uploadPopupRef = useRef<HTMLDivElement>(null);
 
-  // useEffect(() => {
-  //   const handleClickOutside = (event: MouseEvent) => {
-  //     if (divRef.current && !divRef.current.contains(event.target as Node)) {
-  //       setUploadPopup(false);
-  //     }
-  //   };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        uploadPopupRef.current &&
+        !uploadPopupRef.current.contains(event.target as Node)
+      ) {
+        setUploadPopup(false);
+      }
+    };
 
-  //   document.addEventListener("mousedown", handleClickOutside);
-  //   return () => {
-  //     document.removeEventListener("mousedown", handleClickOutside);
-  //   };
-  // }, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-  // type FileImage = {
-  //   name: string;
-  //   file: File;
-  // };
+  type FileImage = {
+    name: string;
+    file: File;
+  };
 
-  // const handleSend = async (files: FileImage[]) => {
-  //   const formData = new FormData();
+  const handleSend = async (files: FileImage[]) => {
+    const formData = new FormData();
+    files.forEach((fileImage, index) => {
+      formData.append("files", fileImage.file, fileImage.name);
+    });
+    formData.append("branch", GIT_KEYS.branch);
+    formData.append("repo", GIT_KEYS.repo);
+    formData.append("owner", GIT_KEYS.owner);
+    try {
+      const local = false;
+      let serverUrl =
+        "https://cms-server-production-b414.up.railway.app/compress";
+      if (local) {
+        serverUrl = "http://localhost:3001/compress";
+      }
+      const response = await axios.post(serverUrl, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.status === 200;
+    } catch (error) {
+      console.error("Upload error:", error);
+      return false;
+    }
+  };
 
-  //   files.forEach((fileImage, index) => {
-  //     formData.append("files", fileImage.file, fileImage.name);
-  //   });
-  //   formData.append("currentPath", currentPath.join("/"));
+  const handleFiles = (files: File[]) => {
+    if (
+      projectFile === null ||
+      projectFile === undefined ||
+      currentPath.length === 0
+    ) {
+      return;
+    }
+    const currentFolder = getCurrentFolder();
+    if (
+      currentFolder === null ||
+      currentFolder === undefined ||
+      typeof currentFolder === "string"
+    ) {
+      return;
+    }
 
-  //   try {
-  //     const local = false;
-  //     let serverUrl =
-  //       "https://image-server-production-53c2.up.railway.app/compress";
-  //     if (local) {
-  //       serverUrl = "http://localhost:3001/compress";
-  //     }
-  //     const response = await axios.post(serverUrl, formData, {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     });
+    setLoading(true);
+    let highestIndex = 0;
+    let nextIndex = 0;
+    for (let i = 0; i < Object.keys(currentFolder.children).length; i++) {
+      if (
+        currentFolder.children[Object.keys(currentFolder.children)[i]].index >
+        highestIndex
+      ) {
+        highestIndex =
+          currentFolder.children[Object.keys(currentFolder.children)[i]].index;
+      }
+    }
+    nextIndex = highestIndex + 1;
 
-  //     return response.status === 200;
-  //   } catch (error) {
-  //     console.error("Upload error:", error);
-  //     return false;
-  //   }
-  // };
+    const random8Digits = () => {
+      return Math.floor(10000000 + Math.random() * 90000000);
+    };
 
-  // const handleFiles = (files: File[]) => {
-  //   let highestIndex = 0;
-  //   let images: any[] = [];
+    const projectFileObject = structuredClone(projectFile);
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    if (imageFiles.length > 0) {
+      const uploadedNames: string[] = [];
+      const readerPromises = imageFiles.map((file) => {
+        return new Promise<FileImage>(async (resolve) => {
+          const extension = file.type.split("/").pop();
+          if (!extension) return;
 
-  //   if (appFile !== null) {
-  //     if (currentPath[0] === "about") {
-  //       images = appFile["pages"]["about"]["images"];
-  //     } else if (currentPath[0] === "projects" && currentPath.length === 2) {
-  //       const projectItem = appFile["pages"]["projects"].filter(
-  //         (item: any) => item.id === currentPath[1]
-  //       );
-  //       if (projectItem.length > 0) {
-  //         images = projectItem[0].images;
-  //       }
-  //     } else if (currentPath[0] === "archives" && currentPath.length === 2) {
-  //       const projectItem = appFile["pages"]["archives"].filter(
-  //         (item: any) => item.id === currentPath[1]
-  //       );
-  //       if (projectItem.length > 0) {
-  //         images = projectItem[0].images;
-  //       }
-  //     } else {
-  //       return;
-  //     }
-  //   } else {
-  //     return;
-  //   }
+          // Remove extension
+          const lastDotIndex = file.name.lastIndexOf(".");
+          if (lastDotIndex === -1) return;
+          const newFileName = file.name.slice(0, lastDotIndex);
 
-  //   for (let i = 0; i < images.length; i++) {
-  //     if (images[i].index > highestIndex) {
-  //       highestIndex = images[i].index;
-  //     }
-  //   }
+          let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
+          const newExtension = "webp";
 
-  //   let nextIndex = highestIndex + 1;
+          // Ensure img has extension
+          sanitizedFileName = `${sanitizedFileName}-${random8Digits()}.${newExtension}`;
+          uploadedNames.push(sanitizedFileName);
 
-  //   const random8Digits = () => {
-  //     return Math.floor(10000000 + Math.random() * 90000000);
-  //   };
-  //   setLoading(true);
-  //   const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-  //   if (imageFiles.length > 0) {
-  //     const appFileCopy = appFile;
-  //     const uploadedNames: string[] = [];
-  //     const readerPromises = imageFiles.map((file) => {
-  //       return new Promise<FileImage>(async (resolve) => {
-  //         const extension = file.type.split("/").pop();
-  //         if (!extension) return;
+          if (Object.keys(currentFolder).includes("children")) {
+            const getTargetObject = (obj: any, path: string[]) => {
+              return path.reduce((acc, key) => acc?.children?.[key], obj);
+            };
+            const targetObject = getTargetObject(
+              projectFileObject,
+              currentPath
+            );
+            console.log(targetObject);
+            if (
+              Object.keys(targetObject).length > 0 &&
+              Object.keys(targetObject).includes("children")
+            ) {
+              targetObject.children[nextIndex] = {
+                type: "image",
+                index: nextIndex,
+                link:
+                  "https://raw.githubusercontent.com/open-dream-studios/test-project/refs/heads/main/images/" +
+                  sanitizedFileName,
+              };
+            }
+          }
 
-  //         // Remove extension
-  //         const lastDotIndex = file.name.lastIndexOf(".");
-  //         if (lastDotIndex === -1) return;
-  //         const newFileName = file.name.slice(0, lastDotIndex);
+          nextIndex += 1;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve({
+              name: sanitizedFileName,
+              file: file,
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      });
 
-  //         let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
-  //         const newExtension = "webp";
-
-  //         // Ensure img has extension
-  //         sanitizedFileName = `${sanitizedFileName}-${random8Digits()}.${newExtension}`;
-  //         uploadedNames.push(sanitizedFileName);
-
-  //         if (currentPath[0] === "about") {
-  //           appFileCopy["pages"]["about"]["images"].push({
-  //             index: nextIndex,
-  //             name: sanitizedFileName,
-  //           });
-  //         } else if (
-  //           currentPath[0] === "projects" &&
-  //           currentPath.length === 2
-  //         ) {
-  //           const projectItem = appFile["pages"]["projects"].filter(
-  //             (item: any) => item.id === currentPath[1]
-  //           );
-  //           if (projectItem.length > 0) {
-  //             const foundIndex = appFileCopy["pages"]["projects"].findIndex(
-  //               (item: any) => item.id === currentPath[1]
-  //             );
-  //             appFileCopy["pages"]["projects"][foundIndex]["images"].push({
-  //               index: nextIndex,
-  //               name: sanitizedFileName,
-  //               projectCover: false,
-  //             });
-  //           }
-  //         } else if (
-  //           currentPath[0] === "archives" &&
-  //           currentPath.length === 2
-  //         ) {
-  //           const projectItem = appFile["pages"]["archives"].filter(
-  //             (item: any) => item.id === currentPath[1]
-  //           );
-
-  //           if (projectItem.length > 0) {
-  //             const foundIndex = appFileCopy["pages"]["archives"].findIndex(
-  //               (item: any) => item.id === currentPath[1]
-  //             );
-  //             appFileCopy["pages"]["archives"][foundIndex]["images"].push({
-  //               index: nextIndex,
-  //               name: sanitizedFileName,
-  //             });
-  //           }
-  //         }
-
-  //         setAppFile(appFileCopy);
-  //         nextIndex += 1;
-  //         const reader = new FileReader();
-  //         reader.onload = (event) => {
-  //           resolve({
-  //             name: sanitizedFileName,
-  //             file: file,
-  //           });
-  //         };
-  //         reader.readAsDataURL(file);
-  //       });
-  //     });
-
-  //     Promise.all(readerPromises)
-  //       .then(async (images) => {
-  //         setUploadPopup(false);
-  //         await handleSend(images);
-  //       })
-  //       .then(() => {
-  //         setLoading(false);
-  //         updateProjectFile(appFileCopy);
-  //       });
-  //   } else {
-  //     alert("Only image files are allowed!");
-  //   }
-  // };
+      Promise.all(readerPromises)
+        .then(async (images) => {
+          setUploadPopup(false);
+          await handleSend(images);
+        })
+        .then(async () => {
+          await updateProjectFile(projectFileObject);
+          setLoading(false);
+        });
+    } else {
+      alert("Only image files are allowed!");
+    }
+  };
 
   if (projectImages.length === 0 && Object.keys(projectFile).length === 0) {
     return <div>{loadingText}</div>;
@@ -1096,7 +1071,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       className="w-[100vw] h-[100vh] fixed"
       style={{ pointerEvents: loading ? "none" : "all" }}
     >
-      {/* {uploadPopup && (
+      {uploadPopup && (
         <div className="z-[999] fixed top-0 left-0">
           <div
             className="absolute top-0 w-[100vw] h-[100vh]"
@@ -1104,7 +1079,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           ></div>
           <div className="absolute top-0 w-[100vw] h-[100vh] flex items-center justify-center">
             <div
-              ref={divRef}
+              ref={uploadPopupRef}
               className="w-[70%] aspect-[1.5/1] relative"
               style={{
                 userSelect: "none",
@@ -1126,7 +1101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
       <div
         className="z-[998] w-[100%] h-[63px] fixed left-0 top-0 flex flex-row"
@@ -1213,7 +1188,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             transition: "transform 0.3s ease-in-out",
             borderRight: "1px solid #BBBBBB",
           }}
-          className="z-[999] bg-[white] w-[140px] lg:w-[180px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]"
+          className="z-[500] bg-[white] w-[140px] lg:w-[180px] h-[100%] absolute top-0 left-0 px-[12px] pt-[6px]"
         >
           <div className="relative select-none">
             <p
@@ -1599,7 +1574,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   ].type === "image")) && (
                 <button
                   onClick={() => {
-                    // setUploadPopup(true);
+                    setUploadPopup(true);
                   }}
                   className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]"
                   style={{ borderRadius: "3px", border: "1px solid #999" }}
