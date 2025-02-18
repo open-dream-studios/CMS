@@ -8,14 +8,6 @@ import ColorPicker from "./ColorPicker";
 import axios from "axios";
 import { GoChevronRight } from "react-icons/go";
 import { GIT_KEYS } from "../config";
-import { renameImageFile } from "../utils/gitFunctions";
-import {
-  extractAfterIndex,
-  extractBeforeIndex,
-  isColor,
-  sanitizeTitle,
-  unSanitizeTitle,
-} from "../utils/helperFunctions";
 import Draggable from "react-draggable";
 
 const Admin = () => {
@@ -120,11 +112,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
       if (
         Object.keys(tree).length > 0 &&
-        Object.keys(tree).includes("images") &&
         Object.keys(tree).includes("project.json")
       ) {
-        setProjectImages(Object.keys(tree["images"]));
-        returnedProject[0] = Object.keys(tree["images"]);
+        if (Object.keys(tree).includes("images")) {
+          returnedProject[0] = Object.keys(tree["images"]);
+          setProjectImages(Object.keys(tree["images"]));
+        } else {
+          returnedProject[0] = [];
+          setProjectImages([]);
+        }
+
         const projectJSONLink = tree["project.json"];
 
         try {
@@ -877,7 +874,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                             window.confirm(
                               folderChildren[item].type === "image"
                                 ? "Delete image?"
-                                : `Delete ${item}?`
+                                : `Delete ${folderChildren[item].name}?`
                             )
                           ) {
                             handleDeleteItem(item);
@@ -984,24 +981,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       ) {
         highestIndex =
           currentFolder.children[Object.keys(currentFolder.children)[i]].index;
+        nextIndex = highestIndex + 1;
       }
     }
-    nextIndex = highestIndex + 1;
 
     const random8Digits = () => {
       return Math.floor(10000000 + Math.random() * 90000000);
     };
 
     const projectFileObject = structuredClone(projectFile);
+    const uploadedNames: string[] = [];
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+
     if (imageFiles.length > 0) {
-      const uploadedNames: string[] = [];
       const readerPromises = imageFiles.map((file) => {
         return new Promise<FileImage>(async (resolve) => {
           const extension = file.type.split("/").pop();
           if (!extension) return;
 
-          // Remove extension
           const lastDotIndex = file.name.lastIndexOf(".");
           if (lastDotIndex === -1) return;
           const newFileName = file.name.slice(0, lastDotIndex);
@@ -1009,40 +1006,48 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
           const newExtension = "webp";
 
-          // Ensure img has extension
           sanitizedFileName = `${sanitizedFileName}-${random8Digits()}.${newExtension}`;
           uploadedNames.push(sanitizedFileName);
 
-          if (Object.keys(currentFolder).includes("children")) {
-            const getTargetObject = (obj: any, path: string[]) => {
-              return path.reduce((acc, key) => acc?.children?.[key], obj);
-            };
-            const targetObject = getTargetObject(
-              projectFileObject,
-              currentPath
-            );
-            console.log(targetObject);
-            if (
-              Object.keys(targetObject).length > 0 &&
-              Object.keys(targetObject).includes("children")
-            ) {
-              targetObject.children[nextIndex] = {
-                type: "image",
-                index: nextIndex,
-                link:
-                  "https://raw.githubusercontent.com/open-dream-studios/test-project/refs/heads/main/images/" +
-                  sanitizedFileName,
-              };
-            }
-          }
-
-          nextIndex += 1;
           const reader = new FileReader();
           reader.onload = (event) => {
-            resolve({
-              name: sanitizedFileName,
-              file: file,
-            });
+            const img = new Image();
+            img.onload = () => {
+              const imageWidth = img.width;
+              const imageHeight = img.height;
+
+              if (Object.keys(currentFolder).includes("children")) {
+                const getTargetObject = (obj: any, path: string[]) => {
+                  return path.reduce((acc, key) => acc?.children?.[key], obj);
+                };
+                const targetObject = getTargetObject(
+                  projectFileObject,
+                  currentPath
+                );
+
+                if (
+                  Object.keys(targetObject).length > 0 &&
+                  Object.keys(targetObject).includes("children")
+                ) {
+                  targetObject.children[nextIndex] = {
+                    type: "image",
+                    index: nextIndex,
+                    width: imageWidth,
+                    height: imageHeight,
+                    link:
+                      "https://raw.githubusercontent.com/open-dream-studios/test-project/refs/heads/main/images/" +
+                      sanitizedFileName,
+                  };
+                }
+              }
+
+              nextIndex += 1;
+              resolve({
+                name: sanitizedFileName,
+                file: file,
+              });
+            };
+            img.src = event.target?.result as string;
           };
           reader.readAsDataURL(file);
         });
@@ -1262,10 +1267,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   onClick={() => {
                     const folderName = window.prompt("New Page Name:");
                     if (folderName && folderName !== "") {
-                      const sanitizedFolderName = folderName
-                        .trim()
-                        .replaceAll(/[^a-zA-Z0-9-&]/g, "_");
-                      handleAddPage(sanitizedFolderName);
+                      handleAddPage(folderName.trim());
                     }
                   }}
                   className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]"
@@ -1550,10 +1552,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   onClick={() => {
                     const folderName = window.prompt("Folder Name:");
                     if (folderName && folderName !== "") {
-                      const sanitizedFolderName = folderName
-                        .trim()
-                        .replace(/[^a-zA-Z0-9-&]/g, "_");
-                      handleAddFolder(sanitizedFolderName);
+                      handleAddFolder(folderName.trim());
                     }
                   }}
                   className="px-[10px] py-[5px] text-[13px] flex-items-center justify-center font-[500]"
