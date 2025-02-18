@@ -976,7 +976,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     let nextIndex = 0;
     for (let i = 0; i < Object.keys(currentFolder.children).length; i++) {
       if (
-        currentFolder.children[Object.keys(currentFolder.children)[i]].index >
+        currentFolder.children[Object.keys(currentFolder.children)[i]].index >=
         highestIndex
       ) {
         highestIndex =
