@@ -9,6 +9,7 @@ import axios from "axios";
 import { GoChevronRight } from "react-icons/go";
 import { GIT_KEYS } from "../config";
 import Draggable from "react-draggable";
+import { FaUndoAlt } from "react-icons/fa";
 
 const Admin = () => {
   const [password, setPassword] = useState("");
@@ -1067,6 +1068,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const [showResetOption, setShowResetOption] = useState<boolean>(false);
+
   if (projectImages.length === 0 && Object.keys(projectFile).length === 0) {
     return <div>{loadingText}</div>;
   }
@@ -1176,7 +1179,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         )}
         <button
           onClick={onLogout}
-          className="button absolute top-3 right-[12px]"
+          className="button absolute top-3 right-[13px]"
         >
           Logout
         </button>
@@ -1220,6 +1223,28 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   style={{ borderRadius: "8px", border: "0.1px solid #999" }}
                 />
               )}
+{/* 
+            {Object.keys(projectFile).includes("projectDetails") &&
+              Object.keys(projectFile["projectDetails"]).includes(
+                "pagesLock"
+              ) && (
+                <FaUndoAlt
+                  onClick={() => {
+                    if (window.prompt("Are you sure you want to reset your project? \n \nThis will delete all folders and images within each page. Press ok to reset to a blank slate.")) {
+                      console.log(1);
+                    }
+                  }}
+                  color={"#222"}
+                  size={23}
+                  className={`p-[5px] ${
+                    !projectFile.projectDetails.pagesLock
+                      ? "right-[29px]"
+                      : "right-[1px]"
+                  } border-[#999] 
+                  absolute top-0 cursor-pointer`}
+                  style={{ borderRadius: "8px", border: "0.1px solid #999" }}
+                />
+              )} */}
           </div>
           {Object.keys(projectFile).length > 0 &&
             projectFile.children &&
