@@ -10,6 +10,7 @@ import { GoChevronRight } from "react-icons/go";
 import { GIT_KEYS } from "../config";
 import Draggable from "react-draggable";
 import { FaUndoAlt } from "react-icons/fa";
+import { getCurrentTimestamp } from "../utils/helperFunctions";
 
 const Admin = () => {
   const [password, setPassword] = useState("");
@@ -894,7 +895,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                         src={folderChildren[item].link}
                       />
                     ) : (
-                      <>{folderChildren[item].name}</>
+                      <div className="w-auto h-full block truncate">
+                        {folderChildren[item].name}
+                      </div>
                     )}
                   </div>
                 </Draggable>
@@ -986,10 +989,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       }
     }
 
-    const random8Digits = () => {
-      return Math.floor(10000000 + Math.random() * 90000000);
-    };
-
     const projectFileObject = structuredClone(projectFile);
     const uploadedNames: string[] = [];
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
@@ -1006,8 +1005,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
           let sanitizedFileName = newFileName.replace(/[^a-zA-Z0-9]/g, "_");
           const newExtension = "webp";
+          const timeStamp = getCurrentTimestamp();
 
-          sanitizedFileName = `${sanitizedFileName}-${random8Digits()}.${newExtension}`;
+          sanitizedFileName = `${timeStamp}--${sanitizedFileName}.${newExtension}`;
           uploadedNames.push(sanitizedFileName);
 
           const reader = new FileReader();
@@ -1223,7 +1223,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   style={{ borderRadius: "8px", border: "0.1px solid #999" }}
                 />
               )}
-{/* 
+            {/* 
             {Object.keys(projectFile).includes("projectDetails") &&
               Object.keys(projectFile["projectDetails"]).includes(
                 "pagesLock"
