@@ -12,16 +12,35 @@ import Draggable from "react-draggable";
 import { FaUndoAlt } from "react-icons/fa";
 import { getCurrentTimestamp } from "../utils/helperFunctions";
 
+const local = false;
 const Admin = () => {
   const [password, setPassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const handleLogin = (e: any) => {
+  const handleLogin = async (e: any) => {
     e.preventDefault();
-    if (password === process.env.REACT_APP_ADMIN_PASSWORD) {
-      setIsLoggedIn(true);
-    } else {
-      alert("Incorrect password. Please try again.");
+
+    const formData = new FormData();
+    formData.append("password", password);
+    try {
+      let serverUrl =
+        "https://cms-server-production-b414.up.railway.app/password";
+      if (local) {
+        serverUrl = "http://localhost:3001/password";
+      }
+      const response = await axios.post(serverUrl, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.status === 200) {
+        setIsLoggedIn(true);
+      } else {
+        alert("Incorrect password. Please try again.");
+      }
+    } catch (error) {
+      alert("Error logging in. Please try again.");
     }
   };
 
@@ -178,41 +197,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const updateProjectFile = async (newProjectFile: any) => {
     setLoading(true);
     cancelTimer();
-    const filePath = "project.json";
+    const formData = new FormData();
+    formData.append("branch", GIT_KEYS.branch);
+    formData.append("repo", GIT_KEYS.repo);
+    formData.append("owner", GIT_KEYS.owner);
+    formData.append("appFile", JSON.stringify(newProjectFile));
     try {
-      const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github.v3+json",
-      };
-      const { data: fileInfo } = await axios.get(fileUrl, { headers });
-      const fileSha = fileInfo.sha;
-
-      // Convert the JSON to a UTF-8 encoded Base64 string
-      const updatedContent = btoa(
-        unescape(
-          encodeURIComponent(
-            typeof newProjectFile === "string"
-              ? newProjectFile
-              : JSON.stringify(newProjectFile)
-          )
-        )
-      );
-      const commitMessage = "Update project.json with new content";
-      await axios.put(
-        fileUrl,
-        {
-          message: commitMessage,
-          content: updatedContent,
-          sha: fileSha,
-          branch,
+      let serverUrl = "https://cms-server-production-b414.up.railway.app/edit";
+      if (local) {
+        serverUrl = "http://localhost:3001/edit";
+      }
+      const response = await axios.post(serverUrl, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-        { headers }
-      );
-
-      console.log("Project file updated successfully");
-      setProjectFile(newProjectFile);
-      return true;
+      });
+      if (response.status === 200) {
+        console.log("Project file updated successfully");
+        setProjectFile(newProjectFile);
+      }
+      return response.status === 200;
     } catch (error) {
       console.error("Error updating project file:", error);
       return false;
@@ -940,7 +944,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     formData.append("repo", GIT_KEYS.repo);
     formData.append("owner", GIT_KEYS.owner);
     try {
-      const local = false;
       let serverUrl =
         "https://cms-server-production-b414.up.railway.app/compress";
       if (local) {
@@ -1036,7 +1039,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     width: imageWidth,
                     height: imageHeight,
                     link:
-                      "https://raw.githubusercontent.com/open-dream-studios/test-project/refs/heads/main/images/" +
+                      `https://raw.githubusercontent.com/${GIT_KEYS.owner}/${GIT_KEYS.repo}/refs/heads/main/images/` +
                       sanitizedFileName,
                   };
                 }

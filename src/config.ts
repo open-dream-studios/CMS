@@ -1,6 +1,6 @@
 export const GIT_KEYS = {
   owner: "open-dream-studios",
-  repo: "js-portfolio",
+  repo: "jg-portfolio",
   branch: "main",
   token: process.env.REACT_APP_GIT_PAT,
 };
